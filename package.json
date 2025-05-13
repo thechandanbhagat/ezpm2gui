@@ -1,6 +1,6 @@
 {
   "name": "ezpm2gui",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "main": "dist/server/index.js",
   "bin": {
     "ezpm2gui": "./bin/ezpm2gui.js",
