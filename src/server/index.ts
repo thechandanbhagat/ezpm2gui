@@ -6,6 +6,14 @@ import pm2 from 'pm2';
 import os from 'os';
 import { execSync } from 'child_process';
 
+// Import routes
+import clusterManagementRoutes from './routes/clusterManagement';
+import processConfigRoutes from './routes/processConfig';
+import deployApplicationRoutes from './routes/deployApplication';
+import moduleRoutes from './routes/modules';
+import { setupLogStreaming } from './routes/logStreaming';
+import { executePM2Command, disconnectFromPM2 } from './utils/pm2-connection';
+
 /**
  * Create and configure the express server
  */
@@ -18,7 +26,12 @@ export function createServer() {
       origin: '*',
       methods: ['GET', 'POST']
     }
-  });  // Serve static files from the React app build directory
+  });
+  
+  // Configure middleware
+  app.use(express.json());
+  
+  // Serve static files from the React app build directory
   const staticPath = 'D:/Personal/ezpm2gui/src/client/build';
   console.log('Serving static files from:', staticPath);
   const fs = require('fs');
@@ -28,25 +41,33 @@ export function createServer() {
     console.error('Static files directory not found at:', staticPath);
   }
 
-  // PM2 API endpoints
-  app.get('/api/processes', (req, res) => {
-    pm2.connect((err) => {
-      if (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Failed to connect to PM2' });
-        return;
-      }
-
-      pm2.list((err, processList) => {
-        pm2.disconnect();
-        if (err) {
-          console.error(err);
-          res.status(500).json({ error: 'Failed to get PM2 processes' });
-          return;
-        }
-        res.json(processList);
+  // Register routes
+  app.use('/api/cluster', clusterManagementRoutes);
+  app.use('/api/config', processConfigRoutes);
+  app.use('/api/deploy', deployApplicationRoutes);
+  app.use('/api/modules', moduleRoutes);
+  
+  // Setup log streaming with Socket.IO
+  setupLogStreaming(io);  // PM2 API endpoints
+  app.get('/api/processes', async (req, res) => {
+    try {
+      const processList = await executePM2Command<any[]>((callback) => {
+        pm2.list(callback);
       });
-    });
+      res.json(processList);
+    } catch (err) {
+      console.error('Failed to get PM2 processes:', err);
+      
+      // Check if error is about PM2 not being installed
+      if (err instanceof Error && err.message.includes('PM2 is not installed')) {
+        res.status(500).json({ 
+          error: 'PM2 is not installed. Please install PM2 globally using: npm install -g pm2',
+          pmNotInstalled: true
+        });
+      } else {
+        res.status(500).json({ error: 'Failed to get PM2 processes' });
+      }
+    }
   });
   
   // Action endpoints (start, stop, restart, delete)
@@ -72,7 +93,7 @@ export function createServer() {
             pm2.restart(id, cb);
             break;
           case 'delete':
-            pm2.delete(id, cb);
+            (pm2 as any).del(id, cb);
             break;
           default:
             cb(new Error('Invalid action'));
@@ -211,7 +232,9 @@ export function createServer() {
       clearInterval(processInterval);
       clearInterval(metricsInterval);
     });
-  });  // Catch-all route to return the React app
+  });
+
+  // Catch-all route to return the React app
   app.get('*', (req, res) => {
     const indexPath = 'D:/Personal/ezpm2gui/src/client/build/index.html';
     console.log('Trying to serve index.html from:', indexPath);
