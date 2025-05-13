@@ -9,6 +9,13 @@ src/
 node_modules/
 src/client/node_modules/
 
+# TypeScript source files
+bin/*.ts
+bin/*.js.map
+**/*.ts
+!**/*.d.ts
+**/*.js.map
+
 # Test files
 test/
 
@@ -16,6 +23,8 @@ test/
 .eslintrc
 .prettierrc
 .editorconfig
+tsconfig.json
+src/client/tsconfig.json
 
 # Docs
 DEVELOPMENT.md
