@@ -5,8 +5,9 @@
 The ezPM2GUI application is structured as follows:
 
 - `src/server`: TypeScript server code using Express and Socket.IO
-- `src/client`: React-based frontend application
-- `bin`: CLI executable scripts
+- `src/client`: React-based frontend with TypeScript and Material UI
+- `src/types`: TypeScript type definitions
+- `bin`: CLI executable scripts 
 - `dist`: Compiled server and client code (generated during build)
 - `test`: Test utilities
 
@@ -26,19 +27,26 @@ The ezPM2GUI application is structured as follows:
    - Memory usage
    - CPU cores
    - System uptime
+   - Visual charts with Chart.js
 
 4. **Process Logs**
    - View standard output and error logs
    - Auto-refresh capability
 
-5. **Process Charts**
-   - CPU and memory usage over time with charts
+5. **Modern UI**
+   - Material UI components
+   - Responsive design
+   - Dark/light theme support
+
+6. **TypeScript Implementation**
+   - Full type safety
+   - Type definitions for PM2
 
 ## Development Setup
 
 ### Prerequisites
 
-- Node.js (>= 14.x)
+- Node.js (>= 16.x)
 - PM2 installed globally (`npm install -g pm2`)
 
 ### Installation
@@ -76,6 +84,14 @@ node test/create-test-services.js
 
 1. Make changes to files in `src/client/src`
 2. Run `npm run dev:client` to start the React development server
+
+#### TypeScript Type Checking
+
+The project uses TypeScript for type safety. Make sure to:
+
+- Define proper interfaces for your components props
+- Use type definitions from `src/client/src/types` directory
+- Run TypeScript compiler to check for type errors: `cd src/client && npx tsc --noEmit`
 
 ### Running Both in Development Mode
 
