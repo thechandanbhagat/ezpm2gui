@@ -2,20 +2,91 @@
 
 A modern web-based graphical user interface for the PM2 process manager, built with TypeScript and Material UI.
 
-![ezPM2GUI Screenshot](https://via.placeholder.com/800x450.png?text=ezPM2GUI+Screenshot)
+![ezPM2GUI Dashboard](./screenshots/screenshot-1747156076728.png)
 
 ## Features
 
-- Real-time process monitoring
-- Process management (start, stop, restart, delete)
-- Detailed process information and logs
-- System metrics dashboard
-- WebSocket for live updates
-- Process CPU and memory charts
-- Filter processes by status or name
-- Modern UI with Material UI components
-- Fully typed with TypeScript
-- Responsive design for desktop and mobile
+- 🔍 **Real-time process monitoring** - Keep track of all your PM2 processes in real-time
+- 🎮 **Process management** - Start, stop, restart, and delete processes with one click
+- 📊 **System metrics dashboard** - Monitor CPU, memory usage, and uptime
+- 📝 **Enhanced log streaming** - View and filter logs from multiple processes simultaneously
+- 🔄 **WebSocket for live updates** - Get instant updates without refreshing
+- 📈 **Process CPU and memory charts** - Visualize performance metrics over time
+- 🔍 **Filter processes by status or name** - Quickly find the processes you need
+- 🌙 **Dark mode support** - Easy on the eyes for late-night monitoring
+- 🖥️ **Cluster management** - Easily scale your Node.js applications
+- 📦 **Application deployment** - Deploy new applications directly from the UI
+- ⚙️ **Ecosystem configuration** - Create and manage your PM2 ecosystem files
+- 🧩 **PM2 modules support** - Manage and configure PM2 modules
+- 🌐 **Modern UI with Material UI components** - Clean and intuitive interface
+- 🔒 **Fully typed with TypeScript** - Robust and maintainable codebase
+
+## Detailed Features
+
+### Process Monitoring
+Monitor all your PM2 processes in real-time with detailed information on CPU usage, memory consumption, uptime, and status. The intuitive interface makes it easy to identify issues at a glance.
+
+### Application Deployment
+Deploy new Node.js applications to PM2 directly from the UI. Configure all the necessary options including:
+- Application name and script path
+- Working directory
+- Number of instances for load balancing
+- Execution mode (fork or cluster)
+- Auto-restart options
+- Memory threshold for restarts
+- Environment variables
+
+### Cluster Management
+Easily scale your Node.js applications with the cluster management interface. Add or remove instances on the fly and switch between fork and cluster execution modes for optimal performance.
+
+### Log Streaming
+View and filter logs from multiple processes simultaneously with the enhanced log streaming interface. Features include:
+- Real-time log updates
+- Filtering by log level or content
+- Pausing and resuming log streams
+- Log retention configuration
+
+### Ecosystem Configuration
+Generate and manage PM2 ecosystem configuration files directly from the UI. This makes it easy to set up complex application deployments and share configurations across your team.
+
+### PM2 Modules
+Manage and configure PM2 modules to extend the functionality of your PM2 installation. Install, update, and remove modules with a few clicks.
+
+### System Metrics
+Monitor key system metrics including:
+- CPU usage and number of cores
+- Memory usage and availability
+- System uptime
+- Load averages (1, 5, and 15 minutes)
+
+### User Interface Customization
+Customize the ezPM2GUI interface to suit your preferences:
+- Toggle dark mode for reduced eye strain
+- Select color themes
+- Configure dashboard refresh intervals
+- Adjust log display settings
+
+## Screenshots
+
+### Process Monitor
+The main dashboard provides a comprehensive view of all your PM2 processes, showing CPU usage, memory consumption, uptime, and status at a glance.
+
+![Process Monitor](./screenshots/screenshot-1747156076728.png)
+
+### System Metrics & Process Management
+Monitor your system resources and manage PM2 processes with intuitive controls for start, stop, restart, and delete operations.
+
+![System Metrics](./screenshots/screenshot-1747156118224.png)
+
+### Deploy New Application
+Easily deploy new Node.js applications to PM2 with a user-friendly form interface. Configure all PM2 options including instances, execution mode, working directory, and environment variables.
+
+![Deploy Application](./screenshots/screenshot-1747156060890.png)
+
+### Application Settings
+Customize the ezPM2GUI interface and configure your PM2 connection settings to match your environment.
+
+![Application Settings](./screenshots/screenshot-1747156042956.png)
 
 ## Installation
 
@@ -38,6 +109,12 @@ npm install ezpm2gui
 ```bash
 # Start the ezPM2GUI web interface
 ezpm2gui
+
+# Start on a specific port
+ezpm2gui --port 4000
+
+# Start bound to all network interfaces
+ezpm2gui --host 0.0.0.0
 
 # Generate a sample PM2 ecosystem config
 ezpm2gui-generate-ecosystem
@@ -114,16 +191,91 @@ See [DEVELOPMENT.md](DEVELOPMENT.md) for detailed development instructions.
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/ezpm2gui.git
+git clone https://github.com/thechandanbhagat/ezpm2gui.git
 cd ezpm2gui
 
 # Install dependencies and build
 ./install.sh   # On Linux/macOS
 install.bat    # On Windows
 
-# Start the application
+# Start in development mode
+npm run dev
+
+# Build the application
+npm run build
+
+# Start the application (production mode)
 npm start
 ```
+
+### Project Structure
+
+```
+ezpm2gui/
+├── bin/                 # CLI entry points
+├── dist/                # Compiled output
+├── docs/                # Documentation
+├── screenshots/         # Application screenshots
+├── scripts/             # Build and utility scripts
+├── src/                 # Source code
+│   ├── client/          # React frontend
+│   │   ├── public/      # Static assets
+│   │   └── src/         # React components and logic
+│   │       ├── components/ # UI components
+│   │       └── types/   # TypeScript types for client
+│   ├── server/          # Express backend
+│   │   ├── routes/      # API routes
+│   │   └── utils/       # Server utilities
+│   └── types/           # Shared TypeScript types
+└── test/                # Test files
+```
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Run the tests to ensure everything works
+5. Commit your changes using our [commit guidelines](./docs/COMMIT_GUIDE.md)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
+
+### Coding Style
+
+This project follows standardized TypeScript conventions and uses ESLint for code quality. Before submitting a pull request, please ensure your code follows these guidelines by running:
+
+```bash
+npm run lint
+```
+
+## FAQ
+
+### Q: How does ezPM2GUI differ from pm2-gui and PM2 Plus?
+
+A: ezPM2GUI is a modern, TypeScript-based alternative to pm2-gui with a more user-friendly interface and additional features. Unlike PM2 Plus, it's completely free and open-source, running locally on your server rather than in the cloud.
+
+### Q: Can I use ezPM2GUI with PM2 running on a different machine?
+
+A: Yes, you can configure ezPM2GUI to connect to a remote PM2 installation. You'll need to specify the connection details in the application settings.
+
+### Q: How do I generate an ecosystem file from my existing processes?
+
+A: Use the `ezpm2gui-generate-ecosystem` command-line tool, or visit the Ecosystem Config section in the web UI.
+
+### Q: Can ezPM2GUI handle a large number of processes?
+
+A: Yes, ezPM2GUI is designed to handle dozens of processes efficiently. The UI is optimized to present large amounts of information in a digestible format.
+
+### Q: Is ezPM2GUI secure?
+
+A: By default, ezPM2GUI binds to localhost for security reasons. If you expose the interface to other machines, consider adding authentication through a reverse proxy like Nginx.
+
+## Related Projects
+
+- [PM2](https://github.com/Unitech/pm2) - The process manager that ezPM2GUI works with
+- [pm2-gui](https://github.com/Tjatse/pm2-gui) - The original inspiration for this project
 
 ## License
 
@@ -131,4 +283,8 @@ ISC
 
 ## Credits
 
-Built with ❤️ as a modern alternative to pm2-gui
+Built with ❤️ by [Chandan Bhagat](https://github.com/thechandanbhagat) as a modern alternative to pm2-gui.
+
+---
+
+**Note**: ezPM2GUI is not officially affiliated with PM2 or PM2 Plus. It's an independent tool that interfaces with the PM2 process manager.
