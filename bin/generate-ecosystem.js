@@ -1,8 +1,11 @@
 #!/usr/bin/env node
-
-const fs = require('fs');
-const path = require('path');
-
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
 const ecosystemConfig = `
 module.exports = {
   apps : [
@@ -39,19 +42,18 @@ module.exports = {
   ]
 }
 `;
-
 // Get the output path
 const outputPath = process.argv[2] || 'ecosystem.config.js';
-const fullPath = path.resolve(process.cwd(), outputPath);
-
+const fullPath = path_1.default.resolve(process.cwd(), outputPath);
 try {
-  // Write file
-  fs.writeFileSync(fullPath, ecosystemConfig);
-  console.log(`PM2 ecosystem file generated at: ${fullPath}`);
-  console.log('\nTo start your PM2 processes with this configuration:');
-  console.log('  pm2 start ecosystem.config.js');
-  console.log('\nTo monitor your processes with ezPM2GUI:');
-  console.log('  ezpm2gui');
-} catch (error) {
-  console.error('Error generating ecosystem file:', error);
+    // Write file
+    fs_1.default.writeFileSync(fullPath, ecosystemConfig);
+    console.log(`PM2 ecosystem file generated at: ${fullPath}`);
+    console.log('\nTo start your PM2 processes with this configuration:');
+    console.log('  pm2 start ecosystem.config.js');
+    console.log('\nTo monitor your processes with ezPM2GUI:');
+    console.log('  ezpm2gui');
+}
+catch (error) {
+    console.error('Error generating ecosystem file:', error);
 }
