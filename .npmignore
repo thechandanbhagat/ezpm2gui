@@ -1,12 +1,14 @@
 # Source files
 src/
 !src/client/build/
+!src/client/build/**/*
 
 # Development files
 .git/
 .github/
 .vscode/
 node_modules/
+**/node_modules/
 src/client/node_modules/
 
 # TypeScript source files
