@@ -1,0 +1,236 @@
+{
+  "projectTypes": {
+    "node": {
+      "name": "Node.js",
+      "detection": {
+        "files": ["package.json"],
+        "extensions": [".js", ".ts", ".jsx", ".tsx"]
+      },
+      "setup": {
+        "steps": [
+          {
+            "name": "Check Node.js version",
+            "command": "node --version",
+            "description": "Verifying Node.js installation",
+            "required": true
+          },
+          {
+            "name": "Install dependencies",
+            "command": "npm install",
+            "description": "Installing project dependencies",
+            "required": true,
+            "workingDirectory": "project"
+          },
+          {
+            "name": "Build project (if build script exists)",
+            "command": "npm run build",
+            "description": "Building the project",
+            "required": false,
+            "conditional": "build_script_exists",
+            "workingDirectory": "project"
+          },
+          {
+            "name": "Run tests (if test script exists)",
+            "command": "npm test",
+            "description": "Running tests",
+            "required": false,
+            "conditional": "test_script_exists",
+            "workingDirectory": "project"
+          }
+        ],
+        "environment": {
+          "NODE_ENV": "production"
+        }
+      },
+      "validation": {
+        "checks": [
+          {
+            "name": "package.json exists",
+            "file": "package.json"
+          },
+          {
+            "name": "node_modules exists after install",
+            "directory": "node_modules"
+          }
+        ]
+      },
+      "defaultConfig": {
+        "interpreter": "node",
+        "execMode": "fork",
+        "supportsCluster": true,
+        "startScript": "npm start"
+      }
+    },
+    "python": {
+      "name": "Python",
+      "detection": {
+        "files": ["requirements.txt", "pyproject.toml", "setup.py", "Pipfile"],
+        "extensions": [".py"]
+      },
+      "setup": {
+        "steps": [
+          {
+            "name": "Check Python version",
+            "command": "python --version",
+            "description": "Verifying Python installation",
+            "required": true
+          },
+          {
+            "name": "Create virtual environment",
+            "command": "python -m venv venv",
+            "description": "Creating Python virtual environment",
+            "required": true,
+            "workingDirectory": "project"
+          },
+          {
+            "name": "Activate virtual environment (Windows)",
+            "command": ".\\venv\\Scripts\\Activate.ps1",
+            "description": "Activating virtual environment",
+            "required": true,
+            "platform": "win32",
+            "workingDirectory": "project"
+          },
+          {
+            "name": "Activate virtual environment (Unix)",
+            "command": "source venv/bin/activate",
+            "description": "Activating virtual environment",
+            "required": true,
+            "platform": "unix",
+            "workingDirectory": "project"
+          },
+          {
+            "name": "Upgrade pip",
+            "command": "python -m pip install --upgrade pip",
+            "description": "Upgrading pip",
+            "required": true,
+            "workingDirectory": "project",
+            "useVenv": true
+          },
+          {
+            "name": "Install requirements",
+            "command": "pip install -r requirements.txt",
+            "description": "Installing Python dependencies",
+            "required": true,
+            "conditional": "requirements_exists",
+            "workingDirectory": "project",
+            "useVenv": true
+          },
+          {
+            "name": "Install from pyproject.toml",
+            "command": "pip install -e .",
+            "description": "Installing from pyproject.toml",
+            "required": true,
+            "conditional": "pyproject_exists",
+            "workingDirectory": "project",
+            "useVenv": true
+          }
+        ],
+        "environment": {
+          "PYTHONPATH": ".",
+          "PYTHON_UNBUFFERED": "1"
+        }
+      },
+      "validation": {
+        "checks": [
+          {
+            "name": "Virtual environment created",
+            "directory": "venv"
+          },
+          {
+            "name": "Requirements file exists",
+            "file": "requirements.txt",
+            "optional": true
+          }
+        ]
+      },
+      "defaultConfig": {
+        "interpreter": "python",
+        "execMode": "fork",
+        "supportsCluster": false,
+        "interpreterPath": "venv/Scripts/python.exe"
+      }
+    },
+    "dotnet": {
+      "name": ".NET",
+      "detection": {
+        "files": ["*.csproj", "*.fsproj", "*.vbproj", "*.sln"],
+        "extensions": [".cs", ".fs", ".vb"]
+      },
+      "setup": {
+        "steps": [
+          {
+            "name": "Check .NET version",
+            "command": "dotnet --version",
+            "description": "Verifying .NET installation",
+            "required": true
+          },
+          {
+            "name": "Restore packages",
+            "command": "dotnet restore",
+            "description": "Restoring NuGet packages",
+            "required": true,
+            "workingDirectory": "project"
+          },
+          {
+            "name": "Build project",
+            "command": "dotnet build --configuration Release",
+            "description": "Building .NET project",
+            "required": true,
+            "workingDirectory": "project"
+          },
+          {
+            "name": "Publish project",
+            "command": "dotnet publish --configuration Release --output ./publish",
+            "description": "Publishing .NET project",
+            "required": true,
+            "workingDirectory": "project"
+          },
+          {
+            "name": "Run tests",
+            "command": "dotnet test",
+            "description": "Running .NET tests",
+            "required": false,
+            "conditional": "test_project_exists",
+            "workingDirectory": "project"
+          }
+        ],
+        "environment": {
+          "DOTNET_ENVIRONMENT": "Production",
+          "ASPNETCORE_ENVIRONMENT": "Production"
+        }
+      },
+      "validation": {
+        "checks": [
+          {
+            "name": "Project file exists",
+            "pattern": "*.csproj"
+          },
+          {
+            "name": "Publish directory exists",
+            "directory": "publish"
+          }
+        ]
+      },
+      "defaultConfig": {
+        "interpreter": "dotnet",
+        "execMode": "fork",
+        "supportsCluster": false,
+        "startCommand": "dotnet run"
+      }
+    }
+  },
+  "global": {
+    "timeouts": {
+      "setup": 300000,
+      "validation": 30000
+    },
+    "retries": {
+      "setup": 2,
+      "validation": 1
+    },
+    "logging": {
+      "level": "info",
+      "file": "deployment.log"
+    }
+  }
+}
