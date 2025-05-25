@@ -91,9 +91,8 @@ export function createServer() {
             break;
           case 'restart':
             pm2.restart(id, cb);
-            break;
-          case 'delete':
-            (pm2 as any).del(id, cb);
+            break;          case 'delete':
+            (pm2 as any).delete(id, cb);
             break;
           default:
             cb(new Error('Invalid action'));
