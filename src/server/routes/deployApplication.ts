@@ -2,11 +2,12 @@ import { Router } from 'express';
 import pm2 from 'pm2';
 import path from 'path';
 import fs from 'fs';
+import { projectSetupService } from '../services/ProjectSetupService';
 
 const router: Router = Router();
 
 // Deploy a new application
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const {
     name,
     script,
@@ -16,7 +17,9 @@ router.post('/', (req, res) => {
     autorestart,
     watch,
     max_memory_restart,
-    env
+    env,
+    appType,
+    autoSetup = true
   } = req.body;
   
   // Validate required fields
@@ -28,42 +31,115 @@ router.post('/', (req, res) => {
   if (!fs.existsSync(script)) {
     return res.status(400).json({ error: `Script file not found: ${script}` });
   }
-  
-  // Create deployment configuration
-  const appConfig = {
-    name,
-    script,
-    cwd: cwd || path.dirname(script),
-    instances: parseInt(instances) || 1,
-    exec_mode: exec_mode || 'fork',
-    autorestart: autorestart !== undefined ? autorestart : true,
-    watch: watch || false,
-    max_memory_restart: max_memory_restart || '150M',
-    env: env || {}
-  };
-  
-  pm2.connect((err) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Failed to connect to PM2' });
+
+  try {
+    const projectPath = cwd || path.dirname(script);
+    let setupResult = null;
+    let finalEnv = env || {};
+    let interpreterPath = '';
+
+    // Auto-detect project type if not provided
+    let detectedType = appType;
+    if (!detectedType) {
+      detectedType = projectSetupService.detectProjectType(projectPath);
+      if (detectedType) {
+        console.log(`Auto-detected project type: ${detectedType}`);
+      }
     }
-    
-    pm2.start(appConfig, (err) => {
-      pm2.disconnect();
+
+    // Run project setup if auto-setup is enabled and project type is detected
+    if (autoSetup && detectedType && ['node', 'python', 'dotnet'].includes(detectedType)) {
+      console.log(`Running setup for ${detectedType} project...`);
       
-      if (err) {
-        console.error('PM2 start error:', err);
+      try {
+        setupResult = await projectSetupService.setupProject(projectPath, detectedType);
+        
+        if (!setupResult.success) {
+          return res.status(500).json({
+            error: 'Project setup failed',
+            details: setupResult.errors,
+            warnings: setupResult.warnings,
+            steps: setupResult.steps
+          });
+        }
+
+        // Merge environment variables from setup
+        finalEnv = { ...setupResult.environment, ...finalEnv };
+        
+        // Set interpreter path for Python projects
+        if (setupResult.interpreterPath) {
+          interpreterPath = setupResult.interpreterPath;
+        }
+
+        console.log('Project setup completed successfully');
+      } catch (setupError) {
+        console.error('Setup error:', setupError);
         return res.status(500).json({
-          error: `Failed to deploy application: ${err.message || 'Unknown error'}`
+          error: 'Project setup failed',
+          details: setupError instanceof Error ? setupError.message : 'Unknown setup error'
         });
       }
+    }
+
+    // Create deployment configuration
+    const appConfig: any = {
+      name,
+      script,
+      cwd: projectPath,
+      instances: parseInt(instances) || 1,
+      exec_mode: exec_mode || 'fork',
+      autorestart: autorestart !== undefined ? autorestart : true,
+      watch: watch || false,
+      max_memory_restart: max_memory_restart || '150M',
+      env: finalEnv
+    };
+
+    // Set interpreter for Python projects
+    if (detectedType === 'python' && interpreterPath) {
+      appConfig.interpreter = interpreterPath;
+    } else if (detectedType === 'dotnet') {
+      appConfig.interpreter = 'dotnet';
+      // For .NET projects, update script to point to the published DLL if available
+      const publishedDll = path.join(projectPath, 'publish', `${path.basename(projectPath)}.dll`);
+      if (fs.existsSync(publishedDll)) {
+        appConfig.script = publishedDll;
+      }
+    }
+  
+    pm2.connect((err) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: 'Failed to connect to PM2' });
+      }
       
-      res.json({
-        success: true,
-        message: `Application ${name} deployed successfully`
+      pm2.start(appConfig, (err) => {
+        pm2.disconnect();
+        
+        if (err) {
+          console.error('PM2 start error:', err);
+          return res.status(500).json({
+            error: `Failed to deploy application: ${err.message || 'Unknown error'}`
+          });
+        }
+        
+        res.json({
+          success: true,
+          message: `Application ${name} deployed successfully`,
+          setupResult: setupResult ? {
+            steps: setupResult.steps,
+            warnings: setupResult.warnings
+          } : null
+        });
       });
     });
-  });
+
+  } catch (error) {
+    console.error('Deployment error:', error);
+    return res.status(500).json({
+      error: 'Deployment failed',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 });
 
 // Generate ecosystem.config.js file
@@ -187,6 +263,95 @@ router.get('/generate-ecosystem-preview', (req, res) => {
       res.status(500).json({ error: error.message || 'Failed to generate ecosystem preview' });
     }
   });
+});
+
+// Detect project type
+router.post('/detect-project', (req, res) => {
+  const { projectPath } = req.body;
+  
+  if (!projectPath) {
+    return res.status(400).json({ error: 'Project path is required' });
+  }
+  
+  if (!fs.existsSync(projectPath)) {
+    return res.status(400).json({ error: 'Project path does not exist' });
+  }
+  
+  try {
+    const projectType = projectSetupService.detectProjectType(projectPath);
+    const config = projectType ? projectSetupService.getProjectConfig(projectType) : null;
+    
+    res.json({
+      success: true,
+      projectType,
+      config: config ? {
+        name: config.name,
+        defaultConfig: config.defaultConfig,
+        setupSteps: config.setup.steps.length
+      } : null
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Failed to detect project type',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Setup project (without deployment)
+router.post('/setup-project', async (req, res) => {
+  const { projectPath, projectType } = req.body;
+  
+  if (!projectPath || !projectType) {
+    return res.status(400).json({ error: 'Project path and type are required' });
+  }
+  
+  if (!fs.existsSync(projectPath)) {
+    return res.status(400).json({ error: 'Project path does not exist' });
+  }
+  
+  try {
+    const setupResult = await projectSetupService.setupProject(projectPath, projectType);
+    
+    res.json({
+      success: setupResult.success,
+      steps: setupResult.steps,
+      errors: setupResult.errors,
+      warnings: setupResult.warnings,
+      environment: setupResult.environment,
+      interpreterPath: setupResult.interpreterPath
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Project setup failed',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Get supported project types
+router.get('/project-types', (req, res) => {
+  try {
+    const types = projectSetupService.getSupportedProjectTypes();
+    const typeConfigs = types.map(type => {
+      const config = projectSetupService.getProjectConfig(type);
+      return {
+        type,
+        name: config?.name,
+        defaultConfig: config?.defaultConfig
+      };
+    });
+    
+    res.json({
+      success: true,
+      types: typeConfigs
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Failed to get project types',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 });
 
 export default router;
