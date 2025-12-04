@@ -1,0 +1,31 @@
+{
+  "connections": [
+    {
+      "id": "10.0.90.89-22-oll-dev",
+      "name": "outernet",
+      "host": "10.0.90.89",
+      "port": 22,
+      "username": "oll-dev",
+      "password": "42eb428a6d0ca614741be36634da53791a5273626acd5d59502780066ce6005e",
+      "useSudo": true
+    },
+    {
+      "id": "10.0.90.90-22-oll-admin",
+      "name": "outernet-prod",
+      "host": "10.0.90.90",
+      "port": 22,
+      "username": "oll-admin",
+      "password": "7c96b2ee79f60409b9a400178ac6a48e245e7b0d761c9caa8e1d720105e7426b",
+      "useSudo": true
+    },
+    {
+      "id": "192.168.50.100-22-oll-dev",
+      "name": "2.0",
+      "host": "192.168.50.100",
+      "port": 22,
+      "username": "oll-dev",
+      "password": "42eb428a6d0ca614741be36634da53791a5273626acd5d59502780066ce6005e",
+      "useSudo": true
+    }
+  ]
+}
