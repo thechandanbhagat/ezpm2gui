@@ -1,0 +1,34 @@
+[
+  {
+    "name": "cv-forge",
+    "description": "",
+    "scriptType": "shell",
+    "scriptMode": "inline",
+    "scriptPath": "",
+    "inlineScript": "echo \"Installing CV Forge\" \nsleep 10\nnpm install -g cv-forge",
+    "cronExpression": "*/5 * * * *",
+    "args": [],
+    "env": {},
+    "cwd": "",
+    "enabled": true,
+    "id": "5e8ec09e-afaa-44bd-a4d4-7901aa3b3b86",
+    "createdAt": "2025-11-03T15:20:46.999Z",
+    "updatedAt": "2025-11-05T10:19:34.194Z"
+  },
+  {
+    "name": "ms-rule-engine",
+    "description": "",
+    "scriptType": "shell",
+    "scriptMode": "inline",
+    "scriptPath": "",
+    "inlineScript": "npm install -g ms-rule-engine",
+    "cronExpression": "*/5 * * * *",
+    "args": [],
+    "env": {},
+    "cwd": "",
+    "enabled": true,
+    "id": "7a07f917-8ac4-48e4-953b-3df86e52c362",
+    "createdAt": "2025-11-05T10:19:23.256Z",
+    "updatedAt": "2025-11-05T10:19:23.256Z"
+  }
+]
