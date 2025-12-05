@@ -1,29 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Paper,
-  Typography,
-  Grid,
-  Divider,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  IconButton,
-  Tooltip,
-  LinearProgress,
-  useTheme,
-  Chip
-} from '@mui/material';
-import {
-  Refresh as RefreshIcon,
-  Memory as MemoryIcon,
-  Speed as SpeedIcon
-} from '@mui/icons-material';
+import React, { useState } from 'react';
+import { useTheme } from '@mui/material';
 import { PM2Process } from '../types/pm2';
 import { useNavigate } from 'react-router-dom';
+
+/**
+ * Namespace: /monit
+ * Route: /monit
+ * Description: Real-time process monitoring dashboard with CPU, memory metrics and process management
+ */
 
 interface MonitDashboardProps {
   processes: PM2Process[];
@@ -35,6 +19,7 @@ const MonitDashboard: React.FC<MonitDashboardProps> = ({ processes, onRefresh })
   const navigate = useNavigate();
   const [sortField, setSortField] = useState<'cpu' | 'memory'>('cpu');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const isDark = theme.palette.mode === 'dark';
 
   // Helper functions for formatting
   const formatMemory = (bytes: number): string => {
@@ -53,12 +38,6 @@ const MonitDashboard: React.FC<MonitDashboardProps> = ({ processes, onRefresh })
     if (days > 0) return `${days}d ${hours}h ${minutes}m`;
     if (hours > 0) return `${hours}h ${minutes}m`;
     return `${minutes}m ${seconds % 60}s`;
-  };
-
-  const getStatusColor = (status: string): "success" | "error" | "warning" => {
-    if (status === 'online') return 'success';
-    if (status === 'stopped') return 'error';
-    return 'warning';
   };
 
   // Sort processes
@@ -91,204 +70,203 @@ const MonitDashboard: React.FC<MonitDashboardProps> = ({ processes, onRefresh })
     navigate(`/process/${pmId}`);
   };
 
+  const getProgressBarColor = (value: number) => {
+    if (value < 60) return isDark ? 'bg-emerald-500' : 'bg-emerald-600';
+    if (value < 80) return isDark ? 'bg-amber-500' : 'bg-amber-600';
+    return isDark ? 'bg-rose-500' : 'bg-rose-600';
+  };
+
   return (
-    <Box>
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h5">Process Monitor</Typography>
-          <Tooltip title="Refresh Data">
-            <IconButton onClick={onRefresh}>
-              <RefreshIcon />
-            </IconButton>
-          </Tooltip>
-        </Box>
-        <Divider sx={{ mb: 3 }} />
-        
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid item xs={12} md={4}>
-            <Paper 
-              sx={{ 
-                p: 2, 
-                bgcolor: theme.palette.background.default,
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center'
-              }}
-              elevation={2}
-            >
-              <Typography variant="h6" gutterBottom align="center">
-                Processes
-              </Typography>
-              <Typography variant="h3" align="center" color="primary">
-                {processes.length}
-              </Typography>
-              <Box sx={{ mt: 1 }}>
-                <Typography variant="body2" align="center">
-                  {processes.filter(p => p.pm2_env.status === 'online').length} online
-                </Typography>
-                <Typography variant="body2" align="center">
-                  {processes.filter(p => p.pm2_env.status !== 'online').length} stopped
-                </Typography>
-              </Box>
-            </Paper>
-          </Grid>
-          
-          <Grid item xs={12} md={4}>
-            <Paper 
-              sx={{ 
-                p: 2, 
-                bgcolor: theme.palette.background.default,
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center'
-              }}
-              elevation={2}
-            >
-              <Typography variant="h6" gutterBottom align="center">
-                <SpeedIcon sx={{ mr: 1, verticalAlign: 'bottom' }} />
-                CPU Usage
-              </Typography>
-              <Typography variant="h3" align="center" color="secondary">
-                {sortedProcesses.length > 0 ? 
-                  `${Math.max(...sortedProcesses.map(p => p.monit.cpu)).toFixed(1)}%` : 
-                  '0%'
-                }
-              </Typography>
-              <Typography variant="body2" align="center" sx={{ mt: 1 }}>
-                Highest process CPU
-              </Typography>
-            </Paper>
-          </Grid>
-          
-          <Grid item xs={12} md={4}>
-            <Paper 
-              sx={{ 
-                p: 2, 
-                bgcolor: theme.palette.background.default,
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center'
-              }}
-              elevation={2}
-            >
-              <Typography variant="h6" gutterBottom align="center">
-                <MemoryIcon sx={{ mr: 1, verticalAlign: 'bottom' }} />
-                Memory Usage
-              </Typography>
-              <Typography variant="h3" align="center" color="info.main">
-                {sortedProcesses.length > 0 ? 
-                  formatMemory(Math.max(...sortedProcesses.map(p => p.monit.memory))) : 
-                  '0 MB'
-                }
-              </Typography>
-              <Typography variant="body2" align="center" sx={{ mt: 1 }}>
-                Highest process memory
-              </Typography>
-            </Paper>
-          </Grid>
-        </Grid>
-        
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>App Name</TableCell>
-                <TableCell>ID</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell 
+    <div className="space-y-4">
+      {/* Header */}
+      <div className={`rounded-lg ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-sm border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+        <div className="flex items-center justify-between px-4 py-3">
+          <h2 className={`text-lg font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+            Process Monitor
+          </h2>
+          <button
+            onClick={onRefresh}
+            className={`p-2 rounded-lg transition-colors ${
+              isDark 
+                ? 'hover:bg-gray-700 text-gray-300 hover:text-gray-100' 
+                : 'hover:bg-gray-100 text-gray-600 hover:text-gray-900'
+            }`}
+            title="Refresh Data"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {/* Total Processes */}
+        <div className={`rounded-lg ${isDark ? 'bg-gradient-to-br from-blue-900 to-blue-800' : 'bg-gradient-to-br from-blue-500 to-blue-600'} shadow-sm p-4`}>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium text-blue-100 uppercase tracking-wide">Processes</span>
+            <svg className="w-5 h-5 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+          </div>
+          <div className="text-3xl font-bold text-white mb-1">{processes.length}</div>
+          <div className="flex items-center gap-3 text-xs text-blue-100">
+            <span>{processes.filter(p => p.pm2_env.status === 'online').length} online</span>
+            <span>•</span>
+            <span>{processes.filter(p => p.pm2_env.status !== 'online').length} stopped</span>
+          </div>
+        </div>
+
+        {/* CPU Usage */}
+        <div className={`rounded-lg ${isDark ? 'bg-gradient-to-br from-purple-900 to-purple-800' : 'bg-gradient-to-br from-purple-500 to-purple-600'} shadow-sm p-4`}>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium text-purple-100 uppercase tracking-wide">CPU Peak</span>
+            <svg className="w-5 h-5 text-purple-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <div className="text-3xl font-bold text-white mb-1">
+            {sortedProcesses.length > 0 
+              ? `${Math.max(...sortedProcesses.map(p => p.monit.cpu)).toFixed(1)}%` 
+              : '0%'
+            }
+          </div>
+          <div className="text-xs text-purple-100">Highest process usage</div>
+        </div>
+
+        {/* Memory Usage */}
+        <div className={`rounded-lg ${isDark ? 'bg-gradient-to-br from-cyan-900 to-cyan-800' : 'bg-gradient-to-br from-cyan-500 to-cyan-600'} shadow-sm p-4`}>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium text-cyan-100 uppercase tracking-wide">Memory Peak</span>
+            <svg className="w-5 h-5 text-cyan-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+            </svg>
+          </div>
+          <div className="text-3xl font-bold text-white mb-1">
+            {sortedProcesses.length > 0 
+              ? formatMemory(Math.max(...sortedProcesses.map(p => p.monit.memory))) 
+              : '0 MB'
+            }
+          </div>
+          <div className="text-xs text-cyan-100">Highest process usage</div>
+        </div>
+      </div>
+
+      {/* Process Table */}
+      <div className={`rounded-lg ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-sm border ${isDark ? 'border-gray-700' : 'border-gray-200'} overflow-hidden`}>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className={`${isDark ? 'bg-gray-900' : 'bg-gray-50'} border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+              <tr>
+                <th className={`px-4 py-2 text-left text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'} uppercase tracking-wider`}>
+                  App Name
+                </th>
+                <th className={`px-3 py-2 text-left text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'} uppercase tracking-wider`}>
+                  ID
+                </th>
+                <th className={`px-3 py-2 text-left text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'} uppercase tracking-wider`}>
+                  Status
+                </th>
+                <th 
+                  className={`px-3 py-2 text-left text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'} uppercase tracking-wider cursor-pointer hover:${isDark ? 'text-gray-100' : 'text-gray-900'} transition-colors`}
                   onClick={() => handleSort('cpu')}
-                  sx={{ cursor: 'pointer' }}
                 >
                   CPU {sortField === 'cpu' && (sortDirection === 'asc' ? '↑' : '↓')}
-                </TableCell>
-                <TableCell 
+                </th>
+                <th 
+                  className={`px-3 py-2 text-left text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'} uppercase tracking-wider cursor-pointer hover:${isDark ? 'text-gray-100' : 'text-gray-900'} transition-colors`}
                   onClick={() => handleSort('memory')}
-                  sx={{ cursor: 'pointer' }}
                 >
                   Memory {sortField === 'memory' && (sortDirection === 'asc' ? '↑' : '↓')}
-                </TableCell>
-                <TableCell>Uptime</TableCell>
-                <TableCell>Restarts</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
+                </th>
+                <th className={`px-3 py-2 text-left text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'} uppercase tracking-wider`}>
+                  Uptime
+                </th>
+                <th className={`px-3 py-2 text-left text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'} uppercase tracking-wider`}>
+                  Restarts
+                </th>
+              </tr>
+            </thead>
+            <tbody className={`divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
               {sortedProcesses.map((process) => (
-                <TableRow 
+                <tr 
                   key={process.pm_id}
-                  hover
                   onClick={() => handleRowClick(process.pm_id)}
-                  sx={{ cursor: 'pointer' }}
+                  className={`cursor-pointer transition-colors ${
+                    isDark 
+                      ? 'hover:bg-gray-750 hover:bg-opacity-50' 
+                      : 'hover:bg-gray-50'
+                  }`}
                 >
-                  <TableCell>
-                    <Typography variant="body2" fontWeight="bold">
-                      {process.name}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>{process.pm_id}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={process.pm2_env.status}
-                      color={getStatusColor(process.pm2_env.status)}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Box sx={{ width: '100%', mr: 1 }}>
-                        <LinearProgress 
-                          variant="determinate" 
-                          value={Math.min(process.monit.cpu, 100)} 
-                          color="secondary"
-                          sx={{ height: 8, borderRadius: 5 }}
-                        />
-                      </Box>
-                      <Box sx={{ minWidth: 35 }}>
-                        <Typography variant="body2" color="secondary">
-                          {process.monit.cpu.toFixed(1)}%
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Box sx={{ width: '100%', mr: 1 }}>
-                        <LinearProgress 
-                          variant="determinate" 
-                          // Calculate percentage based on highest memory usage in list
-                          value={sortedProcesses.length > 0 
-                            ? (process.monit.memory / Math.max(...sortedProcesses.map(p => p.monit.memory))) * 100
-                            : 0
-                          } 
-                          color="info"
-                          sx={{ height: 8, borderRadius: 5 }}
-                        />
-                      </Box>
-                      <Box sx={{ minWidth: 65 }}>
-                        <Typography variant="body2" color="info.main">
-                          {formatMemory(process.monit.memory)}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
+                  <td className={`px-4 py-2.5 text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-900'}`}>
+                    {process.name}
+                  </td>
+                  <td className={`px-3 py-2.5 text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                    {process.pm_id}
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                      process.pm2_env.status === 'online' 
+                        ? isDark ? 'bg-emerald-900 text-emerald-200' : 'bg-emerald-100 text-emerald-800'
+                        : process.pm2_env.status === 'stopped'
+                        ? isDark ? 'bg-rose-900 text-rose-200' : 'bg-rose-100 text-rose-800'
+                        : isDark ? 'bg-amber-900 text-amber-200' : 'bg-amber-100 text-amber-800'
+                    }`}>
+                      {process.pm2_env.status}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 max-w-[100px]">
+                        <div className={`h-1.5 rounded-full ${isDark ? 'bg-gray-700' : 'bg-gray-200'} overflow-hidden`}>
+                          <div 
+                            className={`h-full ${getProgressBarColor(process.monit.cpu)} transition-all duration-300`}
+                            style={{ width: `${Math.min(process.monit.cpu, 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                      <span className={`text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} min-w-[40px]`}>
+                        {process.monit.cpu.toFixed(1)}%
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 max-w-[100px]">
+                        <div className={`h-1.5 rounded-full ${isDark ? 'bg-gray-700' : 'bg-gray-200'} overflow-hidden`}>
+                          <div 
+                            className={`h-full ${isDark ? 'bg-cyan-500' : 'bg-cyan-600'} transition-all duration-300`}
+                            style={{ 
+                              width: `${sortedProcesses.length > 0 
+                                ? (process.monit.memory / Math.max(...sortedProcesses.map(p => p.monit.memory))) * 100
+                                : 0
+                              }%` 
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <span className={`text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} min-w-[60px]`}>
+                        {formatMemory(process.monit.memory)}
+                      </span>
+                    </div>
+                  </td>
+                  <td className={`px-3 py-2.5 text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                     {process.pm2_env.status === 'online' 
                       ? formatUptime(process.pm2_env.pm_uptime) 
                       : '-'
                     }
-                  </TableCell>
-                  <TableCell>
+                  </td>
+                  <td className={`px-3 py-2.5 text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                     {process.pm2_env.restart_time}
-                  </TableCell>
-                </TableRow>
+                  </td>
+                </tr>
               ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
-    </Box>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   );
 };
 

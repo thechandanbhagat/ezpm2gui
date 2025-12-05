@@ -1,31 +1,11 @@
 import React from 'react';
 import { SystemMetricsData } from '../types/pm2';
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Grid,
-  LinearProgress,
-  Chip,
-  Divider,
-  useTheme
-} from '@mui/material';
-import { 
-  Memory as MemoryIcon, 
-  Speed as SpeedIcon, 
-  Schedule as ScheduleIcon,
-  Dns as DnsIcon
-} from '@mui/icons-material';
 
 interface SystemMetricsProps {
   metrics: SystemMetricsData;
 }
 
 const SystemMetrics: React.FC<SystemMetricsProps> = ({ metrics }) => {
-  const theme = useTheme();
-  
-  // Helper function to format memory usage
   const formatMemory = (bytes: number): string => {
     if (bytes === 0) return '0 B';
     const sizes = ['B', 'KB', 'MB', 'GB'];
@@ -33,7 +13,6 @@ const SystemMetrics: React.FC<SystemMetricsProps> = ({ metrics }) => {
     return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${sizes[i]}`;
   };
 
-  // Helper function to format uptime
   const formatUptime = (seconds: number): string => {
     const days = Math.floor(seconds / (3600 * 24));
     const hours = Math.floor((seconds % (3600 * 24)) / 3600);
@@ -47,126 +26,59 @@ const SystemMetrics: React.FC<SystemMetricsProps> = ({ metrics }) => {
     return result;
   };
 
-  // Calculate memory usage percentage
   const memoryUsagePercent = Math.round((metrics.memory.used / metrics.memory.total) * 100);
-  
-  // Determine load average status (visual indicator)
-  const getLoadStatus = (load: number, cores: number): 'success' | 'warning' | 'error' => {
-    if (load / cores > 0.8) return 'error';
-    if (load / cores > 0.5) return 'warning';
-    return 'success';
-  };
-  
-  const loadStatus = getLoadStatus(metrics.loadAvg[0], metrics.cpus);
 
   return (
-    <Box>
-      <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
-        System Metrics
-      </Typography>
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div className="px-3 py-2 border-b border-gray-200">
+        <h2 className="text-sm font-semibold text-gray-900">System Metrics</h2>
+      </div>
       
-      <Grid container spacing={2}>
-        <Grid item xs={12} sm={6}>
-          <Card variant="outlined">
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <DnsIcon color="primary" sx={{ mr: 1 }} />
-                <Typography variant="subtitle2" color="text.secondary">
-                  CPU Cores
-                </Typography>
-              </Box>
-              <Typography variant="h4" sx={{ mb: 1 }}>
-                {metrics.cpus}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Total available CPU cores
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        
-        <Grid item xs={12} sm={6}>
-          <Card variant="outlined">
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <SpeedIcon color={loadStatus} sx={{ mr: 1 }} />
-                <Typography variant="subtitle2" color="text.secondary">
-                  Load Average
-                </Typography>
-                <Chip 
-                  label="1 min" 
-                  size="small" 
-                  color={loadStatus}
-                  variant="outlined"
-                  sx={{ ml: 'auto' }} 
-                />
-              </Box>
-              <Typography variant="h4" sx={{ mb: 1 }}>
-                {metrics.loadAvg[0].toFixed(2)}
-              </Typography>
-              <Divider sx={{ my: 1 }} />
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Typography variant="body2" color="text.secondary">
-                  5 min: {metrics.loadAvg[1].toFixed(2)}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  15 min: {metrics.loadAvg[2].toFixed(2)}
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        
-        <Grid item xs={12} sm={6}>
-          <Card variant="outlined">
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <MemoryIcon color="primary" sx={{ mr: 1 }} />
-                <Typography variant="subtitle2" color="text.secondary">
-                  Memory Usage
-                </Typography>
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'baseline', mb: 1 }}>
-                <Typography variant="h4">
-                  {memoryUsagePercent}%
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                  of {formatMemory(metrics.memory.total)}
-                </Typography>
-              </Box>
-              <LinearProgress 
-                variant="determinate" 
-                value={memoryUsagePercent} 
-                color={memoryUsagePercent > 90 ? "error" : memoryUsagePercent > 70 ? "warning" : "primary"}
-                sx={{ height: 8, borderRadius: 1, mb: 1 }}
-              />
-              <Typography variant="body2" color="text.secondary">
-                {formatMemory(metrics.memory.used)} used, {formatMemory(metrics.memory.free)} free
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        
-        <Grid item xs={12} sm={6}>
-          <Card variant="outlined">
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <ScheduleIcon color="primary" sx={{ mr: 1 }} />
-                <Typography variant="subtitle2" color="text.secondary">
-                  System Uptime
-                </Typography>
-              </Box>
-              <Typography variant="h4" sx={{ mb: 1 }}>
-                {formatUptime(metrics.uptime)}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Since last reboot
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-    </Box>
+      <div className="p-3 space-y-2">
+        {/* System Uptime */}
+        <div className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
+          <div className="flex-1">
+            <p className="text-xs font-medium text-gray-700">Uptime</p>
+            <p className="text-sm font-bold text-gray-900">{formatUptime(metrics.uptime)}</p>
+          </div>
+        </div>
+
+        {/* Load Average */}
+        <div className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
+          <div className="flex-1">
+            <p className="text-xs font-medium text-gray-700">Load Avg</p>
+            <p className="text-sm font-bold text-gray-900">{metrics.loadAvg[0].toFixed(2)}</p>
+            <p className="text-xs text-gray-500">{metrics.loadAvg[1].toFixed(2)} • {metrics.loadAvg[2].toFixed(2)}</p>
+          </div>
+        </div>
+
+        {/* Memory Usage */}
+        <div className="p-2 bg-gray-50 rounded-md">
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-xs font-medium text-gray-700">Memory</p>
+            <p className="text-xs text-gray-500">{memoryUsagePercent}%</p>
+          </div>
+          <p className="text-sm font-bold text-gray-900 mb-1">
+            {formatMemory(metrics.memory.used)}
+          </p>
+          <div className="w-full bg-gray-200 rounded-full h-1.5">
+            <div 
+              className={`h-1.5 rounded-full transition-all duration-300 ${memoryUsagePercent > 80 ? 'bg-red-500' : memoryUsagePercent > 60 ? 'bg-yellow-500' : 'bg-green-500'}`}
+              style={{ width: `${memoryUsagePercent}%` }}
+            ></div>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">of {formatMemory(metrics.memory.total)}</p>
+        </div>
+
+        {/* CPU Cores */}
+        <div className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
+          <div className="flex-1">
+            <p className="text-xs font-medium text-gray-700">CPU Cores</p>
+            <p className="text-sm font-bold text-gray-900">{metrics.cpus}</p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
