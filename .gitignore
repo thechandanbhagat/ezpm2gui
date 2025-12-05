@@ -134,3 +134,14 @@ src/client/build/
 .pnp.*
 
 .vscode
+chatmodes
+copilot-instructions.md
+.claude/
+docs/
+
+# Local development files
+LOCAL_DOMAIN_SETUP.md
+ezpm2gui-nginx.conf
+ezpm2gui.service
+update-windows-hosts.ps1
+

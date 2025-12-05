@@ -5,19 +5,25 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
+    "@heroicons/react": "^2.2.0",
     "@mui/icons-material": "^5.17.1",
     "@mui/material": "^5.17.1",
+    "@mui/x-tree-view": "^8.5.0",
+    "@tailwindcss/forms": "^0.5.10",
+    "@tailwindcss/typography": "^0.5.16",
     "axios": "^1.9.0",
     "chart.js": "^4.4.9",
+    "lucide-react": "^0.545.0",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^7.6.0",
     "react-scripts": "5.0.1",
-    "socket.io-client": "^4.8.1"
+    "socket.io-client": "^4.8.1",
+    "tailwindcss": "^3.4.0"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "PORT=2501 react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
@@ -46,5 +52,5 @@
     "@types/react-dom": "^18.3.7",
     "typescript": "^5.8.3"
   },
-  "proxy": "http://localhost:3001"
+  "proxy": "http://localhost:2502"
 }

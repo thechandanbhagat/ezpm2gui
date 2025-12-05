@@ -18,6 +18,7 @@ A modern web-based graphical user interface for the PM2 process manager, built w
 - 📦 **Application deployment** - Deploy new applications directly from the UI
 - ⚙️ **Ecosystem configuration** - Create and manage your PM2 ecosystem files
 - 🧩 **PM2 modules support** - Manage and configure PM2 modules
+- ⏰ **Cron Jobs** - Schedule and manage automated tasks with visual cron expression builder
 - 🌐 **Modern UI with Material UI components** - Clean and intuitive interface
 - 🔒 **Fully typed with TypeScript** - Robust and maintainable codebase
 
