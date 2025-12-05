@@ -11,8 +11,11 @@ import clusterManagementRoutes from './routes/clusterManagement';
 import processConfigRoutes from './routes/processConfig';
 import deployApplicationRoutes from './routes/deployApplication';
 import moduleRoutes from './routes/modules';
+import remoteConnectionRoutes from './routes/remoteConnections';
+import cronJobsRoutes from './routes/cronJobs';
 import { setupLogStreaming } from './routes/logStreaming';
 import { executePM2Command, disconnectFromPM2 } from './utils/pm2-connection';
+import { remoteConnectionManager } from './utils/remote-connection';
 
 /**
  * Create and configure the express server
@@ -32,7 +35,7 @@ export function createServer() {
   app.use(express.json());
   
   // Serve static files from the React app build directory
-  const staticPath = 'D:/Personal/ezpm2gui/src/client/build';
+  const staticPath = path.join(__dirname, '../../src/client/build');
   console.log('Serving static files from:', staticPath);
   const fs = require('fs');
   if (fs.existsSync(staticPath)) {
@@ -41,11 +44,12 @@ export function createServer() {
     console.error('Static files directory not found at:', staticPath);
   }
 
-  // Register routes
-  app.use('/api/cluster', clusterManagementRoutes);
+  // Register routes  app.use('/api/cluster', clusterManagementRoutes);
   app.use('/api/config', processConfigRoutes);
   app.use('/api/deploy', deployApplicationRoutes);
   app.use('/api/modules', moduleRoutes);
+  app.use('/api/remote', remoteConnectionRoutes);
+  app.use('/api/cron-jobs', cronJobsRoutes);
   
   // Setup log streaming with Socket.IO
   setupLogStreaming(io);  // PM2 API endpoints
@@ -235,7 +239,7 @@ export function createServer() {
 
   // Catch-all route to return the React app
   app.get('*', (req, res) => {
-    const indexPath = 'D:/Personal/ezpm2gui/src/client/build/index.html';
+    const indexPath = path.join(__dirname, '../../src/client/build/index.html');
     console.log('Trying to serve index.html from:', indexPath);
     const fs = require('fs');
     if (fs.existsSync(indexPath)) {
@@ -258,5 +262,30 @@ if (require.main === module) {
   const server = createServer();
   server.listen(PORT, () => {
     console.log(`Server running on http://${HOST}:${PORT}`);
+  });
+
+  // Handle shutdown gracefully
+  process.on('SIGINT', async () => {
+    console.log('\nGracefully shutting down...');
+    try {
+      await disconnectFromPM2();
+      await remoteConnectionManager.closeAllConnections();
+    } catch (error) {
+      console.error('Error during shutdown:', error);
+    }
+    server.close();
+    process.exit(0);
+  });
+
+  process.on('SIGTERM', async () => {
+    console.log('\nGracefully shutting down...');
+    try {
+      await disconnectFromPM2();
+      await remoteConnectionManager.closeAllConnections();
+    } catch (error) {
+      console.error('Error during shutdown:', error);
+    }
+    server.close();
+    process.exit(0);
   });
 }

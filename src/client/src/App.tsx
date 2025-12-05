@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
 import axios from 'axios';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import ProcessList from './components/ProcessList';
 import ProcessDetailPage from './components/ProcessDetailPage';
-import SystemMetrics from './components/SystemMetrics';
+import MainDashboard from './components/MainDashboard';
 import ConfirmationDialog from './components/ConfirmationDialog';
 import MonitDashboard from './components/MonitDashboard';
 import DeployApplication from './components/DeployApplication';
@@ -13,41 +12,19 @@ import EcosystemGenerator from './components/EcosystemGenerator';
 import ProcessConfiguration from './components/ProcessConfiguration';
 import ClusterManagement from './components/ClusterManagement';
 import LogStreamEnhanced from './components/LogStreamEnhanced';
+import AdvancedMonitoringDashboard from './components/AdvancedMonitoringDashboard';
+import RemoteEnhancedLogManagement from './components/RemoteEnhancedLogManagement';
 import SidebarMenu from './components/SidebarMenu';
 import Settings from './components/Settings';
 import LoadBalancingGuide from './components/LoadBalancingGuide';
+import RemoteConnections from './components/RemoteConnections';
+import CronJobsPage from './components/CronJobsPage';
 import { PM2Process, SystemMetricsData, ConfirmationDialogData } from './types/pm2';
-import { 
-  ThemeProvider, 
-  createTheme, 
-  CssBaseline,
-  Container, 
-  Box, 
-  Typography, 
-  Grid, 
-  AppBar, 
-  Toolbar, 
-  IconButton, 
-  Paper,
-  TextField,
-  Alert,
-  MenuItem,
-  InputAdornment,
-  Drawer,
-  useMediaQuery,
-  CircularProgress,
-  FormControl,
-  InputLabel,
-  Select,
-  SelectChangeEvent
-} from '@mui/material';
 import {
-  DarkMode as DarkModeIcon,
-  LightMode as LightModeIcon,
-  Menu as MenuIcon,
-  Search as SearchIcon,
-  FilterAlt as FilterIcon
-} from '@mui/icons-material';
+  MoonIcon,
+  SunIcon,
+  Bars3Icon
+} from '@heroicons/react/24/outline';
 
 // Initialize socket connection
 const socket = io(process.env.REACT_APP_API_URL || 'http://localhost:3001');
@@ -74,8 +51,9 @@ const App: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   
   // Theme state
-  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
-  const [darkMode, setDarkMode] = useState<boolean>(prefersDarkMode);
+  const [darkMode, setDarkMode] = useState<boolean>(
+    typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches
+  );
   
   // Confirmation dialog state
   const [confirmationDialog, setConfirmationDialog] = useState<ConfirmationDialogData>({
@@ -85,32 +63,6 @@ const App: React.FC = () => {
     action: '',
     processId: null
   });
-
-  // Create Material UI theme
-  const theme = React.useMemo(
-    () =>
-      createTheme({
-        palette: {
-          mode: darkMode ? 'dark' : 'light',
-          primary: {
-            main: '#3498db',
-          },
-          secondary: {
-            main: '#2ecc71',
-          },
-        },
-        components: {
-          MuiPaper: {
-            styleOverrides: {
-              root: {
-                backgroundImage: 'none',
-              },
-            },
-          },
-        },
-      }),
-    [darkMode],
-  );
   useEffect(() => {
     // Initial data fetch
     const fetchInitialData = async (): Promise<void> => {
@@ -184,6 +136,15 @@ const App: React.FC = () => {
     
     setFilteredProcesses(result);
   }, [processes, searchTerm, statusFilter]);
+
+  // Effect to handle dark mode class on document
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
 
   // Process control functions
   const handleProcessAction = (id: number, action: string): void => {
@@ -262,270 +223,151 @@ const App: React.FC = () => {
     setSearchTerm(e.target.value);
   };
   
-  const handleStatusFilterChange = (e: SelectChangeEvent): void => {
+  const handleStatusFilterChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
     setStatusFilter(e.target.value);
   };
 
   if (loading) {
     return (
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Box 
-          sx={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center', 
-            height: '100vh' 
-          }}
-        >
-          <CircularProgress />
-          <Typography variant="h6" sx={{ ml: 2 }}>
+      <div className={`min-h-screen flex items-center justify-center ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+        <div className="flex items-center space-x-3">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          <h6 className={`text-lg font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
             Loading PM2 data...
-          </Typography>
-        </Box>
-      </ThemeProvider>
+          </h6>
+        </div>
+      </div>
     );
   }
 
   return (
     <Router>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Box sx={{ display: 'flex' }}>
-          <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
-            <Toolbar>
-              <IconButton
-                edge="start"
-                color="inherit"
-                onClick={toggleMenu}
-                sx={{ mr: 2, display: { sm: 'none' } }}
-              >
-                <MenuIcon />
-              </IconButton>
-              <Typography 
-                variant="h6" 
-                component={Link} 
-                to="/" 
-                sx={{ 
-                  flexGrow: 1, 
-                  textDecoration: 'none', 
-                  color: 'inherit' 
-                }}
-              >
-                ezPM2GUI
-              </Typography>
-              <IconButton 
-                color="inherit" 
-                onClick={toggleDarkMode}
-                sx={{ ml: 1 }}
-              >
-                {darkMode ? <LightModeIcon /> : <DarkModeIcon />}
-              </IconButton>
-            </Toolbar>
-          </AppBar>
+      <div className={`min-h-screen transition-all duration-300 ${darkMode ? 'bg-neutral-950' : 'bg-neutral-50'}`}>
+        <div className="flex">
+          {/* Top Navigation Bar */}
+          <nav className={`fixed w-full z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 transition-all duration-300 ${darkMode ? 'bg-neutral-900/95 border-neutral-800' : 'bg-white/95 border-gray-200'}`}>
+            <div className="px-3 py-3">
+              <div className="flex items-center justify-between max-w mx-auto">
+                <button
+                  onClick={toggleMenu}
+                  className={`sm:hidden p-3 rounded-xl transition-all duration-200 ${darkMode ? 'text-neutral-400 hover:text-white hover:bg-neutral-800/50' : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100/50'} hover:shadow-md`}
+                >
+                  <Bars3Icon className="h-6 w-6" />
+                </button>
+                <Link 
+                  to="/" 
+                  className={`text-2xl font-bold tracking-tight no-underline transition-all duration-200 flex-grow sm:flex-grow-0 ${darkMode ? 'text-white hover:text-primary-400' : 'text-neutral-900 hover:text-primary-600'}`}
+                >
+                  <span className="text-gradient">EZ PM2 GUI</span>
+                </Link>
+                <div className="flex items-center space-x-4">
+                  <button 
+                    onClick={toggleDarkMode}
+                    className={`p-3 rounded-xl transition-all duration-200 ${darkMode ? 'text-neutral-400 hover:text-white hover:bg-neutral-800/50' : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100/50'} hover:shadow-md`}
+                  >
+                    {darkMode ? <SunIcon className="h-6 w-6" /> : <MoonIcon className="h-6 w-6" />}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </nav>
           
-          {/* Mobile drawer (temporary) */}
-          <Drawer
-            anchor="left"
-            open={menuOpen}
-            onClose={toggleMenu}
-            variant="temporary"
-            ModalProps={{
-              keepMounted: true, // Better open performance on mobile
-            }}
-            sx={{
-              display: { xs: 'block', sm: 'none' },
-              '& .MuiDrawer-paper': { boxSizing: 'border-box', width: 240 },
-            }}
-          >
-            <Box
-              sx={{ width: 240 }}
-              role="presentation"
-            >
-              <Toolbar /> {/* This ensures content starts below the AppBar */}
-              <SidebarMenu toggleAbout={toggleAbout} onItemClick={toggleMenu} />
-            </Box>
-          </Drawer>
+          {/* Mobile Sidebar */}
+          {menuOpen && (
+            <div className="fixed inset-0 z-40 sm:hidden animate-fade-in">
+              <div className="fixed inset-0 bg-black/60 backdrop-blur-md" onClick={toggleMenu}></div>
+              <div className={`fixed left-0 top-0 h-full w-80 bg-white border-r border-gray-200 transform transition-all duration-500 ease-out animate-slide-up ${darkMode ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-gray-200'} shadow-2xl`}>
+                <div className="pt-16 h-full overflow-y-auto">
+                  <SidebarMenu toggleAbout={toggleAbout} onItemClick={toggleMenu} />
+                </div>
+              </div>
+            </div>
+          )}
           
-          {/* Desktop drawer (permanent) */}
-          <Drawer
-            variant="permanent"
-            sx={{
-              width: 240,
-              flexShrink: 0,
-              display: { xs: 'none', sm: 'block' },
-              '& .MuiDrawer-paper': { 
-                width: 240,
-                boxSizing: 'border-box',
-              },
-            }}
-          >
-            <Toolbar /> {/* This ensures content starts below the AppBar */}
-            <Box sx={{ overflow: 'auto' }}>
-              <SidebarMenu toggleAbout={toggleAbout} />
-            </Box>
-          </Drawer>
+          {/* Desktop Sidebar */}
+          <div className={`hidden sm:block fixed left-0 top-16 h-[calc(100vh-4rem)] w-80 bg-white border-r border-gray-200 overflow-y-auto ${darkMode ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-gray-200'}`}>
+            <SidebarMenu toggleAbout={toggleAbout} />
+          </div>
           
-          <Box component="main" sx={{ 
-            flexGrow: 1, 
-            p: 3,
-            width: { sm: `calc(100% - 240px)` }
-          }}>
-            <Toolbar /> {/* This ensures content starts below the AppBar */}
-            
-            <Container maxWidth="lg" sx={{ mt: 2 }}>
+          {/* Main Content */}
+          <main className={`flex-1 sm:ml-80 pt-16 min-h-screen transition-all duration-300 ${darkMode ? 'bg-gray-50' : 'bg-gray-50'}`}>
+            <div className="max-w mx-auto px-3 py-3">
               {showAbout && (
-                <Paper sx={{ p: 3, mb: 3 }}>
-                  <Typography variant="h5" sx={{ mb: 2 }}>
-                    About ezPM2GUI
-                  </Typography>
-                  <Typography variant="body1" sx={{ mb: 1 }}>
+                <div className={`card-premium p-12 mb-12 animate-fade-in ${darkMode ? 'bg-neutral-900/80' : 'bg-white/80'} border ${darkMode ? 'border-neutral-800/50' : 'border-neutral-200/50'} shadow-xl`}>
+                  <div className="flex items-center space-x-4 mb-8">
+                    <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-accent-500 rounded-2xl flex items-center justify-center shadow-lg">
+                      <span className="text-white font-bold text-2xl">ez</span>
+                    </div>
+                    <div>
+                      <h2 className={`text-3xl font-bold tracking-tight mb-2 ${darkMode ? 'text-white' : 'text-neutral-900'}`}>
+                        About ezPM2GUI
+                      </h2>
+                      <p className={`text-lg ${darkMode ? 'text-neutral-400' : 'text-neutral-600'}`}>
+                        Professional Process Management Interface
+                      </p>
+                    </div>
+                  </div>
+                  <p className={`mb-6 text-lg leading-relaxed ${darkMode ? 'text-neutral-300' : 'text-neutral-700'}`}>
                     Version: 1.0.0
-                  </Typography>
-                  <Typography variant="body1" sx={{ mb: 1 }}>
+                  </p>
+                  <p className={`mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Created by: Chandan Bhagat
-                  </Typography>
-                  <Typography variant="body1" sx={{ mb: 1 }}>
+                  </p>
+                  <p className={`mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Features:
-                  </Typography>
-                  <Typography component="ul" sx={{ pl: 2, mb: 2 }}>
+                  </p>
+                  <ul className={`list-disc pl-6 mb-4 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     <li>Monitor and manage PM2 processes</li>
                     <li>Real-time logs and metrics</li>
                     <li>Deploy new applications</li>
                     <li>Configure ecosystem files</li>
                     <li>Cluster management</li>
                     <li>Dark mode support</li>
-                  </Typography>
-                  <Typography variant="body1">
+                  </ul>
+                  <p className={`${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     GitHub:&nbsp;
                     <a 
                       href="https://github.com/thechandanbhagat/ezpm2gui" 
                       target="_blank" 
                       rel="noopener noreferrer"
+                      className="text-blue-500 hover:text-blue-600 underline"
                     >
                       GitHub Repository
                     </a>
-                  </Typography>
-                </Paper>
+                  </p>
+                </div>
               )}
 
               {error && (
-                <Alert severity="error" sx={{ mb: 3 }}>
-                  {error}
-                </Alert>
+                <div className="bg-danger-100 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800/50 text-danger-800 dark:text-danger-400 px-6 py-4 rounded-xl mb-8 animate-fade-in">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-2 h-2 bg-danger-500 rounded-full animate-pulse"></div>
+                    <span className="font-medium">{error}</span>
+                  </div>
+                </div>
               )}              <Routes>
                 <Route path="/" element={
-                  <>
-                    <Paper sx={{ p: 2, mb: 3 }} variant="outlined">
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
-                        <TextField
-                          label="Search processes"
-                          value={searchTerm}
-                          onChange={handleSearchChange}
-                          size="small"
-                          variant="outlined"
-                          sx={{ flexGrow: 1, maxWidth: 300 }}
-                          InputProps={{
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                <SearchIcon />
-                              </InputAdornment>
-                            ),
-                          }}
-                        />
-                        
-                        <FormControl sx={{ minWidth: 150 }} size="small">
-                          <InputLabel id="status-filter-label">Status</InputLabel>
-                          <Select
-                            labelId="status-filter-label"
-                            id="status-filter"
-                            value={statusFilter}
-                            label="Status"
-                            onChange={handleStatusFilterChange}
-                            startAdornment={
-                              <InputAdornment position="start">
-                                <FilterIcon />
-                              </InputAdornment>
-                            }
-                          >
-                            <MenuItem value="all">All</MenuItem>
-                            <MenuItem value="online">Online</MenuItem>
-                            <MenuItem value="stopped">Stopped</MenuItem>
-                            <MenuItem value="errored">Errored</MenuItem>
-                          </Select>
-                        </FormControl>
-                      </Box>
-                    </Paper>
-
-                    <Grid container spacing={3}>
-                      <Grid item xs={12} md={4}>
-                        <SystemMetrics metrics={metrics} />
-                      </Grid>
-                      <Grid item xs={12} md={8}>
-                        <ProcessList 
-                          processes={filteredProcesses} 
-                          onAction={handleProcessAction} 
-                        />
-                      </Grid>
-                    </Grid>
-                  </>
+                  <MainDashboard
+                    processes={filteredProcesses}
+                    metrics={metrics}
+                    searchTerm={searchTerm}
+                    statusFilter={statusFilter}
+                    onSearchChange={handleSearchChange}
+                    onStatusFilterChange={handleStatusFilterChange}
+                    onProcessAction={handleProcessAction}
+                  />
                 } />
-                {/* Add a duplicate route for /processes that renders the same content as / */}
-                <Route path="/processes" element={
-                  <>
-                    <Paper sx={{ p: 2, mb: 3 }} variant="outlined">
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
-                        <TextField
-                          label="Search processes"
-                          value={searchTerm}
-                          onChange={handleSearchChange}
-                          size="small"
-                          variant="outlined"
-                          sx={{ flexGrow: 1, maxWidth: 300 }}
-                          InputProps={{
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                <SearchIcon />
-                              </InputAdornment>
-                            ),
-                          }}
-                        />
-                        
-                        <FormControl sx={{ minWidth: 150 }} size="small">
-                          <InputLabel id="status-filter-label">Status</InputLabel>
-                          <Select
-                            labelId="status-filter-label"
-                            id="status-filter"
-                            value={statusFilter}
-                            label="Status"
-                            onChange={handleStatusFilterChange}
-                            startAdornment={
-                              <InputAdornment position="start">
-                                <FilterIcon />
-                              </InputAdornment>
-                            }
-                          >
-                            <MenuItem value="all">All</MenuItem>
-                            <MenuItem value="online">Online</MenuItem>
-                            <MenuItem value="stopped">Stopped</MenuItem>
-                            <MenuItem value="errored">Errored</MenuItem>
-                          </Select>
-                        </FormControl>
-                      </Box>
-                    </Paper>
 
-                    <Grid container spacing={3}>
-                      <Grid item xs={12} md={4}>
-                        <SystemMetrics metrics={metrics} />
-                      </Grid>
-                      <Grid item xs={12} md={8}>
-                        <ProcessList 
-                          processes={filteredProcesses} 
-                          onAction={handleProcessAction} 
-                        />
-                      </Grid>
-                    </Grid>
-                  </>
+                <Route path="/processes" element={
+                  <MainDashboard
+                    processes={filteredProcesses}
+                    metrics={metrics}
+                    searchTerm={searchTerm}
+                    statusFilter={statusFilter}
+                    onSearchChange={handleSearchChange}
+                    onStatusFilterChange={handleStatusFilterChange}
+                    onProcessAction={handleProcessAction}
+                  />
                 } />
                 <Route path="/process/:id" element={<ProcessDetailPage onAction={handleProcessAction} />} />
                 <Route path="/monit" element={<MonitDashboard processes={processes} onRefresh={() => {
@@ -540,6 +382,28 @@ const App: React.FC = () => {
                   };
                   fetchProcesses();
                 }} />} />
+                <Route path="/advanced-monitoring" element={<AdvancedMonitoringDashboard 
+                  processes={processes}
+                  systemMetrics={metrics}
+                  onRefresh={() => {
+                    const fetchData = async () => {
+                      try {
+                        const [processesRes, metricsRes] = await Promise.all([
+                          axios.get<PM2Process[]>('/api/processes'),
+                          axios.get<SystemMetricsData>('/api/metrics')
+                        ]);
+                        setProcesses(processesRes.data);
+                        setMetrics(metricsRes.data);
+                      } catch (err) {
+                        console.error('Error refreshing data:', err);
+                        setError('Failed to refresh data');
+                      }
+                    };
+                    fetchData();
+                  }}
+                />} />
+                <Route path="/enhanced-logs" element={<RemoteEnhancedLogManagement />} />
+                <Route path="/remote" element={<RemoteConnections />} />
                 <Route path="/deploy" element={<DeployApplication />} />
                 <Route path="/modules" element={<ModuleManagement />} />
                 <Route path="/ecosystem" element={<EcosystemGenerator />} />
@@ -557,12 +421,13 @@ const App: React.FC = () => {
                   fetchProcesses();
                 }} />} />                <Route path="/logs" element={<LogStreamEnhanced />} />
                 <Route path="/logs/:id" element={<LogStreamEnhanced />} />
+                <Route path="/cron-jobs" element={<CronJobsPage />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/load-balancing-guide" element={<LoadBalancingGuide />} />
               </Routes>
-            </Container>
-          </Box>
-        </Box>
+            </div>
+          </main>
+        </div>
 
         <ConfirmationDialog 
           isOpen={confirmationDialog.isOpen}
@@ -572,7 +437,7 @@ const App: React.FC = () => {
           onCancel={handleCancelAction}
           type={confirmationDialog.action === 'delete' ? 'danger' : 'warning'}
         />
-      </ThemeProvider>
+      </div>
     </Router>
   );
 };
