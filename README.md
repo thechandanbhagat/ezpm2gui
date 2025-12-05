@@ -2,8 +2,6 @@
 
 A modern web-based graphical user interface for the PM2 process manager, built with TypeScript and Material UI.
 
-![ezPM2GUI Dashboard](./screenshots/screenshot-1747156076728.png)
-
 ## Features
 
 - 🔍 **Real-time process monitoring** - Keep track of all your PM2 processes in real-time
@@ -66,28 +64,6 @@ Customize the ezPM2GUI interface to suit your preferences:
 - Select color themes
 - Configure dashboard refresh intervals
 - Adjust log display settings
-
-## Screenshots
-
-### Process Monitor
-The main dashboard provides a comprehensive view of all your PM2 processes, showing CPU usage, memory consumption, uptime, and status at a glance.
-
-![Process Monitor](./screenshots/screenshot-1747156076728.png)
-
-### System Metrics & Process Management
-Monitor your system resources and manage PM2 processes with intuitive controls for start, stop, restart, and delete operations.
-
-![System Metrics](./screenshots/screenshot-1747156118224.png)
-
-### Deploy New Application
-Easily deploy new Node.js applications to PM2 with a user-friendly form interface. Configure all PM2 options including instances, execution mode, working directory, and environment variables.
-
-![Deploy Application](./screenshots/screenshot-1747156060890.png)
-
-### Application Settings
-Customize the ezPM2GUI interface and configure your PM2 connection settings to match your environment.
-
-![Application Settings](./screenshots/screenshot-1747156042956.png)
 
 ## Installation
 
