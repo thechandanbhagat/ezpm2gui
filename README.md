@@ -17,6 +17,8 @@ A modern web-based graphical user interface for the PM2 process manager, built w
 - **Ecosystem configuration** - Create and manage your PM2 ecosystem files
 - **PM2 modules support** - Manage and configure PM2 modules
 - **Cron Jobs** - Schedule and manage automated tasks with visual cron expression builder
+- **Remote Server Management** - Connect and manage PM2 on remote servers via SSH
+- **Advanced Monitoring Dashboard** - Real-time performance charts with health scoring
 - **Modern UI with Material UI components** - Clean and intuitive interface
 - **Fully typed with TypeScript** - Robust and maintainable codebase
 
@@ -24,6 +26,30 @@ A modern web-based graphical user interface for the PM2 process manager, built w
 
 ### Process Monitoring
 Monitor all your PM2 processes in real-time with detailed information on CPU usage, memory consumption, uptime, and status. The intuitive interface makes it easy to identify issues at a glance.
+
+### Remote Server Management
+Connect to and manage PM2 processes on remote servers via secure SSH connections:
+- Add multiple remote server connections with SSH credentials
+- View and manage processes on remote servers
+- Stream logs from remote processes in real-time
+- Execute PM2 commands on remote machines
+- Encrypted credential storage for security
+
+### Cron Jobs
+Schedule and automate tasks using PM2's cron restart feature:
+- Visual cron expression builder with common presets
+- Support for Node.js, Python, Shell, and .NET scripts
+- Inline script editor or file-based execution
+- Enable/disable jobs without deleting them
+- View next execution times and job status
+
+### Advanced Monitoring Dashboard
+Get deeper insights into your system and process performance:
+- Real-time performance charts for CPU, memory, and load
+- System health score calculation
+- Historical metrics tracking
+- Process alerts for high resource usage
+- Per-process performance visualization
 
 ### Application Deployment
 Deploy new Node.js applications to PM2 directly from the UI. Configure all the necessary options including:
@@ -40,10 +66,11 @@ Easily scale your Node.js applications with the cluster management interface. Ad
 
 ### Log Streaming
 View and filter logs from multiple processes simultaneously with the enhanced log streaming interface. Features include:
-- Real-time log updates
-- Filtering by log level or content
+- Real-time log updates via WebSocket
+- Filtering by process, log level, or content
 - Pausing and resuming log streams
-- Log retention configuration
+- Download logs for offline analysis
+- Floating log panel for remote process logs
 
 ### Ecosystem Configuration
 Generate and manage PM2 ecosystem configuration files directly from the UI. This makes it easy to set up complex application deployments and share configurations across your team.
