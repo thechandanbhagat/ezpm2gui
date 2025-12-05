@@ -4,21 +4,21 @@ A modern web-based graphical user interface for the PM2 process manager, built w
 
 ## Features
 
-- 🔍 **Real-time process monitoring** - Keep track of all your PM2 processes in real-time
-- 🎮 **Process management** - Start, stop, restart, and delete processes with one click
-- 📊 **System metrics dashboard** - Monitor CPU, memory usage, and uptime
-- 📝 **Enhanced log streaming** - View and filter logs from multiple processes simultaneously
-- 🔄 **WebSocket for live updates** - Get instant updates without refreshing
-- 📈 **Process CPU and memory charts** - Visualize performance metrics over time
-- 🔍 **Filter processes by status or name** - Quickly find the processes you need
-- 🌙 **Dark mode support** - Easy on the eyes for late-night monitoring
-- 🖥️ **Cluster management** - Easily scale your Node.js applications
-- 📦 **Application deployment** - Deploy new applications directly from the UI
-- ⚙️ **Ecosystem configuration** - Create and manage your PM2 ecosystem files
-- 🧩 **PM2 modules support** - Manage and configure PM2 modules
-- ⏰ **Cron Jobs** - Schedule and manage automated tasks with visual cron expression builder
-- 🌐 **Modern UI with Material UI components** - Clean and intuitive interface
-- 🔒 **Fully typed with TypeScript** - Robust and maintainable codebase
+- **Real-time process monitoring** - Keep track of all your PM2 processes in real-time
+- **Process management** - Start, stop, restart, and delete processes with one click
+- **System metrics dashboard** - Monitor CPU, memory usage, and uptime
+- **Enhanced log streaming** - View and filter logs from multiple processes simultaneously
+- **WebSocket for live updates** - Get instant updates without refreshing
+- **Process CPU and memory charts** - Visualize performance metrics over time
+- **Filter processes by status or name** - Quickly find the processes you need
+- **Dark mode support** - Easy on the eyes for late-night monitoring
+- **Cluster management** - Easily scale your Node.js applications
+- **Application deployment** - Deploy new applications directly from the UI
+- **Ecosystem configuration** - Create and manage your PM2 ecosystem files
+- **PM2 modules support** - Manage and configure PM2 modules
+- **Cron Jobs** - Schedule and manage automated tasks with visual cron expression builder
+- **Modern UI with Material UI components** - Clean and intuitive interface
+- **Fully typed with TypeScript** - Robust and maintainable codebase
 
 ## Detailed Features
 
