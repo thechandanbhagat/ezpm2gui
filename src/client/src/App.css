@@ -1,54 +1,317 @@
 :root {
-  /* Light mode variables */
-  --primary-color: #3498db;
-  --secondary-color: #2ecc71;
-  --danger-color: #e74c3c;
-  --success-color: #2ecc71;
-  --warning-color: #f39c12;
-  --info-color: #3498db;
-  --bg-color: #f8f9fa;
-  --card-bg: #ffffff;
-  --text-color: #333333;
-  --text-light: #666666;
-  --border-color: #e0e0e0;
-  --hover-color: #f1f1f1;
-  --shadow: rgba(0, 0, 0, 0.08);
-  --transition: all 0.3s ease;
+  /* Modern Professional Color System */
+  --primary-50: #f0f9ff;
+  --primary-100: #e0f2fe;
+  --primary-200: #bae6fd;
+  --primary-300: #7dd3fc;
+  --primary-400: #38bdf8;
+  --primary-500: #0ea5e9;
+  --primary-600: #0284c7;
+  --primary-700: #0369a1;
+  --primary-800: #075985;
+  --primary-900: #0c4a6e;
+  --primary-950: #082f49;
+  
+  --secondary-50: #f8fafc;
+  --secondary-100: #f1f5f9;
+  --secondary-200: #e2e8f0;
+  --secondary-300: #cbd5e1;
+  --secondary-400: #94a3b8;
+  --secondary-500: #64748b;
+  --secondary-600: #475569;
+  --secondary-700: #334155;
+  --secondary-800: #1e293b;
+  --secondary-900: #0f172a;
+  --secondary-950: #020617;
+  
+  /* Status Colors - Professional Palette */
+  --success-50: #f0fdf4;
+  --success-100: #dcfce7;
+  --success-500: #22c55e;
+  --success-600: #16a34a;
+  --success-700: #15803d;
+  
+  --danger-50: #fef2f2;
+  --danger-100: #fee2e2;
+  --danger-500: #ef4444;
+  --danger-600: #dc2626;
+  --danger-700: #b91c1c;
+  
+  --warning-50: #fffbeb;
+  --warning-100: #fef3c7;
+  --warning-500: #f59e0b;
+  --warning-600: #d97706;
+  --warning-700: #b45309;
+  
+  --info-50: #eff6ff;
+  --info-100: #dbeafe;
+  --info-500: #3b82f6;
+  --info-600: #2563eb;
+  --info-700: #1d4ed8;
+  
+  /* Glass Morphism & Modern Backgrounds */
+  --bg-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --glass-bg: rgba(255, 255, 255, 0.25);
+  --glass-border: rgba(255, 255, 255, 0.18);
+  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  --card-bg: rgba(255, 255, 255, 0.95);
+  --card-bg-dark: rgba(255, 255, 255, 0.1);
+  --sidebar-bg: rgba(255, 255, 255, 0.95);
+  --header-bg: rgba(255, 255, 255, 0.8);
+  --backdrop-blur: blur(10px);
+  
+  /* Compact Typography Scale - Space Optimized */
+  --font-family-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family-mono: 'JetBrains Mono', 'Fira Code', Monaco, 'Cascadia Code', 'Courier New', monospace;
+  --font-size-xs: 0.6875rem;  /* 11px - Very compact for labels */
+  --font-size-sm: 0.75rem;    /* 12px - Compact for secondary text */
+  --font-size-base: 0.8125rem; /* 13px - Base text size */
+  --font-size-md: 0.875rem;   /* 14px - Medium text */
+  --font-size-lg: 0.9375rem;  /* 15px - Large text */
+  --font-size-xl: 1rem;       /* 16px - Extra large */
+  --font-size-2xl: 1.125rem;  /* 18px - Headings */
+  --font-size-3xl: 1.25rem;   /* 20px - Large headings */
+  --font-size-4xl: 1.375rem;  /* 22px - Major headings */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+  --line-height-tight: 1.2;   /* Tighter line height */
+  --line-height-normal: 1.4;  /* Normal line height */
+  --line-height-relaxed: 1.5; /* Relaxed line height */
+  
+  /* Advanced Shadow System */
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+  --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.5);
+  
+  /* Compact Spacing System - Space Optimized */
+  --space-px: 1px;
+  --space-0: 0;
+  --space-0_5: 0.125rem;  /* 2px */
+  --space-1: 0.25rem;     /* 4px */
+  --space-1_5: 0.375rem;  /* 6px */
+  --space-2: 0.5rem;      /* 8px */
+  --space-2_5: 0.625rem;  /* 10px */
+  --space-3: 0.75rem;     /* 12px */
+  --space-3_5: 0.875rem;  /* 14px */
+  --space-4: 1rem;        /* 16px */
+  --space-5: 1.25rem;     /* 20px */
+  --space-6: 1.5rem;      /* 24px */
+  --space-8: 2rem;        /* 32px */
+  --space-10: 2.5rem;     /* 40px */
+  --space-12: 3rem;       /* 48px */
+  
+  /* Enhanced Borders & Radius */
+  --border-width: 1px;
+  --border-width-2: 2px;
+  --border-color: rgba(226, 232, 240, 0.8);
+  --border-color-strong: rgba(203, 213, 225, 0.9);
+  --border-color-glass: rgba(255, 255, 255, 0.18);
+  --border-radius-sm: 0.375rem;
+  --border-radius: 0.5rem;
+  --border-radius-md: 0.625rem;
+  --border-radius-lg: 0.75rem;
+  --border-radius-xl: 1rem;
+  --border-radius-2xl: 1.25rem;
+  --border-radius-full: 9999px;
+  
+  /* Text Colors - Enhanced Hierarchy */
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-tertiary: #64748b;
+  --text-quaternary: #94a3b8;
+  --text-inverse: #ffffff;
+  --text-muted: #cbd5e1;
+  --text-disabled: #e2e8f0;
+  
+  /* Interactive States */
+  --hover-overlay: rgba(0, 0, 0, 0.05);
+  --focus-ring: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  --focus-ring-offset: 2px;
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  
+  /* Premium shadows */
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.12);
+  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.04);
+  
+  /* Enhanced transitions */
+  --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: all 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  
+  /* Enhanced border radius */
+  --border-radius-xs: 0.25rem;
+  --border-radius-sm: 0.5rem;
+  --border-radius: 0.75rem;
+  --border-radius-lg: 1rem;
+  --border-radius-xl: 1.5rem;
+  --border-radius-2xl: 2rem;
+  --border-radius-full: 9999px;
+  
+  /* Enhanced spacing scale */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+  --spacing-3xl: 4rem;
 }
 
-/* Dark mode variables */
+/* Premium Dark Theme - Modern Glass Morphism */
 [data-theme="dark"] {
-  --primary-color: #3498db;
-  --secondary-color: #2ecc71;
-  --danger-color: #e74c3c;
-  --success-color: #2ecc71;
-  --warning-color: #f39c12;
-  --info-color: #3498db;
-  --bg-color: #121212;
-  --card-bg: #1e1e1e;
-  --text-color: #e0e0e0;
-  --text-light: #aaaaaa;
-  --border-color: #333333;
-  --hover-color: #2a2a2a;
-  --shadow: rgba(0, 0, 0, 0.3);
+  /* Dark Mode Color Overrides */
+  --primary-50: #1e1b4b;
+  --primary-100: #312e81;
+  --primary-500: #6366f1;
+  --primary-600: #5b21b6;
+  --primary-700: #4c1d95;
+  
+  --secondary-50: #020617;
+  --secondary-100: #0f172a;
+  --secondary-200: #1e293b;
+  --secondary-300: #334155;
+  --secondary-400: #475569;
+  --secondary-500: #64748b;
+  --secondary-600: #94a3b8;
+  --secondary-700: #cbd5e1;
+  --secondary-800: #e2e8f0;
+  --secondary-900: #f1f5f9;
+  
+  /* Dark Glass Morphism Backgrounds */
+  --bg-primary: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e40af 100%);
+  --bg-secondary: #0a0f1c;
+  --bg-tertiary: #111827;
+  --glass-bg: rgba(15, 23, 42, 0.4);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  --card-bg: rgba(15, 23, 42, 0.6);
+  --card-bg-dark: rgba(0, 0, 0, 0.3);
+  --sidebar-bg: rgba(15, 23, 42, 0.8);
+  --header-bg: rgba(15, 23, 42, 0.9);
+  
+  /* Dark Text Colors */
+  --text-primary: #f8fafc;
+  --text-secondary: #e2e8f0;
+  --text-tertiary: #cbd5e1;
+  --text-quaternary: #94a3b8;
+  --text-inverse: #0f172a;
+  --text-muted: #64748b;
+  --text-disabled: #475569;
+  
+  /* Dark Interactive Elements */
+  --hover-overlay: rgba(255, 255, 255, 0.05);
+  --border-color: rgba(255, 255, 255, 0.1);
+  --border-color-strong: rgba(255, 255, 255, 0.2);
+  --border-color-glass: rgba(255, 255, 255, 0.15);
+  
+  /* Enhanced Dark Shadows */
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.5), 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.6), 0 2px 4px -1px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 10px 10px -5px rgba(0, 0, 0, 0.6);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+}
+
+/* Modern Base Styles */
+* {
+  box-sizing: border-box;
+}
+
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  line-height: 1.15;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+  color: var(--text-primary);
+  background: var(--bg-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--bg-color);
-  color: var(--text-color);
-  transition: var(--transition);
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'liga', 'kern';
+  transition: var(--transition-base);
+  min-height: 100vh;
 }
 
+/* Compact Typography Classes */
+.text-xs { font-size: var(--font-size-xs); line-height: var(--line-height-tight); }
+.text-sm { font-size: var(--font-size-sm); line-height: var(--line-height-tight); }
+.text-base { font-size: var(--font-size-base); line-height: var(--line-height-normal); }
+.text-md { font-size: var(--font-size-md); line-height: var(--line-height-normal); }
+.text-lg { font-size: var(--font-size-lg); line-height: var(--line-height-normal); }
+.text-xl { font-size: var(--font-size-xl); line-height: var(--line-height-tight); }
+.text-2xl { font-size: var(--font-size-2xl); line-height: var(--line-height-tight); }
+.text-3xl { font-size: var(--font-size-3xl); line-height: var(--line-height-tight); }
+
+/* Compact Spacing Classes */
+.p-1 { padding: var(--space-1); }
+.p-2 { padding: var(--space-2); }
+.p-3 { padding: var(--space-3); }
+.p-4 { padding: var(--space-4); }
+.px-2 { padding-left: var(--space-2); padding-right: var(--space-2); }
+.px-3 { padding-left: var(--space-3); padding-right: var(--space-3); }
+.px-4 { padding-left: var(--space-4); padding-right: var(--space-4); }
+.py-1 { padding-top: var(--space-1); padding-bottom: var(--space-1); }
+.py-2 { padding-top: var(--space-2); padding-bottom: var(--space-2); }
+.py-3 { padding-top: var(--space-3); padding-bottom: var(--space-3); }
+.py-4 { padding-top: var(--space-4); padding-bottom: var(--space-4); }
+
+.m-1 { margin: var(--space-1); }
+.m-2 { margin: var(--space-2); }
+.m-3 { margin: var(--space-3); }
+.m-4 { margin: var(--space-4); }
+.mx-2 { margin-left: var(--space-2); margin-right: var(--space-2); }
+.mx-3 { margin-left: var(--space-3); margin-right: var(--space-3); }
+.mx-4 { margin-left: var(--space-4); margin-right: var(--space-4); }
+.my-1 { margin-top: var(--space-1); margin-bottom: var(--space-1); }
+.my-2 { margin-top: var(--space-2); margin-bottom: var(--space-2); }
+.my-3 { margin-top: var(--space-3); margin-bottom: var(--space-3); }
+.my-4 { margin-top: var(--space-4); margin-bottom: var(--space-4); }
+
+.gap-1 { gap: var(--space-1); }
+.gap-2 { gap: var(--space-2); }
+.gap-3 { gap: var(--space-3); }
+.gap-4 { gap: var(--space-4); }
+
 .App {
-  text-align: center;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 20px;
-  transition: var(--transition);
+  min-height: 100vh;
+  background-color: var(--bg-color);
 }
 
 .App-header {
