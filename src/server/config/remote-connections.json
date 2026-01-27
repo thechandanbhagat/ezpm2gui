@@ -20,12 +20,12 @@
     },
     {
       "id": "192.168.50.100-22-oll-dev",
-      "name": "2.0",
+      "name": "outernet",
       "host": "192.168.50.100",
       "port": 22,
       "username": "oll-dev",
       "password": "42eb428a6d0ca614741be36634da53791a5273626acd5d59502780066ce6005e",
-      "useSudo": true
+      "useSudo": false
     }
   ]
 }
