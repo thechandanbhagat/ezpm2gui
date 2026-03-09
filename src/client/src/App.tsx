@@ -27,7 +27,11 @@ import {
 } from '@heroicons/react/24/outline';
 
 // Initialize socket connection with improved settings
-const socket = io(process.env.REACT_APP_API_URL || 'http://localhost:3001', {
+const API_URL = typeof window !== 'undefined' && (window as any).REACT_APP_API_URL 
+  ? (window as any).REACT_APP_API_URL 
+  : 'http://localhost:3001';
+
+const socket = io(API_URL, {
   // Reconnection settings
   reconnection: true,
   reconnectionDelay: 1000,
@@ -40,10 +44,7 @@ const socket = io(process.env.REACT_APP_API_URL || 'http://localhost:3001', {
   // Upgrade timeout
   upgrade: true,
   // Force new connection
-  forceNew: false,
-  // Ping/pong intervals (match server settings)
-  pingTimeout: 10000,
-  pingInterval: 25000
+  forceNew: false
 });
 
 const App: React.FC = () => {
@@ -83,7 +84,7 @@ const App: React.FC = () => {
   useEffect(() => {
     // Track last data update timestamp to detect if data is actually flowing
     let lastDataUpdate = Date.now();
-    let connectionErrorTimeout: NodeJS.Timeout | null = null;
+    let connectionErrorTimeout: number | null = null;
     let socketConnected = socket.connected;
     let hasReconnectError = false; // Track if current error is a reconnect error
 
