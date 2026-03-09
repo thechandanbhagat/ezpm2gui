@@ -1,4 +1,4 @@
-# ezPM2GUI
+# EZ PM2 GUI
 
 A modern web-based graphical user interface for the PM2 process manager, built with TypeScript and Material UI.
 
