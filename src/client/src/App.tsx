@@ -26,8 +26,25 @@ import {
   Bars3Icon
 } from '@heroicons/react/24/outline';
 
-// Initialize socket connection
-const socket = io(process.env.REACT_APP_API_URL || 'http://localhost:3001');
+// Initialize socket connection with improved settings
+const socket = io(process.env.REACT_APP_API_URL || 'http://localhost:3001', {
+  // Reconnection settings
+  reconnection: true,
+  reconnectionDelay: 1000,
+  reconnectionDelayMax: 5000,
+  reconnectionAttempts: Infinity,
+  // Connection timeout settings
+  timeout: 10000,
+  // Transport configuration
+  transports: ['websocket', 'polling'],
+  // Upgrade timeout
+  upgrade: true,
+  // Force new connection
+  forceNew: false,
+  // Ping/pong intervals (match server settings)
+  pingTimeout: 10000,
+  pingInterval: 25000
+});
 
 const App: React.FC = () => {
   // State for process data
@@ -64,6 +81,12 @@ const App: React.FC = () => {
     processId: null
   });
   useEffect(() => {
+    // Track last data update timestamp to detect if data is actually flowing
+    let lastDataUpdate = Date.now();
+    let connectionErrorTimeout: NodeJS.Timeout | null = null;
+    let socketConnected = socket.connected;
+    let hasReconnectError = false; // Track if current error is a reconnect error
+
     // Initial data fetch
     const fetchInitialData = async (): Promise<void> => {
       try {
@@ -75,6 +98,7 @@ const App: React.FC = () => {
         setProcesses(processesRes.data);
         setMetrics(metricsRes.data);
         setLoading(false);
+        lastDataUpdate = Date.now();
       } catch (err: any) {
         console.error('Error fetching initial data:', err);
         
@@ -94,25 +118,102 @@ const App: React.FC = () => {
     // Set up socket listeners for real-time updates
     socket.on('processes', (data: PM2Process[]) => {
       setProcesses(data);
+      lastDataUpdate = Date.now();
+      
+      // Clear any error if we're receiving data
+      if (hasReconnectError) {
+        setError('');
+        hasReconnectError = false;
+      }
     });
 
     socket.on('metrics', (data: SystemMetricsData) => {
       setMetrics(data);
+      lastDataUpdate = Date.now();
+      
+      // Clear any error if we're receiving data
+      if (hasReconnectError) {
+        setError('');
+        hasReconnectError = false;
+      }
     });
 
+    // Handle connection errors with debouncing
     socket.on('connect_error', () => {
-      setError('Connection to server lost. Trying to reconnect...');
+      console.warn('Socket connect_error event detected');
+      
+      // Only show error if we haven't received data recently (within last 5 seconds)
+      // This prevents false positives during transient network issues
+      const timeSinceLastUpdate = Date.now() - lastDataUpdate;
+      
+      if (timeSinceLastUpdate > 5000) {
+        // Debounce: wait 3 seconds before showing error
+        if (connectionErrorTimeout) {
+          clearTimeout(connectionErrorTimeout);
+        }
+        
+        connectionErrorTimeout = setTimeout(() => {
+          // Double-check if we're still not receiving data
+          if (Date.now() - lastDataUpdate > 5000 && !socketConnected) {
+            setError('Connection to server lost. Trying to reconnect...');
+            hasReconnectError = true;
+          }
+        }, 3000);
+      }
     });
 
+    // Handle successful connection
     socket.on('connect', () => {
-      setError('');
+      console.log('Socket connected successfully');
+      socketConnected = true;
+      lastDataUpdate = Date.now();
+      
+      // Clear any pending error timeout
+      if (connectionErrorTimeout) {
+        clearTimeout(connectionErrorTimeout);
+        connectionErrorTimeout = null;
+      }
+      
+      // Clear error message
+      if (hasReconnectError) {
+        setError('');
+        hasReconnectError = false;
+      }
+    });
+
+    // Handle disconnection
+    socket.on('disconnect', (reason) => {
+      console.log('Socket disconnected:', reason);
+      socketConnected = false;
+      
+      // Only show error for unexpected disconnections, not for client-initiated ones
+      if (reason === 'io server disconnect' || reason === 'transport close') {
+        // The server disconnected us or transport failed
+        // Wait before showing error to allow auto-reconnect
+        if (connectionErrorTimeout) {
+          clearTimeout(connectionErrorTimeout);
+        }
+        
+        connectionErrorTimeout = setTimeout(() => {
+          if (!socketConnected && Date.now() - lastDataUpdate > 5000) {
+            setError('Connection to server lost. Trying to reconnect...');
+            hasReconnectError = true;
+          }
+        }, 5000);
+      }
     });
 
     return () => {
+      // Cleanup
+      if (connectionErrorTimeout) {
+        clearTimeout(connectionErrorTimeout);
+      }
+      
       socket.off('processes');
       socket.off('metrics');
       socket.off('connect_error');
       socket.off('connect');
+      socket.off('disconnect');
     };
   }, []);
 

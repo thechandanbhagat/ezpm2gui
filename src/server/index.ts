@@ -28,7 +28,16 @@ export function createServer() {
     cors: {
       origin: '*',
       methods: ['GET', 'POST']
-    }
+    },
+    // Increase ping timeout to prevent false positive disconnections
+    pingTimeout: 10000,  // How long to wait for a pong response (default: 5000ms)
+    pingInterval: 25000, // How often to send ping packets (default: 25000ms)
+    // Allow reconnection attempts
+    allowEIO3: true,
+    // Transport configuration
+    transports: ['websocket', 'polling'],
+    // Upgrade timeout
+    upgradeTimeout: 10000
   });
   
   // Configure middleware
