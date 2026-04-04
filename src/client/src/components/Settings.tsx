@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
 import {
-  Container,
-  Paper,
   Typography,
   Box,
   Switch,
   FormControl,
   FormControlLabel,
-  Divider,
   Button,
   TextField,
   Grid,
@@ -59,13 +56,13 @@ const Settings: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Paper sx={{ p: 3 }} variant="outlined">
-        <Typography variant="h5" gutterBottom color="primary">
-          Application Settings
-        </Typography>
-        
-        <Divider sx={{ my: 3 }} />
+    <Box>
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-200 dark:border-neutral-800">
+        <div>
+          <h1 className="text-base font-semibold text-neutral-900 dark:text-neutral-100 leading-tight">Settings</h1>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">Application preferences and configuration</p>
+        </div>
+      </div>
         
         <Grid container spacing={4}>
           <Grid item xs={12} md={6}>
@@ -172,14 +169,13 @@ const Settings: React.FC = () => {
             Save Settings
           </Button>
         </Box>
-      </Paper>
-      
+
       <Snackbar open={success} autoHideDuration={6000} onClose={handleClose}>
         <Alert onClose={handleClose} severity="success" sx={{ width: '100%' }}>
           Settings saved successfully!
         </Alert>
       </Snackbar>
-    </Container>
+    </Box>
   );
 };
 

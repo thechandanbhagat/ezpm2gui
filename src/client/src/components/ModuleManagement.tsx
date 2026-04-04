@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   Box,
   Paper,
-  Typography,
   List,
   ListItem,
   ListItemText,
@@ -99,28 +98,17 @@ const ModuleManagement: React.FC = () => {
 
   return (
     <Box>
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h5">PM2 Modules</Typography>
-          <Box>
-            <Button
-              variant="outlined"
-              startIcon={<RefreshIcon />}
-              onClick={fetchModules}
-              sx={{ mr: 2 }}
-              disabled={loading}
-            >
-              Refresh
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => setDialogOpen(true)}
-            >
-              Install Module
-            </Button>
-          </Box>
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-200 dark:border-neutral-800">
+        <div>
+          <h1 className="text-base font-semibold text-neutral-900 dark:text-neutral-100 leading-tight">PM2 Modules</h1>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">Install and manage PM2 module plugins</p>
+        </div>
+        <Box sx={{ display: 'flex', gap: 0.5 }}>
+          <Button variant="outlined" startIcon={<RefreshIcon />} onClick={fetchModules} disabled={loading}>Refresh</Button>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setDialogOpen(true)}>Install Module</Button>
         </Box>
+      </div>
+      <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
 
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
