@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Container,
   Typography,
   Button,
   Card,
@@ -18,7 +17,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Alert,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -32,14 +30,14 @@ import {
   Error as ErrorIcon,
   Refresh as RefreshIcon,
 } from '@mui/icons-material';
-import { useTheme } from '@mui/material/styles';
 import axios from 'axios';
 import CronJobDialog from './CronJobDialog';
 import ConfirmationDialog from './ConfirmationDialog';
+import PageHeader from './PageHeader';
 import { CronJobConfig, CronJobStatus } from '../types/cron';
 
+// @group CronJobsPage : Cron job management page
 const CronJobsPage: React.FC = () => {
-  const theme = useTheme();
   const [jobs, setJobs] = useState<CronJobStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -47,13 +45,12 @@ const CronJobsPage: React.FC = () => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [jobToDelete, setJobToDelete] = useState<string | null>(null);
 
+  // @group DataFetching : Load cron jobs from API
   const fetchJobs = async () => {
     try {
       setLoading(true);
       const response = await axios.get('/api/cron-jobs/status');
-      if (response.data.success) {
-        setJobs(response.data.data);
-      }
+      if (response.data.success) setJobs(response.data.data);
     } catch (error) {
       console.error('Error fetching cron jobs:', error);
     } finally {
@@ -61,19 +58,11 @@ const CronJobsPage: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    fetchJobs();
-  }, []);
+  useEffect(() => { fetchJobs(); }, []);
 
-  const handleCreate = () => {
-    setEditingJob(undefined);
-    setDialogOpen(true);
-  };
-
-  const handleEdit = (job: CronJobConfig) => {
-    setEditingJob(job);
-    setDialogOpen(true);
-  };
+  // @group Handlers : CRUD and toggle handlers
+  const handleCreate = () => { setEditingJob(undefined); setDialogOpen(true); };
+  const handleEdit   = (job: CronJobConfig) => { setEditingJob(job); setDialogOpen(true); };
 
   const handleSave = async (jobData: Omit<CronJobConfig, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
@@ -92,7 +81,6 @@ const CronJobsPage: React.FC = () => {
 
   const handleDelete = async () => {
     if (!jobToDelete) return;
-
     try {
       await axios.delete(`/api/cron-jobs/${jobToDelete}`);
       fetchJobs();
@@ -104,158 +92,71 @@ const CronJobsPage: React.FC = () => {
   };
 
   const handleToggle = async (jobId: string) => {
-    try {
-      await axios.post(`/api/cron-jobs/${jobId}/toggle`);
-      fetchJobs();
-    } catch (error) {
-      console.error('Error toggling cron job:', error);
-    }
+    try { await axios.post(`/api/cron-jobs/${jobId}/toggle`); fetchJobs(); }
+    catch (error) { console.error('Error toggling cron job:', error); }
   };
 
   const handleStart = async (jobId: string) => {
-    try {
-      await axios.post(`/api/cron-jobs/${jobId}/start`);
-      fetchJobs();
-    } catch (error) {
-      console.error('Error starting cron job:', error);
-    }
+    try { await axios.post(`/api/cron-jobs/${jobId}/start`); fetchJobs(); }
+    catch (error) { console.error('Error starting cron job:', error); }
   };
 
   const handleStop = async (jobId: string) => {
-    try {
-      await axios.post(`/api/cron-jobs/${jobId}/stop`);
-      fetchJobs();
-    } catch (error) {
-      console.error('Error stopping cron job:', error);
-    }
+    try { await axios.post(`/api/cron-jobs/${jobId}/stop`); fetchJobs(); }
+    catch (error) { console.error('Error stopping cron job:', error); }
   };
 
+  // @group Utilities : Chip color helpers
   const getScriptTypeColor = (type: string) => {
-    const colors: Record<string, string> = {
-      node: 'success',
-      python: 'info',
-      shell: 'warning',
-      dotnet: 'secondary',
-    };
+    const colors: Record<string, string> = { node: 'success', python: 'info', shell: 'warning', dotnet: 'secondary' };
     return colors[type] || 'default';
   };
 
-  const getScriptTypeIcon = (type: string) => {
-    return <CodeIcon fontSize="small" />;
-  };
-
+  // @group Render : Page layout
   return (
-    <Container maxWidth="xl" sx={{ py: 3 }}>
-      {/* Header */}
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Box>
-          <Typography variant="h4" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <ScheduleIcon sx={{ fontSize: 40 }} />
-            Cron Jobs
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            Schedule and manage automated tasks using PM2's cron feature
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button
-            variant="outlined"
-            startIcon={<RefreshIcon />}
-            onClick={fetchJobs}
-            disabled={loading}
-          >
-            Refresh
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleCreate}
-          >
-            Create Job
-          </Button>
-        </Box>
-      </Box>
+    <Box>
+      <PageHeader
+        title="Cron Jobs"
+        subtitle="Schedule and manage automated tasks using PM2's cron feature"
+        actions={
+          <>
+            <Button variant="outlined" startIcon={<RefreshIcon />} onClick={fetchJobs} disabled={loading}>
+              Refresh
+            </Button>
+            <Button variant="contained" startIcon={<AddIcon />} onClick={handleCreate}>
+              Create Job
+            </Button>
+          </>
+        }
+      />
 
       {/* Summary Cards */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-              color: 'white',
-            }}
-          >
-            <CardContent>
-              <Typography variant="h3" sx={{ fontWeight: 700 }}>
-                {jobs.length}
-              </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                Total Jobs
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              background: `linear-gradient(135deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
-              color: 'white',
-            }}
-          >
-            <CardContent>
-              <Typography variant="h3" sx={{ fontWeight: 700 }}>
-                {jobs.filter((j) => j.config.enabled).length}
-              </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                Enabled
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              background: `linear-gradient(135deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`,
-              color: 'white',
-            }}
-          >
-            <CardContent>
-              <Typography variant="h3" sx={{ fontWeight: 700 }}>
-                {jobs.filter((j) => j.isRunning).length}
-              </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                Running
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              background: `linear-gradient(135deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`,
-              color: 'white',
-            }}
-          >
-            <CardContent>
-              <Typography variant="h3" sx={{ fontWeight: 700 }}>
-                {jobs.filter((j) => j.config.enabled && !j.isRunning).length}
-              </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                Scheduled
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
+      <Grid container spacing={1.5} sx={{ mb: 2.5 }}>
+        {[
+          { label: 'Total',     value: jobs.length,                                        color: 'primary' },
+          { label: 'Enabled',   value: jobs.filter(j => j.config.enabled).length,          color: 'success' },
+          { label: 'Running',   value: jobs.filter(j => j.isRunning).length,               color: 'info'    },
+          { label: 'Scheduled', value: jobs.filter(j => j.config.enabled && !j.isRunning).length, color: 'warning' },
+        ].map(({ label, value, color }) => (
+          <Grid item xs={6} sm={3} key={label}>
+            <Card variant="outlined">
+              <CardContent sx={{ py: 1.5, px: 2, '&:last-child': { pb: 1.5 } }}>
+                <Typography variant="h5" color={`${color}.main`} sx={{ fontWeight: 700 }}>
+                  {value}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">{label}</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
       </Grid>
 
       {/* Jobs Table */}
       {jobs.length === 0 ? (
-        <Paper sx={{ p: 4, textAlign: 'center' }}>
-          <ScheduleIcon sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            No cron jobs yet
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        <Paper variant="outlined" sx={{ p: 4, textAlign: 'center' }}>
+          <ScheduleIcon sx={{ fontSize: 32, color: 'text.disabled', mb: 1 }} />
+          <Typography variant="subtitle2" color="text.secondary" gutterBottom>No cron jobs yet</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             Create your first scheduled task to automate your workflows
           </Typography>
           <Button variant="contained" startIcon={<AddIcon />} onClick={handleCreate}>
@@ -263,131 +164,79 @@ const CronJobsPage: React.FC = () => {
           </Button>
         </Paper>
       ) : (
-        <TableContainer component={Paper}>
-          <Table>
+        <TableContainer component={Paper} variant="outlined">
+          <Table size="small">
             <TableHead>
-              <TableRow sx={{ backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)' }}>
-                <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Type</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Schedule</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Next Run</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Enabled</TableCell>
-                <TableCell sx={{ fontWeight: 600 }} align="right">
-                  Actions
-                </TableCell>
+              <TableRow>
+                <TableCell>Name</TableCell>
+                <TableCell>Type</TableCell>
+                <TableCell>Schedule</TableCell>
+                <TableCell>Next Run</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>Enabled</TableCell>
+                <TableCell align="right">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {jobs.map((job) => (
                 <TableRow key={job.config.id} hover>
                   <TableCell>
-                    <Box>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {job.config.name}
-                      </Typography>
-                      {job.config.description && (
-                        <Typography variant="caption" color="text.secondary">
-                          {job.config.description}
-                        </Typography>
-                      )}
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-                        {job.config.scriptPath}
-                      </Typography>
-                    </Box>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{job.config.name}</Typography>
+                    {job.config.description && (
+                      <Typography variant="caption" color="text.secondary">{job.config.description}</Typography>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Chip
-                      icon={getScriptTypeIcon(job.config.scriptType)}
+                      icon={<CodeIcon />}
                       label={job.config.scriptType.toUpperCase()}
-                      size="small"
                       color={getScriptTypeColor(job.config.scriptType) as any}
                     />
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                    <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
                       {job.config.cronExpression}
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    {job.nextExecution ? (
-                      <Typography variant="body2">
-                        {new Date(job.nextExecution).toLocaleString()}
-                      </Typography>
-                    ) : (
-                      <Typography variant="body2" color="text.secondary">
-                        -
-                      </Typography>
-                    )}
+                    <Typography variant="caption" color={job.nextExecution ? 'text.primary' : 'text.secondary'}>
+                      {job.nextExecution ? new Date(job.nextExecution).toLocaleString() : '—'}
+                    </Typography>
                   </TableCell>
                   <TableCell>
                     {job.isRunning ? (
-                      <Chip
-                        icon={<CheckCircleIcon />}
-                        label="Running"
-                        size="small"
-                        color="success"
-                      />
+                      <Chip icon={<CheckCircleIcon />} label="Running" color="success" />
                     ) : job.config.enabled ? (
-                      <Chip label="Scheduled" size="small" color="default" />
+                      <Chip label="Scheduled" />
                     ) : (
-                      <Chip
-                        icon={<ErrorIcon />}
-                        label="Disabled"
-                        size="small"
-                        color="default"
-                      />
+                      <Chip icon={<ErrorIcon />} label="Disabled" />
                     )}
                   </TableCell>
                   <TableCell>
-                    <Switch
-                      checked={job.config.enabled}
-                      onChange={() => handleToggle(job.config.id)}
-                      color="success"
-                      size="small"
-                    />
+                    <Switch checked={job.config.enabled} onChange={() => handleToggle(job.config.id)} color="success" size="small" />
                   </TableCell>
                   <TableCell align="right">
                     <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
                       {job.isRunning ? (
                         <Tooltip title="Stop">
-                          <IconButton
-                            size="small"
-                            onClick={() => handleStop(job.config.id)}
-                            color="error"
-                          >
+                          <IconButton onClick={() => handleStop(job.config.id)} color="error">
                             <StopIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
                       ) : (
                         <Tooltip title="Start">
-                          <IconButton
-                            size="small"
-                            onClick={() => handleStart(job.config.id)}
-                            color="success"
-                          >
+                          <IconButton onClick={() => handleStart(job.config.id)} color="success">
                             <PlayIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
                       )}
                       <Tooltip title="Edit">
-                        <IconButton
-                          size="small"
-                          onClick={() => handleEdit(job.config)}
-                          color="primary"
-                        >
+                        <IconButton onClick={() => handleEdit(job.config)} color="primary">
                           <EditIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
                       <Tooltip title="Delete">
-                        <IconButton
-                          size="small"
-                          onClick={() => {
-                            setJobToDelete(job.config.id);
-                            setDeleteConfirmOpen(true);
-                          }}
-                          color="error"
-                        >
+                        <IconButton onClick={() => { setJobToDelete(job.config.id); setDeleteConfirmOpen(true); }} color="error">
                           <DeleteIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
@@ -400,41 +249,22 @@ const CronJobsPage: React.FC = () => {
         </TableContainer>
       )}
 
-      {/* Info Alert */}
-      <Alert severity="info" sx={{ mt: 3 }}>
-        <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-          About PM2 Cron Jobs
-        </Typography>
-        <Typography variant="caption">
-          Cron jobs run as PM2 processes with automatic restart on the specified schedule.
-          They will continue running even after system reboot if PM2 is set to start on boot.
-          Use the PM2 ecosystem file or PM2 startup command to configure PM2 auto-start.
-        </Typography>
-      </Alert>
-
       {/* Dialogs */}
       <CronJobDialog
         open={dialogOpen}
-        onClose={() => {
-          setDialogOpen(false);
-          setEditingJob(undefined);
-        }}
+        onClose={() => { setDialogOpen(false); setEditingJob(undefined); }}
         onSave={handleSave}
         editJob={editingJob}
       />
-
       <ConfirmationDialog
         isOpen={deleteConfirmOpen}
         title="Delete Cron Job"
         message="Are you sure you want to delete this cron job? This action cannot be undone."
         onConfirm={handleDelete}
-        onCancel={() => {
-          setDeleteConfirmOpen(false);
-          setJobToDelete(null);
-        }}
+        onCancel={() => { setDeleteConfirmOpen(false); setJobToDelete(null); }}
         type="danger"
       />
-    </Container>
+    </Box>
   );
 };
 

@@ -5,7 +5,6 @@ import ProcessLogs from './ProcessLogs';
 import MetricsChart from './MetricsChart';
 import axios from 'axios';
 import {
-  Container,
   Box,
   IconButton,
   Tabs,
@@ -14,65 +13,61 @@ import {
   Paper,
   Typography,
   Chip,
-  Divider,
-  useTheme,
   Button,
   CircularProgress,
-  Alert
+  Alert,
+  Tooltip
 } from '@mui/material';
-import { 
+import {
   ArrowBack as ArrowBackIcon,
   PlayArrow as PlayIcon,
   Stop as StopIcon,
   Refresh as RefreshIcon,
   Delete as DeleteIcon
 } from '@mui/icons-material';
+import PageHeader from './PageHeader';
 
+// @group Types : Tab panel props
 interface TabPanelProps {
   children?: React.ReactNode;
   value: number;
   index: number;
 }
 
-const TabPanel: React.FC<TabPanelProps> = ({ children, value, index, ...other }) => {
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`process-tabpanel-${index}`}
-      aria-labelledby={`process-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          {children}
-        </Box>
-      )}
-    </div>
-  );
-};
+// @group TabPanel : Renders tab content when active
+const TabPanel: React.FC<TabPanelProps> = ({ children, value, index, ...other }) => (
+  <div
+    role="tabpanel"
+    hidden={value !== index}
+    id={`process-tabpanel-${index}`}
+    aria-labelledby={`process-tab-${index}`}
+    {...other}
+  >
+    {value === index && <Box sx={{ p: 2 }}>{children}</Box>}
+  </div>
+);
 
 interface ProcessDetailPageProps {
   onAction?: (id: number, action: string) => void;
 }
 
+// @group ProcessDetailPage : Detail view for a single PM2 process
 const ProcessDetailPage: React.FC<ProcessDetailPageProps> = ({ onAction }) => {
   const { id } = useParams<{ id: string }>();
   const [process, setProcess] = useState<PM2Process | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
   const [activeTab, setActiveTab] = useState<number>(0);
-  const theme = useTheme();
   const navigate = useNavigate();
 
+  // @group DataFetching : Load process details and poll for updates
   useEffect(() => {
     const fetchProcess = async () => {
       try {
         const response = await axios.get<PM2Process[]>('/api/processes');
-        const foundProcess = response.data.find(p => p.pm_id === Number(id));
-        
-        if (foundProcess) {
-          setProcess(foundProcess);
+        const found = response.data.find(p => p.pm_id === Number(id));
+        if (found) {
+          setProcess(found);
         } else {
           setError(`Process with ID ${id} not found`);
         }
@@ -84,30 +79,17 @@ const ProcessDetailPage: React.FC<ProcessDetailPageProps> = ({ onAction }) => {
       }
     };
 
-    if (id) {
-      fetchProcess();
-    }
-
-    // Set up polling to refresh the data
-    const interval = setInterval(() => {
-      if (id) fetchProcess();
-    }, 3000);
-
+    if (id) fetchProcess();
+    const interval = setInterval(() => { if (id) fetchProcess(); }, 3000);
     return () => clearInterval(interval);
   }, [id]);
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
-  };
-
-  // Helper function to format dates
+  // @group Utilities : Format helpers
   const formatDate = (timestamp: number | undefined): string => {
     if (!timestamp) return 'N/A';
-    const date = new Date(timestamp);
-    return date.toLocaleString();
+    return new Date(timestamp).toLocaleString();
   };
 
-  // Helper function to format memory usage
   const formatMemory = (bytes: number): string => {
     if (bytes === 0) return '0 B';
     const sizes = ['B', 'KB', 'MB', 'GB'];
@@ -115,288 +97,191 @@ const ProcessDetailPage: React.FC<ProcessDetailPageProps> = ({ onAction }) => {
     return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${sizes[i]}`;
   };
 
-  // Helper function to determine status color
-  const getStatusColor = (status: string): "success" | "error" | "warning" => {
-    if (status === 'online') return 'success';
-    if (status === 'stopped') return 'error';
-    return 'warning';
-  };
+  const getStatusColor = (status: string): 'success' | 'error' | 'warning' =>
+    status === 'online' ? 'success' : status === 'stopped' ? 'error' : 'warning';
 
-  // Execute process actions
+  // @group Handlers : Execute process lifecycle actions
   const executeAction = async (action: string): Promise<void> => {
     if (!process) return;
-    
     try {
       if (onAction) {
-        // Use the parent onAction function if provided
         onAction(process.pm_id, action);
-        
-        // If delete action, navigate back to the process list
-        if (action === 'delete') {
-          navigate('/');
-          return;
-        }
+        if (action === 'delete') { navigate('/'); return; }
       } else {
-        // Direct API call if onAction is not provided
         await axios.post(`/api/process/${process.pm_id}/${action}`);
       }
-      
-      // Refresh the process data after action
       const response = await axios.get<PM2Process[]>('/api/processes');
-      const updatedProcess = response.data.find(p => p.pm_id === Number(id));
-      if (updatedProcess) {
-        setProcess(updatedProcess);
-      }
+      const updated = response.data.find(p => p.pm_id === Number(id));
+      if (updated) setProcess(updated);
     } catch (err) {
       console.error(`Error performing ${action}:`, err);
       setError(`Failed to ${action} process. ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };
 
+  // @group Render : Loading / error states
   if (loading) {
     return (
-      <Container maxWidth="lg" sx={{ mt: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
-          <CircularProgress />
-          <Typography variant="h6" sx={{ ml: 2 }}>
-            Loading process details...
-          </Typography>
-        </Box>
-      </Container>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8, gap: 1.5 }}>
+        <CircularProgress size={20} />
+        <Typography variant="body2" color="text.secondary">Loading process details…</Typography>
+      </Box>
     );
   }
 
-  if (error) {
+  if (error || !process) {
     return (
-      <Container maxWidth="lg" sx={{ mt: 4 }}>
-        <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
-        <Button 
-          variant="outlined" 
-          startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/')}
-        >
-          Back to Process List
-        </Button>
-      </Container>
-    );
-  }
-
-  if (!process) {
-    return (
-      <Container maxWidth="lg" sx={{ mt: 4 }}>
-        <Alert severity="warning" sx={{ mb: 2 }}>Process not found</Alert>
-        <Button 
-          variant="outlined" 
-          startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/')}
-        >
-          Back to Process List
-        </Button>
-      </Container>
-    );
-  }
-
-  return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Box sx={{ mb: 2 }}>
-        <Button 
-          variant="outlined" 
-          startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/')}
-          sx={{ mb: 2 }}
-        >
+      <Box>
+        <Alert severity={error ? 'error' : 'warning'} sx={{ mb: 2 }}>
+          {error || 'Process not found'}
+        </Alert>
+        <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => navigate('/')}>
           Back to Process List
         </Button>
       </Box>
-      
-      <Paper variant="outlined" sx={{ mb: 3 }}>
-        <Box sx={{ p: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <Typography variant="h4">
-                {process.name}
-              </Typography>
-              <Chip
-                label={process.pm2_env.status}
-                size="medium"
-                color={getStatusColor(process.pm2_env.status)}
-                sx={{ ml: 2 }}
-              />
-            </Box>
-            <Box>
-              <Button 
-                variant="contained" 
-                color="primary" 
-                startIcon={<PlayIcon />} 
-                onClick={() => executeAction('start')}
-                disabled={process.pm2_env.status === 'online'}
-                sx={{ mr: 1 }}
-              >
-                Start
-              </Button>
-              <Button 
-                variant="contained" 
-                color="error" 
-                startIcon={<StopIcon />} 
-                onClick={() => executeAction('stop')}
-                disabled={process.pm2_env.status === 'stopped'}
-                sx={{ mr: 1 }}
-              >
-                Stop
-              </Button>
-              <Button 
-                variant="contained" 
-                color="warning" 
-                startIcon={<RefreshIcon />} 
-                onClick={() => executeAction('restart')}
-                sx={{ mr: 1 }}
-              >
-                Restart
-              </Button>
-              <Button 
-                variant="outlined" 
-                color="error" 
-                startIcon={<DeleteIcon />} 
-                onClick={() => executeAction('delete')}
-              >
-                Delete
-              </Button>
-            </Box>
+    );
+  }
+
+  // @group Render : Main detail page layout
+  return (
+    <Box>
+      <PageHeader
+        title={process.name}
+        subtitle={`PID ${process.pm_id} · ${process.pm2_env.exec_mode || 'fork'} mode`}
+        actions={
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Chip
+              label={process.pm2_env.status}
+              size="small"
+              color={getStatusColor(process.pm2_env.status)}
+            />
+            <Tooltip title="Back to process list">
+              <IconButton size="small" onClick={() => navigate('/')}>
+                <ArrowBackIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<PlayIcon />}
+              onClick={() => executeAction('start')}
+              disabled={process.pm2_env.status === 'online'}
+            >
+              Start
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              color="error"
+              startIcon={<StopIcon />}
+              onClick={() => executeAction('stop')}
+              disabled={process.pm2_env.status === 'stopped'}
+            >
+              Stop
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<RefreshIcon />}
+              onClick={() => executeAction('restart')}
+            >
+              Restart
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              color="error"
+              startIcon={<DeleteIcon />}
+              onClick={() => executeAction('delete')}
+            >
+              Delete
+            </Button>
           </Box>
-          
-          <Divider sx={{ my: 2 }} />
-          
-          <Grid container spacing={3}>
-            <Grid item xs={12} sm={6} md={3}>
-              <Typography variant="body2" color="text.secondary">
-                Process ID
-              </Typography>
-              <Typography variant="body1" fontWeight="medium">
-                {process.pm_id}
-              </Typography>
+        }
+      />
+
+      {/* Quick stats row */}
+      <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+        <Grid container spacing={2}>
+          {[
+            { label: 'CPU Usage',     value: process.monit ? `${process.monit.cpu}%` : 'N/A' },
+            { label: 'Memory',        value: process.monit ? formatMemory(process.monit.memory) : 'N/A' },
+            { label: 'Restarts',      value: process.pm2_env.restart_time },
+            { label: 'Started At',    value: formatDate(process.pm2_env.pm_uptime) },
+          ].map(({ label, value }) => (
+            <Grid item xs={6} sm={3} key={label}>
+              <Typography variant="caption" color="text.secondary" display="block">{label}</Typography>
+              <Typography variant="body2" fontWeight={500}>{value}</Typography>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Typography variant="body2" color="text.secondary">
-                CPU Usage
-              </Typography>
-              <Typography variant="body1" fontWeight="medium">
-                {process.monit ? `${process.monit.cpu}%` : 'N/A'}
-              </Typography>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Typography variant="body2" color="text.secondary">
-                Memory Usage
-              </Typography>
-              <Typography variant="body1" fontWeight="medium">
-                {process.monit ? formatMemory(process.monit.memory) : 'N/A'}
-              </Typography>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Typography variant="body2" color="text.secondary">
-                Uptime
-              </Typography>
-              <Typography variant="body1" fontWeight="medium">
-                {process.pm2_env.pm_uptime ? formatDate(process.pm2_env.pm_uptime) : 'N/A'}
-              </Typography>
-            </Grid>
-          </Grid>
-        </Box>
+          ))}
+        </Grid>
       </Paper>
-      
+
+      {/* Tabbed detail panels */}
       <Paper variant="outlined">
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={activeTab} onChange={handleTabChange} aria-label="process details tabs">
-            <Tab label="Details" id="process-tab-0" aria-controls="process-tabpanel-0" />
-            <Tab label="Logs" id="process-tab-1" aria-controls="process-tabpanel-1" />
-            <Tab label="Metrics" id="process-tab-2" aria-controls="process-tabpanel-2" />
+          <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)} aria-label="process details tabs">
+            <Tab label="Details"  id="process-tab-0" aria-controls="process-tabpanel-0" />
+            <Tab label="Logs"     id="process-tab-1" aria-controls="process-tabpanel-1" />
+            <Tab label="Metrics"  id="process-tab-2" aria-controls="process-tabpanel-2" />
           </Tabs>
         </Box>
-        
+
+        {/* Details tab */}
         <TabPanel value={activeTab} index={0}>
-          <Grid container spacing={3}>
+          <Grid container spacing={2}>
             <Grid item xs={12} md={6}>
-              <Typography variant="h6" gutterBottom>
-                Process Information
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary">
-                    Exec Mode
-                  </Typography>
-                  <Typography variant="body1" fontWeight="medium" paragraph>
-                    {process.pm2_env.exec_mode || 'N/A'}
-                  </Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary">
-                    Instances
-                  </Typography>
-                  <Typography variant="body1" fontWeight="medium" paragraph>
-                    {process.pm2_env.instances || 1}
-                  </Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary">
-                    Created At
-                  </Typography>
-                  <Typography variant="body1" fontWeight="medium" paragraph>
-                    {formatDate(process.pm2_env.created_at)}
-                  </Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary">
-                    Restarts
-                  </Typography>
-                  <Typography variant="body1" fontWeight="medium" paragraph>
-                    {process.pm2_env.restart_time}
-                  </Typography>
-                </Grid>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>Process Information</Typography>
+              <Grid container spacing={1.5}>
+                {[
+                  { label: 'Exec Mode',   value: process.pm2_env.exec_mode || 'N/A' },
+                  { label: 'Instances',   value: process.pm2_env.instances || 1 },
+                  { label: 'Created At',  value: formatDate(process.pm2_env.created_at) },
+                  { label: 'Restarts',    value: process.pm2_env.restart_time },
+                ].map(({ label, value }) => (
+                  <Grid item xs={6} key={label}>
+                    <Typography variant="caption" color="text.secondary" display="block">{label}</Typography>
+                    <Typography variant="body2" fontWeight={500}>{value}</Typography>
+                  </Grid>
+                ))}
                 <Grid item xs={12}>
-                  <Typography variant="body2" color="text.secondary">
-                    Script Path
-                  </Typography>
-                  <Typography variant="body1" fontWeight="medium" paragraph sx={{ wordBreak: 'break-all' }}>
+                  <Typography variant="caption" color="text.secondary" display="block">Script Path</Typography>
+                  <Typography variant="body2" fontWeight={500} sx={{ wordBreak: 'break-all' }}>
                     {process.pm2_env.pm_exec_path}
                   </Typography>
                 </Grid>
               </Grid>
             </Grid>
-            
+
             <Grid item xs={12} md={6}>
-              <Typography variant="h6" gutterBottom>
-                Environment Variables
-              </Typography>
-              <Paper 
-                variant="outlined" 
-                sx={{ 
-                  p: 2, 
-                  maxHeight: 300, 
-                  overflow: 'auto',
-                  bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.50'
-                }}
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>Environment Variables</Typography>
+              <Paper
+                variant="outlined"
+                sx={{ p: 1.5, maxHeight: 260, overflow: 'auto', bgcolor: 'action.hover' }}
               >
                 {process.pm2_env.env && Object.keys(process.pm2_env.env).length > 0 ? (
-                  <Box component="pre" sx={{ margin: 0, fontSize: '0.875rem' }}>
+                  <Box component="pre" sx={{ m: 0, fontSize: '0.75rem', fontFamily: 'monospace', lineHeight: 1.6 }}>
                     {JSON.stringify(process.pm2_env.env, null, 2)}
                   </Box>
                 ) : (
-                  <Typography variant="body2" color="text.secondary">
-                    No environment variables found.
-                  </Typography>
+                  <Typography variant="body2" color="text.secondary">No environment variables found.</Typography>
                 )}
               </Paper>
             </Grid>
           </Grid>
         </TabPanel>
-          <TabPanel value={activeTab} index={1}>
+
+        {/* Logs tab */}
+        <TabPanel value={activeTab} index={1}>
           <ProcessLogs processId={process.pm_id} processName={process.name} />
         </TabPanel>
-        
+
+        {/* Metrics tab */}
         <TabPanel value={activeTab} index={2}>
           <MetricsChart processId={process.pm_id} initialData={process} />
         </TabPanel>
       </Paper>
-    </Container>
+    </Box>
   );
 };
 

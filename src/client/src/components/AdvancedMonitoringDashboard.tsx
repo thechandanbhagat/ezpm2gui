@@ -40,6 +40,7 @@ import {
   Filler
 } from 'chart.js';
 import { PM2Process, SystemMetricsData } from '../types/pm2';
+import PageHeader from './PageHeader';
 
 // Register Chart.js components
 ChartJS.register(
@@ -115,89 +116,12 @@ const AdvancedMonitoringDashboard: React.FC<AdvancedMonitoringDashboardProps> = 
     return 'error';
   };
 
-  // Generate alerts based on process and system state
-  const generateAlerts = (): ProcessAlert[] => {
-    const newAlerts: ProcessAlert[] = [];
-    const now = Date.now();
-
-    // Check for stopped processes
-    processes.forEach(process => {
-      if (process.pm2_env.status !== 'online') {
-        newAlerts.push({
-          processId: process.pm_id,
-          processName: process.name,
-          type: 'error',
-          message: `Process is ${process.pm2_env.status}`,
-          timestamp: now
-        });
-      }
-
-      // Check for high memory usage
-      if (process.monit.memory > 500 * 1024 * 1024) { // 500MB
-        newAlerts.push({
-          processId: process.pm_id,
-          processName: process.name,
-          type: 'warning',
-          message: `High memory usage: ${formatMemory(process.monit.memory)}`,
-          timestamp: now
-        });
-      }
-
-      // Check for high CPU usage
-      if (process.monit.cpu > 80) {
-        newAlerts.push({
-          processId: process.pm_id,
-          processName: process.name,
-          type: 'warning',
-          message: `High CPU usage: ${process.monit.cpu.toFixed(1)}%`,
-          timestamp: now
-        });
-      }
-
-      // Check for frequent restarts
-      if (process.pm2_env.restart_time > 5) {
-        newAlerts.push({
-          processId: process.pm_id,
-          processName: process.name,
-          type: 'warning',
-          message: `Frequent restarts: ${process.pm2_env.restart_time} times`,
-          timestamp: now
-        });
-      }
-    });
-
-    // System-level alerts
-    const memoryUsagePercent = (systemMetrics.memory.used / systemMetrics.memory.total) * 100;
-    if (memoryUsagePercent > 90) {
-      newAlerts.push({
-        processId: -1,
-        processName: 'System',
-        type: 'error',
-        message: `Critical memory usage: ${memoryUsagePercent.toFixed(1)}%`,
-        timestamp: now
-      });
-    }
-
-    const loadAvgPercent = (systemMetrics.loadAvg[0] / systemMetrics.cpus) * 100;
-    if (loadAvgPercent > 100) {
-      newAlerts.push({
-        processId: -1,
-        processName: 'System',
-        type: 'warning',
-        message: `High system load: ${systemMetrics.loadAvg[0].toFixed(2)}`,
-        timestamp: now
-      });
-    }
-
-    return newAlerts;
-  };
-
-  // Update historical metrics
+  // @group Monitoring : Update historical metrics and alerts on data change
   useEffect(() => {
     if (realTimeUpdates) {
       const now = Date.now();
       const onlineProcesses = processes.filter(p => p.pm2_env.status === 'online').length;
-      
+
       const newMetric: HistoricalMetrics = {
         timestamp: now,
         cpu: processes.reduce((sum, p) => sum + p.monit.cpu, 0) / Math.max(processes.length, 1),
@@ -209,12 +133,83 @@ const AdvancedMonitoringDashboard: React.FC<AdvancedMonitoringDashboardProps> = 
 
       setHistoricalMetrics(prev => {
         const updated = [...prev, newMetric];
-        // Keep only last 100 data points for performance
         return updated.slice(-100);
-      });      // Update alerts
-      setAlerts(generateAlerts());
+      });
+
+      // generateAlerts defined inline to avoid stale dependency reference
+      const computeAlerts = (): ProcessAlert[] => {
+        const newAlerts: ProcessAlert[] = [];
+
+        processes.forEach(process => {
+          if (process.pm2_env.status !== 'online') {
+            newAlerts.push({
+              processId: process.pm_id,
+              processName: process.name,
+              type: 'error',
+              message: `Process is ${process.pm2_env.status}`,
+              timestamp: now
+            });
+          }
+          if (process.monit.memory > 500 * 1024 * 1024) {
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(process.monit.memory) / Math.log(1024));
+            const memStr = `${(process.monit.memory / Math.pow(1024, i)).toFixed(2)} ${sizes[i]}`;
+            newAlerts.push({
+              processId: process.pm_id,
+              processName: process.name,
+              type: 'warning',
+              message: `High memory usage: ${memStr}`,
+              timestamp: now
+            });
+          }
+          if (process.monit.cpu > 80) {
+            newAlerts.push({
+              processId: process.pm_id,
+              processName: process.name,
+              type: 'warning',
+              message: `High CPU usage: ${process.monit.cpu.toFixed(1)}%`,
+              timestamp: now
+            });
+          }
+          if (process.pm2_env.restart_time > 5) {
+            newAlerts.push({
+              processId: process.pm_id,
+              processName: process.name,
+              type: 'warning',
+              message: `Frequent restarts: ${process.pm2_env.restart_time} times`,
+              timestamp: now
+            });
+          }
+        });
+
+        const memUsagePct = (systemMetrics.memory.used / systemMetrics.memory.total) * 100;
+        if (memUsagePct > 90) {
+          newAlerts.push({
+            processId: -1,
+            processName: 'System',
+            type: 'error',
+            message: `Critical memory usage: ${memUsagePct.toFixed(1)}%`,
+            timestamp: now
+          });
+        }
+
+        const loadPct = (systemMetrics.loadAvg[0] / systemMetrics.cpus) * 100;
+        if (loadPct > 100) {
+          newAlerts.push({
+            processId: -1,
+            processName: 'System',
+            type: 'warning',
+            message: `High system load: ${systemMetrics.loadAvg[0].toFixed(2)}`,
+            timestamp: now
+          });
+        }
+
+        return newAlerts;
+      };
+
+      setAlerts(computeAlerts());
     }
-  }, [processes, systemMetrics, realTimeUpdates, generateAlerts]);
+  }, [processes, systemMetrics, realTimeUpdates]);
 
   // Prepare chart data
   const chartData = {
@@ -288,30 +283,25 @@ const AdvancedMonitoringDashboard: React.FC<AdvancedMonitoringDashboardProps> = 
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          Advanced Monitoring Dashboard
-        </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={realTimeUpdates}
-                onChange={(e) => setRealTimeUpdates(e.target.checked)}
-                color="primary"
-              />
-            }
-            label="Real-time Updates"
-          />          <Tooltip title="Refresh Data">
-            <IconButton onClick={onRefresh}>
-              <RefreshIcon />
-            </IconButton>
-          </Tooltip>
-        </Box>
-      </Box>
+      <PageHeader
+        title="Advanced Monitoring"
+        subtitle="Real-time system and process performance trends"
+        actions={
+          <>
+            <FormControlLabel
+              control={<Switch checked={realTimeUpdates} onChange={(e) => setRealTimeUpdates(e.target.checked)} color="primary" size="small" />}
+              label={<Typography variant="caption">Live</Typography>}
+              sx={{ mr: 0 }}
+            />
+            <Tooltip title="Refresh">
+              <IconButton onClick={onRefresh} size="small"><RefreshIcon fontSize="small" /></IconButton>
+            </Tooltip>
+          </>
+        }
+      />
 
       {/* System Health Overview */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
+      <Grid container spacing={1.5} sx={{ mb: 2 }}>
         <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
@@ -321,7 +311,7 @@ const AdvancedMonitoringDashboard: React.FC<AdvancedMonitoringDashboardProps> = 
                   System Health
                 </Typography>
               </Box>
-              <Typography variant="h3" color={`${healthColor}.main`}>
+              <Typography variant="h5" color={`${healthColor}.main`}>
                 {healthScore}%
               </Typography>
               <Typography variant="body2" color="text.secondary">
@@ -340,7 +330,7 @@ const AdvancedMonitoringDashboard: React.FC<AdvancedMonitoringDashboardProps> = 
                   Active Processes
                 </Typography>
               </Box>
-              <Typography variant="h3" color="primary">
+              <Typography variant="h5" color="primary">
                 {processes.filter(p => p.pm2_env.status === 'online').length}
               </Typography>
               <Typography variant="body2" color="text.secondary">
@@ -359,7 +349,7 @@ const AdvancedMonitoringDashboard: React.FC<AdvancedMonitoringDashboardProps> = 
                   Memory Usage
                 </Typography>
               </Box>
-              <Typography variant="h3" color="primary">
+              <Typography variant="h5" color="primary">
                 {Math.round((systemMetrics.memory.used / systemMetrics.memory.total) * 100)}%
               </Typography>
               <Typography variant="body2" color="text.secondary">
@@ -378,7 +368,7 @@ const AdvancedMonitoringDashboard: React.FC<AdvancedMonitoringDashboardProps> = 
                   CPU Load
                 </Typography>
               </Box>
-              <Typography variant="h3" color="primary">
+              <Typography variant="h5" color="primary">
                 {systemMetrics.loadAvg[0].toFixed(1)}
               </Typography>
               <Typography variant="body2" color="text.secondary">
@@ -390,17 +380,17 @@ const AdvancedMonitoringDashboard: React.FC<AdvancedMonitoringDashboardProps> = 
       </Grid>
 
       {/* Charts and Alerts */}
-      <Grid container spacing={3}>
+      <Grid container spacing={1.5}>
         <Grid item xs={12} lg={8}>
           <Paper sx={{ p: 3 }}>
-            <Box sx={{ height: 400 }}>
+            <Box sx={{ height: 280 }}>
               <Line data={chartData} options={chartOptions} />
             </Box>
           </Paper>
         </Grid>
 
         <Grid item xs={12} lg={4}>
-          <Paper sx={{ p: 3, height: 400, overflow: 'auto' }}>
+          <Paper variant="outlined" sx={{ p: 2, height: 280, overflow: 'auto' }}>
             <Typography variant="h6" gutterBottom>
               Active Alerts
             </Typography>
@@ -414,7 +404,7 @@ const AdvancedMonitoringDashboard: React.FC<AdvancedMonitoringDashboardProps> = 
                 height: '60%',
                 color: 'success.main'
               }}>
-                <CheckCircleIcon sx={{ fontSize: 48, mb: 2 }} />
+                <CheckCircleIcon sx={{ fontSize: 28, mb: 1 }} />
                 <Typography variant="body1">All systems healthy</Typography>
               </Box>
             ) : (
@@ -447,11 +437,11 @@ const AdvancedMonitoringDashboard: React.FC<AdvancedMonitoringDashboardProps> = 
       </Grid>
 
       {/* Process Performance Table */}
-      <Paper sx={{ p: 3, mt: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          Process Performance Overview
+      <Paper variant="outlined" sx={{ p: 2, mt: 1.5 }}>
+        <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>
+          Process Performance
         </Typography>
-        <Grid container spacing={2}>
+        <Grid container spacing={1.5}>
           {processes.map((process) => (
             <Grid item xs={12} sm={6} md={4} key={process.pm_id}>
               <Card variant="outlined">
