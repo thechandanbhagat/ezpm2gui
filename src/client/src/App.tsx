@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
 import axios from 'axios';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 import ProcessDetailPage from './components/ProcessDetailPage';
 import MainDashboard from './components/MainDashboard';
 import ConfirmationDialog from './components/ConfirmationDialog';
@@ -13,7 +14,6 @@ import ProcessConfiguration from './components/ProcessConfiguration';
 import ClusterManagement from './components/ClusterManagement';
 import LogStreamEnhanced from './components/LogStreamEnhanced';
 import AdvancedMonitoringDashboard from './components/AdvancedMonitoringDashboard';
-import RemoteEnhancedLogManagement from './components/RemoteEnhancedLogManagement';
 import SidebarMenu from './components/SidebarMenu';
 import Settings from './components/Settings';
 import LoadBalancingGuide from './components/LoadBalancingGuide';
@@ -68,9 +68,11 @@ const App: React.FC = () => {
   const [showAbout, setShowAbout] = useState<boolean>(false);
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   
-  // Theme state
+  // Theme state — default dark, respect system preference
   const [darkMode, setDarkMode] = useState<boolean>(
-    typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches
+    typeof window !== 'undefined'
+      ? window.matchMedia('(prefers-color-scheme: dark)').matches
+      : true
   );
   
   // Confirmation dialog state
@@ -84,7 +86,7 @@ const App: React.FC = () => {
   useEffect(() => {
     // Track last data update timestamp to detect if data is actually flowing
     let lastDataUpdate = Date.now();
-    let connectionErrorTimeout: number | null = null;
+    let connectionErrorTimeout: ReturnType<typeof setTimeout> | null = null;
     let socketConnected = socket.connected;
     let hasReconnectError = false; // Track if current error is a reconnect error
 
@@ -331,123 +333,186 @@ const App: React.FC = () => {
 
   if (loading) {
     return (
-      <div className={`min-h-screen flex items-center justify-center ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-        <div className="flex items-center space-x-3">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-          <h6 className={`text-lg font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-            Loading PM2 data...
-          </h6>
+      <div className={`min-h-screen flex items-center justify-center ${darkMode ? 'bg-neutral-950' : 'bg-neutral-100'}`}>
+        <div className="flex items-center gap-2.5">
+          <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary-500 border-t-transparent"></div>
+          <span className={`text-sm font-medium ${darkMode ? 'text-neutral-300' : 'text-neutral-600'}`}>
+            Loading PM2 data…
+          </span>
         </div>
       </div>
     );
   }
 
+  // @group Theme : MUI theme wired to darkMode state — normalises typography and component sizes globally
+  const muiTheme = createTheme({
+    palette: { mode: darkMode ? 'dark' : 'light' },
+    typography: {
+      fontFamily: 'inherit',          // use the Tailwind / CSS font stack
+      h4: { fontSize: '1.0625rem', fontWeight: 600, lineHeight: 1.3 },  // 17px — page titles
+      h5: { fontSize: '0.9375rem', fontWeight: 600, lineHeight: 1.3 },  // 15px — section headers
+      h6: { fontSize: '0.875rem',  fontWeight: 600, lineHeight: 1.3 },  // 14px — subsections
+      subtitle1: { fontSize: '0.8125rem', lineHeight: 1.4 },            // 13px
+      subtitle2: { fontSize: '0.75rem',   fontWeight: 600, lineHeight: 1.4 }, // 12px
+      body1:     { fontSize: '0.875rem',  lineHeight: 1.5 },            // 14px
+      body2:     { fontSize: '0.8125rem', lineHeight: 1.5 },            // 13px
+      caption:   { fontSize: '0.75rem',   lineHeight: 1.4 },            // 12px
+      overline:  { fontSize: '0.6875rem', lineHeight: 1.4 },            // 11px
+    },
+    shape: { borderRadius: 6 },
+    components: {
+      // Buttons — small by default, no shadow
+      MuiButton: {
+        defaultProps: { size: 'small', disableElevation: true },
+        styleOverrides: { root: { textTransform: 'none', fontWeight: 500 } },
+      },
+      MuiIconButton: { defaultProps: { size: 'small' } },
+      // Form controls — small by default
+      MuiTextField:   { defaultProps: { size: 'small' } },
+      MuiSelect:      { defaultProps: { size: 'small' } },
+      MuiFormControl: { defaultProps: { size: 'small' } },
+      MuiInputLabel:  { defaultProps: { size: 'small' } },
+      // Chips — small by default
+      MuiChip: { defaultProps: { size: 'small' } },
+      // Cards — consistent border radius, outlined by default
+      MuiCard:  { defaultProps: { variant: 'outlined' } },
+      MuiPaper: { styleOverrides: { root: { backgroundImage: 'none' } } },
+      // Table — dense
+      MuiTableCell: {
+        styleOverrides: {
+          head: { fontWeight: 600, fontSize: '0.75rem' },
+          body: { fontSize: '0.8125rem' },
+        },
+      },
+      // Tabs — compact
+      MuiTab: {
+        styleOverrides: {
+          root: { textTransform: 'none', minHeight: 36, fontSize: '0.8125rem', fontWeight: 500 },
+        },
+      },
+      MuiTabs: { styleOverrides: { root: { minHeight: 36 } } },
+      // Accordion — compact
+      MuiAccordionSummary: {
+        styleOverrides: { root: { minHeight: 40, '&.Mui-expanded': { minHeight: 40 } } },
+      },
+      // Alerts — compact padding
+      MuiAlert: { styleOverrides: { root: { fontSize: '0.8125rem', padding: '6px 12px' } } },
+      // Dialogs — consistent radius
+      MuiDialog: { styleOverrides: { paper: { borderRadius: 8 } } },
+    },
+  });
+
   return (
+    <ThemeProvider theme={muiTheme}>
     <Router>
-      <div className={`min-h-screen transition-all duration-300 ${darkMode ? 'bg-neutral-950' : 'bg-neutral-50'}`}>
+      <div className={`min-h-screen ${darkMode ? 'bg-neutral-950' : 'bg-neutral-100'}`}>
         <div className="flex">
-          {/* Top Navigation Bar */}
-          <nav className={`fixed w-full z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 transition-all duration-300 ${darkMode ? 'bg-neutral-900/95 border-neutral-800' : 'bg-white/95 border-gray-200'}`}>
-            <div className="px-3 py-3">
-              <div className="flex items-center justify-between max-w mx-auto">
-                <button
-                  onClick={toggleMenu}
-                  className={`sm:hidden p-3 rounded-xl transition-all duration-200 ${darkMode ? 'text-neutral-400 hover:text-white hover:bg-neutral-800/50' : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100/50'} hover:shadow-md`}
-                >
-                  <Bars3Icon className="h-6 w-6" />
-                </button>
-                <Link 
-                  to="/" 
-                  className={`text-2xl font-bold tracking-tight no-underline transition-all duration-200 flex-grow sm:flex-grow-0 ${darkMode ? 'text-white hover:text-primary-400' : 'text-neutral-900 hover:text-primary-600'}`}
-                >
-                  <span className="text-gradient">EZ PM2 GUI</span>
-                </Link>
-                <div className="flex items-center space-x-4">
-                  <button 
-                    onClick={toggleDarkMode}
-                    className={`p-3 rounded-xl transition-all duration-200 ${darkMode ? 'text-neutral-400 hover:text-white hover:bg-neutral-800/50' : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100/50'} hover:shadow-md`}
-                  >
-                    {darkMode ? <SunIcon className="h-6 w-6" /> : <MoonIcon className="h-6 w-6" />}
-                  </button>
-                </div>
-              </div>
+
+          {/* ── Top Navigation Bar (36px) ── */}
+          <nav className={`fixed w-full z-50 h-9 flex items-center border-b ${
+            darkMode
+              ? 'bg-neutral-900 border-neutral-800'
+              : 'bg-white border-neutral-200'
+          }`}>
+            <div className="flex items-center justify-between w-full px-3">
+              {/* Mobile hamburger */}
+              <button
+                onClick={toggleMenu}
+                className={`sm:hidden p-1 rounded ${darkMode ? 'text-neutral-400 hover:text-white' : 'text-neutral-500 hover:text-neutral-900'}`}
+              >
+                <Bars3Icon className="h-4 w-4" />
+              </button>
+
+              {/* Logo */}
+              <Link
+                to="/"
+                className="text-sm font-bold tracking-tight no-underline flex-grow sm:flex-grow-0"
+              >
+                <span className="text-gradient">EZ PM2 GUI</span>
+              </Link>
+
+              {/* Dark-mode toggle */}
+              <button
+                onClick={toggleDarkMode}
+                className={`p-1 rounded transition-colors ${
+                  darkMode
+                    ? 'text-neutral-400 hover:text-yellow-400'
+                    : 'text-neutral-500 hover:text-neutral-900'
+                }`}
+                title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                {darkMode ? <SunIcon className="h-4 w-4" /> : <MoonIcon className="h-4 w-4" />}
+              </button>
             </div>
           </nav>
-          
-          {/* Mobile Sidebar */}
+
+          {/* ── Mobile Sidebar ── */}
           {menuOpen && (
-            <div className="fixed inset-0 z-40 sm:hidden animate-fade-in">
-              <div className="fixed inset-0 bg-black/60 backdrop-blur-md" onClick={toggleMenu}></div>
-              <div className={`fixed left-0 top-0 h-full w-80 bg-white border-r border-gray-200 transform transition-all duration-500 ease-out animate-slide-up ${darkMode ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-gray-200'} shadow-2xl`}>
-                <div className="pt-16 h-full overflow-y-auto">
+            <div className="fixed inset-0 z-40 sm:hidden">
+              <div className="fixed inset-0 bg-black/50" onClick={toggleMenu} />
+              <div className={`fixed left-0 top-0 h-full w-[200px] border-r shadow-xl ${
+                darkMode ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-200'
+              }`}>
+                <div className="pt-9 h-full overflow-y-auto">
                   <SidebarMenu toggleAbout={toggleAbout} onItemClick={toggleMenu} />
                 </div>
               </div>
             </div>
           )}
-          
-          {/* Desktop Sidebar */}
-          <div className={`hidden sm:block fixed left-0 top-16 h-[calc(100vh-4rem)] w-80 bg-white border-r border-gray-200 overflow-y-auto ${darkMode ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-gray-200'}`}>
+
+          {/* ── Desktop Sidebar (200px) ── */}
+          <div className={`hidden sm:flex flex-col fixed left-0 top-9 h-[calc(100vh-2.25rem)] w-[200px] border-r overflow-y-auto ${
+            darkMode ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-200'
+          }`}>
             <SidebarMenu toggleAbout={toggleAbout} />
           </div>
-          
-          {/* Main Content */}
-          <main className={`flex-1 sm:ml-80 pt-16 min-h-screen transition-all duration-300 ${darkMode ? 'bg-gray-50' : 'bg-gray-50'}`}>
-            <div className="max-w mx-auto px-3 py-3">
+
+          {/* ── Main Content ── */}
+          <main className={`flex-1 sm:ml-[200px] pt-9 min-h-screen ${
+            darkMode ? 'bg-neutral-950' : 'bg-neutral-100'
+          }`}>
+            <div className="px-3 py-3 pb-10">
+
+              {/* About panel */}
               {showAbout && (
-                <div className={`card-premium p-12 mb-12 animate-fade-in ${darkMode ? 'bg-neutral-900/80' : 'bg-white/80'} border ${darkMode ? 'border-neutral-800/50' : 'border-neutral-200/50'} shadow-xl`}>
-                  <div className="flex items-center space-x-4 mb-8">
-                    <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-accent-500 rounded-2xl flex items-center justify-center shadow-lg">
-                      <span className="text-white font-bold text-2xl">ez</span>
+                <div className={`card mb-3 p-4 animate-fade-in`}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-accent-500 rounded-lg flex items-center justify-center">
+                      <span className="text-white font-bold text-xs">EZ</span>
                     </div>
                     <div>
-                      <h2 className={`text-3xl font-bold tracking-tight mb-2 ${darkMode ? 'text-white' : 'text-neutral-900'}`}>
-                        About ezPM2GUI
+                      <h2 className={`text-base font-semibold ${darkMode ? 'text-white' : 'text-neutral-900'}`}>
+                        About EZ PM2 GUI
                       </h2>
-                      <p className={`text-lg ${darkMode ? 'text-neutral-400' : 'text-neutral-600'}`}>
-                        Professional Process Management Interface
-                      </p>
+                      <p className="text-xs text-neutral-500">v1.0.0 · Chandan Bhagat</p>
                     </div>
                   </div>
-                  <p className={`mb-6 text-lg leading-relaxed ${darkMode ? 'text-neutral-300' : 'text-neutral-700'}`}>
-                    Version: 1.0.0
-                  </p>
-                  <p className={`mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Created by: Chandan Bhagat
-                  </p>
-                  <p className={`mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Features:
-                  </p>
-                  <ul className={`list-disc pl-6 mb-4 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    <li>Monitor and manage PM2 processes</li>
-                    <li>Real-time logs and metrics</li>
-                    <li>Deploy new applications</li>
-                    <li>Configure ecosystem files</li>
-                    <li>Cluster management</li>
-                    <li>Dark mode support</li>
+                  <ul className={`text-xs space-y-0.5 list-disc pl-4 mb-3 ${darkMode ? 'text-neutral-400' : 'text-neutral-600'}`}>
+                    <li>Monitor and manage PM2 processes in real-time</li>
+                    <li>Deploy new apps, configure ecosystems, manage clusters</li>
+                    <li>Remote server SSH connections with live logs</li>
+                    <li>Cron job scheduling and dark-mode support</li>
                   </ul>
-                  <p className={`${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    GitHub:&nbsp;
-                    <a 
-                      href="https://github.com/thechandanbhagat/ezpm2gui" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-blue-500 hover:text-blue-600 underline"
-                    >
-                      GitHub Repository
-                    </a>
-                  </p>
+                  <a
+                    href="https://github.com/thechandanbhagat/ezpm2gui"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-primary-500 hover:underline"
+                  >
+                    GitHub Repository ↗
+                  </a>
                 </div>
               )}
 
+              {/* Error banner */}
               {error && (
-                <div className="bg-danger-100 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800/50 text-danger-800 dark:text-danger-400 px-6 py-4 rounded-xl mb-8 animate-fade-in">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-danger-500 rounded-full animate-pulse"></div>
-                    <span className="font-medium">{error}</span>
-                  </div>
+                <div className="flex items-center gap-2 text-xs font-medium text-danger-700 dark:text-danger-400 bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800/50 rounded-md px-3 py-2 mb-3">
+                  <div className="w-1.5 h-1.5 bg-danger-500 rounded-full animate-pulse shrink-0" />
+                  {error}
                 </div>
-              )}              <Routes>
+              )}
+
+              <Routes>
                 <Route path="/" element={
                   <MainDashboard
                     processes={filteredProcesses}
@@ -504,7 +569,6 @@ const App: React.FC = () => {
                     fetchData();
                   }}
                 />} />
-                <Route path="/enhanced-logs" element={<RemoteEnhancedLogManagement />} />
                 <Route path="/remote" element={<RemoteConnections />} />
                 <Route path="/deploy" element={<DeployApplication />} />
                 <Route path="/modules" element={<ModuleManagement />} />
@@ -527,11 +591,11 @@ const App: React.FC = () => {
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/load-balancing-guide" element={<LoadBalancingGuide />} />
               </Routes>
-            </div>
+            </div>{/* /px-3 py-3 */}
           </main>
         </div>
 
-        <ConfirmationDialog 
+        <ConfirmationDialog
           isOpen={confirmationDialog.isOpen}
           title={confirmationDialog.title}
           message={confirmationDialog.message}
@@ -541,6 +605,7 @@ const App: React.FC = () => {
         />
       </div>
     </Router>
+    </ThemeProvider>
   );
 };
 
