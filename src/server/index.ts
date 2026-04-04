@@ -84,44 +84,37 @@ export function createServer() {
   });
   
   // Action endpoints (start, stop, restart, delete)
-  app.post('/api/process/:id/:action', (req, res) => {
+  app.post('/api/process/:id/:action', async (req, res) => {
     const { id, action } = req.params;
-    
-    pm2.connect((err) => {
-      if (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Failed to connect to PM2' });
-        return;
-      }
 
-      const processAction = (actionName: string, cb: (err: Error | null) => void) => {
-        switch (actionName) {
+    const validActions = ['start', 'stop', 'restart', 'delete'];
+    if (!validActions.includes(action)) {
+      res.status(400).json({ error: 'Invalid action' });
+      return;
+    }
+
+    try {
+      await executePM2Command((callback) => {
+        switch (action) {
           case 'start':
-            pm2.start(id, cb);
+            pm2.start(id, callback);
             break;
           case 'stop':
-            pm2.stop(id, cb);
+            pm2.stop(id, callback);
             break;
           case 'restart':
-            pm2.restart(id, cb);
-            break;          case 'delete':
-            (pm2 as any).delete(id, cb);
+            pm2.restart(id, callback);
             break;
-          default:
-            cb(new Error('Invalid action'));
+          case 'delete':
+            (pm2 as any).delete(id, callback);
+            break;
         }
-      };
-
-      processAction(action, (err) => {
-        pm2.disconnect();
-        if (err) {
-          console.error(err);
-          res.status(500).json({ error: `Failed to ${action} process` });
-          return;
-        }
-        res.json({ success: true, message: `Process ${id} ${action} request received` });
       });
-    });
+      res.json({ success: true, message: `Process ${id} ${action} request received` });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: `Failed to ${action} process` });
+    }
   });
   
   // Get system metrics
@@ -141,86 +134,66 @@ export function createServer() {
   });
 
   // Get process logs
-  app.get('/api/logs/:id/:type', (req, res) => {
+  app.get('/api/logs/:id/:type', async (req, res) => {
     const { id, type } = req.params;
     const logType = type === 'err' ? 'err' : 'out';
-    
-    pm2.connect((err) => {
-      if (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Failed to connect to PM2' });
+
+    try {
+      const processDesc = await executePM2Command<any[]>((callback) => {
+        pm2.describe(id, callback);
+      });
+
+      if (!processDesc || processDesc.length === 0) {
+        res.status(404).json({ error: 'Process not found' });
         return;
       }
 
-      pm2.describe(id, (err, processDesc: any) => {
-        if (err || !processDesc || processDesc.length === 0) {
-          pm2.disconnect();
-          res.status(404).json({ error: 'Process not found' });
-          return;
-        }
+      const logPath = processDesc[0]?.pm2_env?.[`pm_${logType}_log_path`];
 
-        const logPath = processDesc[0]?.pm2_env?.[`pm_${logType}_log_path`];
-        
-        if (!logPath) {
-          pm2.disconnect();
-          res.status(404).json({ error: `Log file for ${logType} not found` });
-          return;
-        }
+      if (!logPath) {
+        res.status(404).json({ error: `Log file for ${logType} not found` });
+        return;
+      }
 
-        try {
-          // Read the log file using Node.js fs instead of exec
-          const fs = require('fs');
-          let logContent = '';
-          
-          if (fs.existsSync(logPath)) {
-            // Read the last part of the file (up to 10KB to avoid huge responses)
-            const stats = fs.statSync(logPath);
-            const fileSize = stats.size;
-            const readSize = Math.min(fileSize, 10 * 1024); // 10KB max
-            const position = Math.max(0, fileSize - readSize);
-            
-            const buffer = Buffer.alloc(readSize);
-            const fd = fs.openSync(logPath, 'r');
-            fs.readSync(fd, buffer, 0, readSize, position);
-            fs.closeSync(fd);
-            
-            logContent = buffer.toString('utf8');
-          }
-          
-          const logs = logContent.split('\n').filter((line: string) => line.trim() !== '');
-          
-          pm2.disconnect();
-          res.json({ logs });
-        } catch (error) {
-          console.error(`Error reading log file: ${error}`);
-          pm2.disconnect();
-          res.status(500).json({ error: 'Failed to read log file' });
-        }
-      });
-    });
+      const fs = require('fs');
+      let logContent = '';
+
+      if (fs.existsSync(logPath)) {
+        const stats = fs.statSync(logPath);
+        const fileSize = stats.size;
+        const readSize = Math.min(fileSize, 10 * 1024); // 10KB max
+        const position = Math.max(0, fileSize - readSize);
+
+        const buffer = Buffer.alloc(readSize);
+        const fd = fs.openSync(logPath, 'r');
+        fs.readSync(fd, buffer, 0, readSize, position);
+        fs.closeSync(fd);
+
+        logContent = buffer.toString('utf8');
+      }
+
+      const logs = logContent.split('\n').filter((line: string) => line.trim() !== '');
+      res.json({ logs });
+    } catch (err) {
+      console.error(`Error reading log file: ${err}`);
+      res.status(500).json({ error: 'Failed to read log file' });
+    }
   });
   
   // WebSocket for real-time updates
   io.on('connection', (socket) => {
     console.log('Client connected');
-    
-    // Send process updates every 3 seconds
-    const processInterval = setInterval(() => {
-      pm2.connect((err) => {
-        if (err) {
-          console.error(err);
-          return;
-        }
 
-        pm2.list((err, processList) => {
-          pm2.disconnect();
-          if (err) {
-            console.error(err);
-            return;
-          }
-          socket.emit('processes', processList);
+    // Send process updates every 3 seconds using shared pooled connection
+    const processInterval = setInterval(async () => {
+      try {
+        const processList = await executePM2Command<any[]>((callback) => {
+          pm2.list(callback);
         });
-      });
+        socket.emit('processes', processList);
+      } catch (err) {
+        console.error('Failed to list PM2 processes:', err);
+      }
     }, 3000);
 
     // Send system metrics every 2 seconds

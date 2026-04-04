@@ -1,179 +1,114 @@
 import React, { useState } from 'react';
 import {
-  Box,
-  Paper,
-  Typography,
-  Divider,
-  Grid,
-  Card,
-  CardContent,
-  CardHeader,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Alert,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Button
+  Box, Paper, Typography, Grid, Card, CardContent,
+  List, ListItem, ListItemIcon, ListItemText,
+  Accordion, AccordionSummary, AccordionDetails, Button
 } from '@mui/material';
 import {
-  BubbleChart as BubbleChartIcon,
-  Speed as SpeedIcon,
-  DeviceHub as DeviceHubIcon,
-  ExpandMore as ExpandMoreIcon,
-  Code as CodeIcon,
-  Update as UpdateIcon,
-  Settings as SettingsIcon
+  BubbleChart as BubbleChartIcon, Speed as SpeedIcon,
+  DeviceHub as DeviceHubIcon, ExpandMore as ExpandMoreIcon,
+  Code as CodeIcon, Update as UpdateIcon, Settings as SettingsIcon
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
+import PageHeader from './PageHeader';
 
+// @group LoadBalancingGuide : PM2 load balancing reference guide
 const LoadBalancingGuide: React.FC = () => {
+  const navigate = useNavigate();
   const [expanded, setExpanded] = useState<string | false>('panel1');
+  const toggle = (panel: string) => (_: React.SyntheticEvent, open: boolean) =>
+    setExpanded(open ? panel : false);
 
-  const handleChange = (panel: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
-    setExpanded(isExpanded ? panel : false);
-  };
-
+  // @group Render : Guide layout with accordions
   return (
     <Box>
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h5" gutterBottom>PM2 Load Balancing Guide</Typography>
-        <Divider sx={{ mb: 3 }} />
-        
-        <Alert severity="info" sx={{ mb: 3 }}>
-          <Typography variant="body1">
-            PM2 provides built-in load balancing capabilities for Node.js applications.
-            This guide will help you understand how to set it up and use it effectively.
-          </Typography>
-        </Alert>
-        
-        <Accordion expanded={expanded === 'panel1'} onChange={handleChange('panel1')}>
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-          >
-            <Typography variant="h6">What is PM2 Load Balancing?</Typography>
+      <PageHeader
+        title="Load Balancing Guide"
+        subtitle="How to set up PM2 cluster mode and distribute traffic across CPU cores"
+        actions={
+          <Button variant="outlined" onClick={() => navigate('/cluster')}>
+            Go to Cluster Management
+          </Button>
+        }
+      />
+
+      <Paper variant="outlined" sx={{ p: 2 }}>
+        <Accordion expanded={expanded === 'panel1'} onChange={toggle('panel1')} disableGutters elevation={0}>
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>What is PM2 Load Balancing?</Typography>
           </AccordionSummary>
-          <AccordionDetails>
-            <Typography variant="body1" paragraph>
-              PM2 Load Balancing allows your application to handle more traffic by creating multiple instances of your application
-              that work together. This is particularly useful for:
+          <AccordionDetails sx={{ pt: 0 }}>
+            <Typography variant="body2" color="text.secondary" paragraph>
+              PM2 load balancing creates multiple instances of your app that share the same port,
+              distributing requests across all instances automatically. Useful for:
             </Typography>
-            <List>
-              <ListItem>
-                <ListItemIcon><SpeedIcon /></ListItemIcon>
-                <ListItemText primary="Improving performance by utilizing all CPU cores" />
-              </ListItem>
-              <ListItem>
-                <ListItemIcon><DeviceHubIcon /></ListItemIcon>
-                <ListItemText primary="Distributing incoming requests across multiple instances" />
-              </ListItem>
-              <ListItem>
-                <ListItemIcon><UpdateIcon /></ListItemIcon>
-                <ListItemText primary="Enabling zero-downtime reloads and updates" />
-              </ListItem>
+            <List dense disablePadding>
+              {[
+                [SpeedIcon,      'Utilise all CPU cores for maximum throughput'],
+                [DeviceHubIcon,  'Distribute incoming requests across worker processes'],
+                [UpdateIcon,     'Enable zero-downtime reloads during deployments'],
+              ].map(([Icon, text]: any, i) => (
+                <ListItem key={i} sx={{ py: 0.25, px: 0 }}>
+                  <ListItemIcon sx={{ minWidth: 32 }}><Icon fontSize="small" /></ListItemIcon>
+                  <ListItemText primary={<Typography variant="body2">{text}</Typography>} />
+                </ListItem>
+              ))}
             </List>
           </AccordionDetails>
         </Accordion>
-        
-        <Accordion expanded={expanded === 'panel2'} onChange={handleChange('panel2')}>
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-          >
-            <Typography variant="h6">How to Set Up Load Balancing</Typography>
+
+        <Accordion expanded={expanded === 'panel2'} onChange={toggle('panel2')} disableGutters elevation={0}>
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Setting Up Load Balancing</Typography>
           </AccordionSummary>
-          <AccordionDetails>
-            <Typography variant="body1" paragraph>
-              Setting up load balancing with PM2 requires two key settings:
+          <AccordionDetails sx={{ pt: 0 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Two settings are required in your ecosystem.config.js:
             </Typography>
-            
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <Card variant="outlined">
-                  <CardHeader title="Multiple Instances" />
-                  <CardContent>
-                    <Typography variant="body2" paragraph>
-                      Set the number of instances greater than 1 to create multiple workers.
-                      Use 0 or -1 to automatically use all available CPU cores.
-                    </Typography>
-                    <Box sx={{ p: 1, bgcolor: 'grey.100', borderRadius: 1 }}>
-                      <Typography variant="body2" component="code">
-                        "instances": 4  // or -1 for max
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-              
-              <Grid item xs={12} md={6}>
-                <Card variant="outlined">
-                  <CardHeader title="Cluster Mode" />
-                  <CardContent>
-                    <Typography variant="body2" paragraph>
-                      Set the execution mode to "cluster" to allow all instances to share the same server port.
-                    </Typography>
-                    <Box sx={{ p: 1, bgcolor: 'grey.100', borderRadius: 1 }}>
-                      <Typography variant="body2" component="code">
-                        "exec_mode": "cluster"
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
+            <Grid container spacing={2}>
+              {[
+                { title: 'Multiple Instances', desc: 'Set instances > 1 to create workers. Use -1 to match CPU core count.', code: '"instances": 4  // or -1 for max' },
+                { title: 'Cluster Mode',       desc: 'Allow all instances to share the same server port.', code: '"exec_mode": "cluster"' },
+              ].map(({ title, desc, code }) => (
+                <Grid item xs={12} md={6} key={title}>
+                  <Card variant="outlined">
+                    <CardContent sx={{ pb: '12px !important' }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>{title}</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>{desc}</Typography>
+                      <Box sx={{ p: 1, borderRadius: 1, bgcolor: 'action.hover', fontFamily: 'monospace', fontSize: '0.8125rem' }}>
+                        {code}
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
             </Grid>
           </AccordionDetails>
         </Accordion>
-        
-        <Accordion expanded={expanded === 'panel3'} onChange={handleChange('panel3')}>
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-          >
-            <Typography variant="h6">Best Practices</Typography>
+
+        <Accordion expanded={expanded === 'panel3'} onChange={toggle('panel3')} disableGutters elevation={0}>
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Best Practices</Typography>
           </AccordionSummary>
-          <AccordionDetails>
-            <List>
-              <ListItem>
-                <ListItemIcon><SettingsIcon /></ListItemIcon>
-                <ListItemText 
-                  primary="Number of Instances" 
-                  secondary="For CPU-bound applications, use a number equal to your CPU cores. For I/O-bound applications, you can use more."
-                />
-              </ListItem>
-              <ListItem>
-                <ListItemIcon><CodeIcon /></ListItemIcon>
-                <ListItemText 
-                  primary="Application Design" 
-                  secondary="Ensure your application is stateless or uses external state storage like Redis for session management."
-                />
-              </ListItem>
-              <ListItem>
-                <ListItemIcon><BubbleChartIcon /></ListItemIcon>
-                <ListItemText 
-                  primary="Memory Management" 
-                  secondary="Monitor memory usage and set appropriate max_memory_restart limits to prevent memory leaks."
-                />
-              </ListItem>
-              <ListItem>
-                <ListItemIcon><UpdateIcon /></ListItemIcon>
-                <ListItemText 
-                  primary="Zero-downtime Updates" 
-                  secondary="Use the reload feature instead of restart to update your application without disrupting service."
-                />
-              </ListItem>
+          <AccordionDetails sx={{ pt: 0 }}>
+            <List dense disablePadding>
+              {[
+                [SettingsIcon,      'Instances',       'Match CPU cores for CPU-bound apps. I/O-bound apps can use more.'],
+                [CodeIcon,          'Stateless Design','Keep app stateless or use Redis for shared session storage.'],
+                [BubbleChartIcon,   'Memory Limits',   'Set max_memory_restart to automatically cycle processes with leaks.'],
+                [UpdateIcon,        'Zero-downtime',   'Use pm2 reload (not restart) to update without dropping connections.'],
+              ].map(([Icon, primary, secondary]: any) => (
+                <ListItem key={primary} sx={{ py: 0.5, px: 0 }}>
+                  <ListItemIcon sx={{ minWidth: 32 }}><Icon fontSize="small" /></ListItemIcon>
+                  <ListItemText
+                    primary={<Typography variant="body2" sx={{ fontWeight: 500 }}>{primary}</Typography>}
+                    secondary={<Typography variant="caption" color="text.secondary">{secondary}</Typography>}
+                  />
+                </ListItem>
+              ))}
             </List>
           </AccordionDetails>
         </Accordion>
-        
-        <Grid container sx={{ mt: 3 }}>
-          <Grid item>
-            <Button
-              variant="contained"
-              color="primary"              href="/processes"
-            >
-              Go to Process List
-            </Button>
-          </Grid>
-        </Grid>
       </Paper>
     </Box>
   );

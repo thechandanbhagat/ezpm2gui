@@ -106,20 +106,19 @@ export const disconnectFromPM2 = (): Promise<void> => {
  * This will connect to PM2 if needed, run the command,
  * and properly handle the result
  */
-export const executePM2Command = async <T>(
+// @group ConnectionPool : Execute a PM2 command using the shared pooled connection
+export const executePM2Command = async <T = any>(
   command: (callback: (err: Error | null, result?: T) => void) => void
 ): Promise<T> => {
   try {
     await connectToPM2();
-    
+
     return new Promise<T>((resolve, reject) => {
       command((err, result) => {
         if (err) {
           reject(err);
-        } else if (result === undefined) {
-          reject(new Error('PM2 command returned undefined result'));
         } else {
-          resolve(result);
+          resolve(result as T);
         }
       });
     });

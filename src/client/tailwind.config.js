@@ -101,17 +101,18 @@ module.exports = {
         mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
       },
       fontSize: {
-        'xs': ['0.75rem', { lineHeight: '1rem' }],
-        'sm': ['0.875rem', { lineHeight: '1.25rem' }],
-        'base': ['1rem', { lineHeight: '1.5rem' }],
-        'lg': ['1.125rem', { lineHeight: '1.75rem' }],
-        'xl': ['1.25rem', { lineHeight: '1.75rem' }],
-        '2xl': ['1.5rem', { lineHeight: '2rem' }],
-        '3xl': ['1.875rem', { lineHeight: '2.25rem' }],
+        'xs':   ['0.75rem',   { lineHeight: '1rem' }],      // 12px — labels, badges
+        'sm':   ['0.8125rem', { lineHeight: '1.25rem' }],   // 13px — secondary text
+        'base': ['0.875rem',  { lineHeight: '1.375rem' }],  // 14px — body / table cells
+        'lg':   ['0.9375rem', { lineHeight: '1.5rem' }],    // 15px — sub-headings
+        'xl':   ['1rem',      { lineHeight: '1.5rem' }],    // 16px — headings
+        '2xl':  ['1.0625rem', { lineHeight: '1.625rem' }],  // 17px — section titles
+        '3xl':  ['1.1875rem', { lineHeight: '1.75rem' }],   // 19px — page titles
+        '4xl':  ['1.3125rem', { lineHeight: '1.875rem' }],  // 21px — hero text only
       },
       spacing: {
-        '18': '4.5rem',
-        '88': '22rem',
+        '18':  '4.5rem',
+        '88':  '22rem',
         '112': '28rem',
         '128': '32rem',
       },

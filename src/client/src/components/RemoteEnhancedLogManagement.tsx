@@ -485,11 +485,13 @@ const RemoteEnhancedLogManagement: React.FC = () => {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          Remote Enhanced Log Management
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 1 }}>
+      {/* Page header using shared component — import not needed, inline for MUI context */}
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-200 dark:border-neutral-800">
+        <div>
+          <h1 className="text-base font-semibold text-neutral-900 dark:text-neutral-100 leading-tight">Enhanced Logs</h1>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">Unified log viewer across local and remote servers</p>
+        </div>
+        <Box sx={{ display: 'flex', gap: 0.5 }}>
           <Button
             variant={isStreaming ? 'contained' : 'outlined'}
             color={isStreaming ? 'error' : 'primary'}
@@ -497,19 +499,13 @@ const RemoteEnhancedLogManagement: React.FC = () => {
             startIcon={isStreaming ? <PauseIcon /> : <PlayIcon />}
             disabled={filters.serverIds.length === 0}
           >
-            {isStreaming ? 'Stop Stream' : 'Start Stream'}
+            {isStreaming ? 'Stop' : 'Stream'}
           </Button>
-          <IconButton onClick={fetchLogs} disabled={loading}>
-            <RefreshIcon />
-          </IconButton>
-          <IconButton onClick={clearLogs}>
-            <ClearIcon />
-          </IconButton>
-          <IconButton onClick={downloadLogs} disabled={filteredLogs.length === 0}>
-            <DownloadIcon />
-          </IconButton>
+          <IconButton onClick={fetchLogs} disabled={loading}><RefreshIcon fontSize="small" /></IconButton>
+          <IconButton onClick={clearLogs}><ClearIcon fontSize="small" /></IconButton>
+          <IconButton onClick={downloadLogs} disabled={filteredLogs.length === 0}><DownloadIcon fontSize="small" /></IconButton>
         </Box>
-      </Box>
+      </div>
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
@@ -526,7 +522,7 @@ const RemoteEnhancedLogManagement: React.FC = () => {
       {selectedTab === 0 && (
         <>
           {/* Enhanced Filters */}
-          <Paper sx={{ p: 2, mb: 2 }}>
+          <Paper variant="outlined" sx={{ p: 1.5, mb: 1.5 }}>
             <Grid container spacing={2} alignItems="center">
               <Grid item xs={12} md={3}>
                 <TextField
@@ -672,7 +668,7 @@ const RemoteEnhancedLogManagement: React.FC = () => {
           </Paper>
 
           {/* Log Display */}
-          <Paper sx={{ height: 600, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <Paper variant="outlined" sx={{ height: 'calc(100vh - 380px)', minHeight: 300, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
               <Typography variant="h6">
                 Logs ({filteredLogs.length})
@@ -721,52 +717,36 @@ const RemoteEnhancedLogManagement: React.FC = () => {
                       key={log.id}
                       sx={{
                         display: 'flex',
-                        alignItems: 'flex-start',
+                        alignItems: 'baseline',
                         gap: 1,
-                        py: 0.5,
+                        py: 0.25,
                         px: 1,
                         borderBottom: '1px solid',
                         borderColor: 'divider',
-                        '&:hover': {
-                          backgroundColor: 'action.hover'
-                        }
+                        '&:hover': { backgroundColor: 'action.hover' }
                       }}
                     >
+                      {/* Timestamp */}
+                      <Typography variant="caption" sx={{ color: 'text.disabled', whiteSpace: 'nowrap', minWidth: 56 }}>
+                        {log.timestamp.toLocaleTimeString()}
+                      </Typography>
+                      {/* Server · Process */}
+                      <Typography variant="caption" sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}>
+                        {log.serverName}/{log.processName}
+                      </Typography>
+                      {/* Level icon */}
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        {getLogLevelIcon(log.level)}
+                      </Box>
+                      {/* Content */}
                       <Typography
                         variant="caption"
                         sx={{
-                          minWidth: 60,
-                          color: 'text.secondary',
-                          fontSize: '0.75rem'
-                        }}
-                      >
-                        {log.timestamp.toLocaleTimeString()}
-                      </Typography>
-                      
-                      <Chip
-                        label={log.serverName}
-                        size="small"
-                        icon={getServerIcon(log.isRemote)}
-                        sx={{ minWidth: 100, fontSize: '0.7rem' }}
-                        color={log.isRemote ? 'primary' : 'secondary'}
-                      />
-                      
-                      <Chip
-                        label={log.processName}
-                        size="small"
-                        sx={{ minWidth: 80, fontSize: '0.7rem' }}
-                      />
-                      
-                      <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 20 }}>
-                        {getLogLevelIcon(log.level)}
-                      </Box>
-                      
-                      <Typography
-                        sx={{
                           flex: 1,
                           whiteSpace: 'pre-wrap',
-                          wordBreak: 'break-word',
-                          color: log.type === 'err' ? 'error.main' : 'text.primary'
+                          wordBreak: 'break-all',
+                          color: log.type === 'err' ? 'error.main' : 'text.primary',
+                          fontFamily: 'monospace',
                         }}
                       >
                         {log.content}

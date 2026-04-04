@@ -39,10 +39,10 @@ const getLogStream = (io: any, processId: string, logType: string) => {
       // Setup event handlers
       tail.stdout.on('data', (data) => {
         const lines = data.toString().split('\n').filter((line: string) => line.trim() !== '');
-        
+
         lines.forEach((line: string) => {
-          // Emit log line to all connected clients
-          io.emit('log-line', {
+          // Emit only to clients subscribed to this specific log stream
+          io.to(streamKey).emit('log-line', {
             processId,
             logType,
             line
@@ -80,19 +80,26 @@ const getRemoteLogStream = async (io: any, connectionId: string, processId: stri
     throw new Error('Connection not found or not connected');
   }
 
-  // Get process info to find log paths
+  // Get process info using the multi-path fallback so pm2 is found regardless of PATH
   console.log(`Getting process info for: ${processId}`);
-  const processInfoResult = await connection.executeCommand(`pm2 jlist`, false); // Don't use sudo for listing
+  const processInfoResult = await connection.executePM2Command('jlist');
   if (processInfoResult.code !== 0) {
     throw new Error(`Failed to get process list: ${processInfoResult.stderr}`);
   }
 
+  // Extract JSON from output (pm2 jlist may prefix with non-JSON lines)
+  let rawOutput = processInfoResult.stdout.trim();
+  const startIdx = rawOutput.indexOf('[');
+  const endIdx = rawOutput.lastIndexOf(']') + 1;
+  if (startIdx !== -1 && endIdx > 0) {
+    rawOutput = rawOutput.substring(startIdx, endIdx);
+  }
+
   let processInfo;
   try {
-    const processList = JSON.parse(processInfoResult.stdout);
+    const processList = JSON.parse(rawOutput);
     console.log(`Found ${processList.length} processes`);
-    
-    // Find the process by ID
+
     processInfo = processList.find((proc: any) => proc.pm_id === parseInt(processId));
     if (!processInfo) {
       throw new Error(`Process with ID ${processId} not found`);
@@ -101,17 +108,19 @@ const getRemoteLogStream = async (io: any, connectionId: string, processId: stri
   } catch (parseError) {
     console.error('Parse error:', parseError);
     throw new Error(`Failed to parse process list: ${parseError}`);
-  }  const processName = processInfo.name;
+  }
+
+  const processName = processInfo.name;
 
   // Create streams using pm2 logs instead of tail for better permission handling
   const streams: any = {};
   try {
     console.log(`Setting up pm2 logs stream for process: ${processName} (ID: ${processId})`);
-    
-    // Use pm2 logs with --lines 0 --raw to stream only new logs
-    // Use sudo since PM2 processes are running as root
-    const pm2LogsCommand = `pm2 logs ${processId} --lines 0 --raw`;
-    console.log(`About to create pm2 log stream with command: ${pm2LogsCommand} (using sudo)`);
+
+    // Use the resolved pm2 invocation (cached from the jlist call above) so the
+    // same shell/path that successfully ran pm2 jlist is reused here.
+    const pm2LogsCommand = connection.buildPM2StreamCommand(`logs ${processId} --lines 0 --raw`);
+    console.log(`About to create pm2 log stream with command: ${pm2LogsCommand}`);
     
     const logStream = await connection.createLogStream(pm2LogsCommand, true);
     console.log(`Successfully created pm2 logs stream for ${processName}`);
@@ -172,7 +181,8 @@ const getRemoteLogStream = async (io: any, connectionId: string, processId: stri
         }
         
         console.log(`Emitting remote-log-line for ${connectionId}-${processId} (${logType}):`, cleanLine);
-        io.emit('remote-log-line', {
+        // Emit only to clients subscribed to this specific remote log stream
+        io.to(streamKey).emit('remote-log-line', {
           connectionId,
           processId,
           processName,
@@ -184,7 +194,7 @@ const getRemoteLogStream = async (io: any, connectionId: string, processId: stri
     
     logStream.on('error', (error: any) => {
       console.error(`Error in pm2 logs stream for ${processName}:`, error);
-      io.emit('remote-log-error', {
+      io.to(streamKey).emit('remote-log-error', {
         connectionId,
         processId,
         processName,
@@ -197,8 +207,9 @@ const getRemoteLogStream = async (io: any, connectionId: string, processId: stri
     });
     
     streams.combined = logStream;
-  } catch (error) {    console.error(`Failed to create pm2 logs stream for ${processName}:`, error);
-    io.emit('remote-log-error', {
+  } catch (error) {
+    console.error(`Failed to create pm2 logs stream for ${processName}:`, error);
+    io.to(streamKey).emit('remote-log-error', {
       connectionId,
       processId,
       processName,

@@ -14,6 +14,7 @@ interface MainDashboardProps {
   onProcessAction: (id: number, action: string) => void;
 }
 
+// @group MainDashboard : Process dashboard page with metrics and process list
 const MainDashboard: React.FC<MainDashboardProps> = ({
   processes,
   metrics,
@@ -23,50 +24,62 @@ const MainDashboard: React.FC<MainDashboardProps> = ({
   onStatusFilterChange,
   onProcessAction
 }) => {
+  const onlineCount = processes.filter(p => p.pm2_env?.status === 'online').length;
+
   return (
     <div className="space-y-4">
-      {/* Dashboard Header - Compact */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+
+      {/* Dashboard Header */}
+      <div className="bg-white dark:bg-neutral-900 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-800 p-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">
+            <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
               Process Dashboard
             </h1>
-            <p className="text-gray-600 mt-0.5 text-xs">
+            <p className="text-neutral-500 dark:text-neutral-400 mt-0.5 text-xs">
               Monitor and manage your PM2 processes in real-time
             </p>
           </div>
           <div className="mt-2 sm:mt-0">
-            <div className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-              {processes.filter(p => p.pm2_env?.status === 'online').length} active / {processes.length} total
+            <div className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary-100 dark:bg-primary-900/25 text-primary-800 dark:text-primary-400">
+              {onlineCount} active / {processes.length} total
             </div>
           </div>
         </div>
       </div>
 
-      {/* Search and Filter Bar - Compact */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
+      {/* Search and Filter Bar */}
+      <div className="bg-white dark:bg-neutral-900 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-800 p-3">
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1">
             <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+              <MagnifyingGlassIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400 dark:text-neutral-500" />
               <input
                 type="text"
                 placeholder="Search processes by name or ID..."
                 value={searchTerm}
                 onChange={onSearchChange}
-                className="w-full pl-8 pr-3 py-1.5 border border-gray-300 rounded-md text-xs text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-8 pr-3 py-1.5 border border-neutral-300 dark:border-neutral-700 rounded-md text-xs
+                           bg-white dark:bg-neutral-800
+                           text-neutral-900 dark:text-neutral-100
+                           placeholder-neutral-400 dark:placeholder-neutral-500
+                           focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500
+                           transition-colors duration-150"
               />
             </div>
           </div>
-          
+
           <div className="sm:w-40">
             <div className="relative">
-              <FunnelIcon className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+              <FunnelIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400 dark:text-neutral-500 pointer-events-none" />
               <select
                 value={statusFilter}
                 onChange={onStatusFilterChange}
-                className="w-full pl-8 pr-6 py-1.5 border border-gray-300 rounded-md text-xs text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent cursor-pointer"
+                className="w-full pl-8 pr-6 py-1.5 border border-neutral-300 dark:border-neutral-700 rounded-md text-xs
+                           bg-white dark:bg-neutral-800
+                           text-neutral-900 dark:text-neutral-100
+                           focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500
+                           cursor-pointer transition-colors duration-150"
               >
                 <option value="all">All Processes</option>
                 <option value="online">Online Only</option>
@@ -78,18 +91,18 @@ const MainDashboard: React.FC<MainDashboardProps> = ({
         </div>
       </div>
 
-      {/* Main Content Grid - Compact */}
+      {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* System Metrics - Compact */}
+        {/* System Metrics */}
         <div className="lg:col-span-1">
           <SystemMetrics metrics={metrics} />
         </div>
-        
-        {/* Process List - Compact */}
+
+        {/* Process List */}
         <div className="lg:col-span-2">
-          <ProcessList 
-            processes={processes} 
-            onAction={onProcessAction} 
+          <ProcessList
+            processes={processes}
+            onAction={onProcessAction}
           />
         </div>
       </div>

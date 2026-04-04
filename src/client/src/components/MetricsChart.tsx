@@ -47,8 +47,6 @@ interface MetricPoint {
 
 const MetricsChart: React.FC<MetricsChartProps> = ({ processId, initialData }) => {
   const [metrics, setMetrics] = useState<MetricPoint[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string>('');
 
   // Helper function to format memory usage
   const formatMemory = (bytes: number): string => {
@@ -87,11 +85,8 @@ const MetricsChart: React.FC<MetricsChartProps> = ({ processId, initialData }) =
             return newMetrics;
           });
         }
-        setLoading(false);
       } catch (err) {
         console.error('Error fetching metrics:', err);
-        setError(`Failed to fetch metrics: ${err instanceof Error ? err.message : 'Unknown error'}`);
-        setLoading(false);
       }
     }, 2000);
 
