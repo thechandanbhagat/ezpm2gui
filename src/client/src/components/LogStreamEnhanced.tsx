@@ -27,6 +27,7 @@ import {
 } from '@mui/icons-material';
 import axios from 'axios';
 import { io } from 'socket.io-client';
+import PageHeader from './PageHeader';
 
 interface LogStreamEnhancedProps {
   processId?: number | string;
@@ -206,12 +207,10 @@ const LogStreamEnhanced: React.FC<LogStreamEnhancedProps> = ({ processId: propPr
 
   return (
     <Box>
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'center' }, mb: 2 }}>
-          <Typography variant="h6" sx={{ mb: { xs: 2, md: 0 }}}>
-            Log Streaming
-          </Typography>
-          
+      <PageHeader
+        title="Log Streaming"
+        subtitle="Live stdout and stderr output for any running process"
+        actions={
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
             <FormControl sx={{ minWidth: 150 }} size="small">
               <InputLabel>Process</InputLabel>
@@ -251,9 +250,10 @@ const LogStreamEnhanced: React.FC<LogStreamEnhancedProps> = ({ processId: propPr
               {isStreaming ? 'Stop' : 'Start'} Stream
             </Button>
           </Box>
-        </Box>
-        
-        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: 'center', mb: 2, gap: 1 }}>
+        }
+      />
+      <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: 'center', mb: 1.5, gap: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
             <SearchIcon sx={{ color: 'action.active', mr: 1 }} />
             <TextField
