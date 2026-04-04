@@ -19,16 +19,12 @@ router.post('/:connectionId/connect', async (req, res) => {
       });
     }
     
-    // Connect to the remote server
+    // Establish the SSH connection only — PM2 detection happens lazily
+    // when processes are first requested, avoiding a slow multi-command
+    // pre-check that causes browser timeouts on the connect button.
     await connection.connect();
-    
-    // Check if PM2 is installed
-    const isPM2Installed = await connection.checkPM2Installation();
-    
-    res.json({
-      success: true,
-      isPM2Installed
-    });  } catch (error) {
+
+    res.json({ success: true });  } catch (error) {
     console.error('Connection error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     res.status(500).json({
@@ -510,29 +506,38 @@ router.get('/:connectionId/logs/:processId', async (req, res) => {
         success: false,
         error: 'Connection not established'
       });
-    }    // Get log paths from PM2 process info
-    const processInfoResult = await connection.executeCommand(`pm2 show ${processId} --json`);
+    }
+
+    // Get log paths from PM2 process info — use the PATH-fallback executor so
+    // pm2 is found regardless of the remote shell environment (nvm, npm-global, etc.)
+    const processInfoResult = await connection.executePM2Command('jlist');
     if (processInfoResult.code !== 0) {
       return res.status(500).json({
         success: false,
-        error: 'Failed to get process info'
+        error: 'Failed to get PM2 process list'
       });
     }
 
     let processInfo;
     try {
-      processInfo = JSON.parse(processInfoResult.stdout);
-      if (!Array.isArray(processInfo) || processInfo.length === 0) {
+      let raw = processInfoResult.stdout.trim();
+      const start = raw.indexOf('[');
+      const end = raw.lastIndexOf(']') + 1;
+      if (start !== -1 && end > 0) raw = raw.substring(start, end);
+
+      const processList = JSON.parse(raw);
+      processInfo = processList.find((p: any) => p.pm_id === parseInt(processId, 10) || p.name === processId);
+
+      if (!processInfo) {
         return res.status(404).json({
           success: false,
           error: 'Process not found'
         });
       }
-      processInfo = processInfo[0];
     } catch (parseError) {
       return res.status(500).json({
         success: false,
-        error: 'Failed to parse process info'
+        error: 'Failed to parse PM2 process list'
       });
     }
 
@@ -597,8 +602,9 @@ router.get('/connections', async (req, res) => {  try {
       host: conn.host,
       port: conn.port,
       username: conn.username,
-      isConnected: conn.isConnected(),
-      isPM2Installed: conn.isPM2Installed    }));
+      connected: conn.isConnected(),
+      isPM2Installed: conn.isPM2Installed
+    }));
 
     res.json(connectionsList);
   } catch (error) {
@@ -758,33 +764,6 @@ router.post('/:connectionId/install-pm2', async (req, res) => {
     res.status(500).json({
       success: false,
       error: `Failed to install PM2: ${error.message}`
-    });
-  }
-});
-
-/**
- * Delete a connection configuration
- * DELETE /api/remote/connections/:connectionId
- */
-router.delete('/connections/:connectionId', async (req, res) => {
-  try {
-    const { connectionId } = req.params;
-    
-    // Disconnect if connected
-    await remoteConnectionManager.closeConnection(connectionId);
-    
-    // Delete the connection from the manager
-    const success = remoteConnectionManager.deleteConnection(connectionId);
-    
-    if (success) {
-      res.json({ success: true, message: 'Connection deleted' });
-    } else {
-      res.status(404).json({ success: false, error: 'Connection not found' });
-    }
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: `Server error: ${error.message}`
     });
   }
 });
