@@ -279,9 +279,13 @@ const DeployApplication: React.FC = () => {
 
   return (
     <Box component="form" onSubmit={handleSubmit}>
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h5" gutterBottom>Deploy New Application</Typography>
-        <Divider sx={{ mb: 3 }} />        <Grid container spacing={3}>
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-200 dark:border-neutral-800">
+        <div>
+          <h1 className="text-base font-semibold text-neutral-900 dark:text-neutral-100 leading-tight">Deploy Application</h1>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">Start a new process managed by PM2</p>
+        </div>
+      </div>
+      <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>        <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
             <FormControl fullWidth margin="normal">
               <InputLabel>Application Type</InputLabel>
