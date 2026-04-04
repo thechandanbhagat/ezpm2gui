@@ -172,13 +172,11 @@ export class RemoteConnection extends EventEmitter {
 
     // Apply sudo if configured or explicitly requested for this command
     const useElevatedPrivileges = forceSudo || this.config.useSudo;
-    let finalCommand = command;
-    
-    // Only apply sudo if it's requested and we have a password
-    if (useElevatedPrivileges && this.config.password) {
-      finalCommand = `echo '${this.config.password}' | sudo -S ${command}`;
-    }
-      
+    // Use sudo -S so sudo reads the password from stdin instead of piping it in the shell command
+    const finalCommand = (useElevatedPrivileges && this.config.password)
+      ? `sudo -S ${command}`
+      : command;
+
     console.log(`Executing command: ${useElevatedPrivileges ? '[sudo] ' : ''}${command}`);
 
     return new Promise((resolve, reject) => {
@@ -186,6 +184,12 @@ export class RemoteConnection extends EventEmitter {
         if (err) {
           console.error('Error executing command:', err);
           return reject(err);
+        }
+
+        // Write password to sudo's stdin, then close stdin
+        if (useElevatedPrivileges && this.config.password) {
+          channel.stdin.write(this.config.password + '\n');
+          channel.stdin.end();
         }
 
         let stdout = '';
@@ -205,12 +209,6 @@ export class RemoteConnection extends EventEmitter {
         });
 
         channel.on('close', () => {
-          // Remove sudo password from stdout/stderr if present
-          if (useElevatedPrivileges && this.config.password) {
-            stdout = stdout.replace(this.config.password, '[PASSWORD REDACTED]');
-            stderr = stderr.replace(this.config.password, '[PASSWORD REDACTED]');
-          }
-          
           resolve({
             stdout,
             stderr,
@@ -303,31 +301,53 @@ export class RemoteConnection extends EventEmitter {
   }
 
   /**
-   * Execute a PM2 command with proper PATH handling
-   * Tries different methods to find and execute PM2
+   * Ordered list of command builders tried when resolving the pm2 binary.
+   * The index of the first successful builder is cached so that subsequent
+   * calls (including streaming commands) reuse the same invocation.
    */
-  private async executePM2Command(pm2Args: string): Promise<CommandResult> {
-    const commands = [
-      `pm2 ${pm2Args}`,                           // Direct PM2 call
-      `bash -l -c "pm2 ${pm2Args}"`,              // With login shell
-      `~/.npm-global/bin/pm2 ${pm2Args}`,         // Common global npm path
-      `~/node_modules/.bin/pm2 ${pm2Args}`,       // Local node_modules path
-      `/usr/local/bin/pm2 ${pm2Args}`,            // System-wide installation
-      `npx pm2 ${pm2Args}`                        // Using npx as fallback
-    ];
+  private static readonly PM2_BUILDERS: Array<(args: string) => string> = [
+    args => `pm2 ${args}`,
+    args => `bash -l -c "pm2 ${args}"`,
+    args => `bash -i -c "pm2 ${args}"`,
+    args => `bash -li -c "pm2 ${args}"`,
+    args => `/usr/local/bin/pm2 ${args}`,
+    args => `/usr/bin/pm2 ${args}`,
+    args => `~/.npm-global/bin/pm2 ${args}`,
+    args => `~/.npm/bin/pm2 ${args}`,
+    args => `~/node_modules/.bin/pm2 ${args}`,
+    args => `. ~/.nvm/nvm.sh && pm2 ${args}`,
+    args => `. ~/.nvm/nvm.sh && nvm use --lts && pm2 ${args}`,
+    args => `. /usr/share/nvm/init-nvm.sh && pm2 ${args}`,
+    args => `npx pm2 ${args}`,
+  ];
+
+  /** Index into PM2_BUILDERS of the invocation that actually works on this host. -1 = not yet resolved. */
+  private resolvedBuilderIndex = -1;
+
+  /**
+   * Execute a PM2 command with proper PATH handling.
+   * The first successful invocation is cached so later calls (and streaming
+   * commands) reuse the same shell/binary path without re-probing.
+   */
+  async executePM2Command(pm2Args: string): Promise<CommandResult> {
+    // Fast path: reuse the builder we already know works on this host
+    if (this.resolvedBuilderIndex >= 0) {
+      return this.executeCommand(RemoteConnection.PM2_BUILDERS[this.resolvedBuilderIndex](pm2Args));
+    }
 
     let lastError: any = null;
-
-    for (const command of commands) {
+    for (let i = 0; i < RemoteConnection.PM2_BUILDERS.length; i++) {
+      const command = RemoteConnection.PM2_BUILDERS[i](pm2Args);
       try {
         const result = await this.executeCommand(command);
         if (result.code === 0) {
+          this.resolvedBuilderIndex = i; // Cache for all future calls on this connection
+          console.log(`[executePM2Command] Resolved pm2 via builder[${i}]: ${command.substring(0, 60)}`);
           return result;
         }
-        lastError = new Error(`Command failed with exit code ${result.code}: ${result.stderr}`);
+        lastError = new Error(`Command failed (code ${result.code}): ${result.stderr}`);
       } catch (error) {
         lastError = error;
-        continue;
       }
     }
 
@@ -335,67 +355,64 @@ export class RemoteConnection extends EventEmitter {
   }
 
   /**
+   * Build a pm2 command string using the already-resolved invocation pattern.
+   * Falls back to bash -li -c if the resolver has not yet run.
+   * Use this when you need the raw command string for a streaming shell exec.
+   */
+  buildPM2StreamCommand(pm2Args: string): string {
+    if (this.resolvedBuilderIndex >= 0) {
+      return RemoteConnection.PM2_BUILDERS[this.resolvedBuilderIndex](pm2Args);
+    }
+    // Default: login+interactive shell covers .profile AND .bashrc (catches nvm)
+    return `bash -li -c "pm2 ${pm2Args}"`;
+  }
+
+  /**
    * Get PM2 processes from the remote server
    */
   async getPM2Processes(): Promise<any[]> {
+    if (!this._isConnected) {
+      await this.connect();
+    }
+
+    let result: CommandResult;
     try {
-      // Connect if not already connected
-      if (!this._isConnected) {
-        await this.connect();
-      }
-
-      // Check if PM2 is installed (force re-check if not cached)
-      const isPM2Installed = await this.checkPM2Installation();
-      if (!isPM2Installed) {
-        throw new Error('PM2 is not installed on the remote server. Please install PM2 globally using: npm install -g pm2');
-      }
-
-      // Update the cached status
+      // executePM2Command tries all known paths/shells before giving up
+      result = await this.executePM2Command('jlist');
       this.isPM2Installed = true;
+    } catch (err) {
+      // All path attempts failed — PM2 is genuinely not found
+      console.error('Error getting PM2 processes:', err);
+      throw new Error('PM2 is not installed or not accessible on the remote server. Please install PM2 globally using: npm install -g pm2');
+    }
 
-      const result = await this.executePM2Command('jlist');
-      
-      // Clean the output to ensure it's valid JSON
-      // Sometimes pm2 jlist can include non-JSON data at the beginning or end
-      let cleanedOutput = result.stdout.trim();
-      
-      // Find the beginning of the JSON array
-      const startIndex = cleanedOutput.indexOf('[');
-      // Find the end of the JSON array
-      const endIndex = cleanedOutput.lastIndexOf(']') + 1;
-      
-      if (startIndex === -1 || endIndex === 0) {
-        console.log('Invalid PM2 output format, trying alternative approach');
-        // Try using pm2 list --format=json instead
-        const listResult = await this.executeCommand('pm2 list --format=json');
-        cleanedOutput = listResult.stdout.trim();
-      } else if (startIndex > 0 || endIndex < cleanedOutput.length) {
-        // Extract just the JSON array part
-        cleanedOutput = cleanedOutput.substring(startIndex, endIndex);
-      }
+    // Extract the JSON array from the output (pm2 jlist may include extra lines)
+    let cleanedOutput = result.stdout.trim();
+    const startIndex = cleanedOutput.indexOf('[');
+    const endIndex = cleanedOutput.lastIndexOf(']') + 1;
 
-      try {
-        const processList = JSON.parse(cleanedOutput);
-        
-        // Format process data similar to local PM2 format
-        return processList.map((proc: any) => ({
-          name: proc.name,
-          pm_id: proc.pm_id,
-          status: proc.pm2_env ? proc.pm2_env.status : 'unknown',
-          cpu: proc.monit ? (proc.monit.cpu || 0).toFixed(1) : '0.0',
-          memory: proc.monit ? this.formatMemory(proc.monit.memory) : '0 B',
-          uptime: proc.pm2_env ? this.formatUptime(proc.pm2_env.pm_uptime) : 'N/A',
-          restarts: proc.pm2_env ? (proc.pm2_env.restart_time || 0) : 0
-        }));
-      } catch (error) {
-        console.error('Error parsing PM2 process list:', error);
-        console.log('Raw output:', result.stdout);
-        // Return an empty array instead of throwing
-        return [];
-      }
+    if (startIndex !== -1 && endIndex > 0) {
+      cleanedOutput = cleanedOutput.substring(startIndex, endIndex);
+    } else {
+      console.log('Invalid PM2 jlist output, returning empty list. Raw:', result.stdout);
+      return [];
+    }
+
+    try {
+      const processList = JSON.parse(cleanedOutput);
+      return processList.map((proc: any) => ({
+        name: proc.name,
+        pm_id: proc.pm_id,
+        status: proc.pm2_env ? proc.pm2_env.status : 'unknown',
+        cpu: proc.monit ? (proc.monit.cpu || 0).toFixed(1) : '0.0',
+        memory: proc.monit ? this.formatMemory(proc.monit.memory) : '0 B',
+        uptime: proc.pm2_env ? this.formatUptime(proc.pm2_env.pm_uptime) : 'N/A',
+        restarts: proc.pm2_env ? (proc.pm2_env.restart_time || 0) : 0
+      }));
     } catch (error) {
-      console.error('Error getting PM2 processes:', error);
-      throw error;
+      console.error('Error parsing PM2 process list:', error);
+      console.log('Raw output:', result.stdout);
+      return [];
     }
   }
 
@@ -583,16 +600,12 @@ export class RemoteConnection extends EventEmitter {
       throw new Error('Connection not established');
     }
 
-    let finalCommand = command;
+    // Use sudo -S so sudo reads the password from stdin rather than the shell command line
+    const useSudoAuth = useSudo && this.config.useSudo && !!this.config.password;
+    const finalCommand = useSudoAuth ? `sudo -S ${command}` : command;
     let isInitialized = false;
-    
-    // Apply sudo if requested and we have a password
-    if (useSudo && this.config.useSudo && this.config.password) {
-      // Use echo to pipe the password to sudo for streaming commands
-      finalCommand = `echo '${this.config.password}' | sudo -S ${command}`;
-    }
 
-    console.log(`[createLogStream] Executing command: ${finalCommand.replace(this.config.password || '', '[PASSWORD]')}`);
+    console.log(`[createLogStream] Executing command: ${useSudoAuth ? '[sudo] ' : ''}${command}`);
 
     return new Promise((resolve, reject) => {
       this.client.exec(finalCommand, (err: Error | undefined, stream: ClientChannel) => {
@@ -600,6 +613,11 @@ export class RemoteConnection extends EventEmitter {
           console.error(`[createLogStream] Exec error:`, err);
           reject(err);
           return;
+        }
+
+        // Write password to sudo's stdin (do not close stdin — stream must stay open)
+        if (useSudoAuth && this.config.password) {
+          stream.stdin.write(this.config.password + '\n');
         }
 
         const logEmitter = new EventEmitter();        stream.on('data', (data: Buffer) => {
