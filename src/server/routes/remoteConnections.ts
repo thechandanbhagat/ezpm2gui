@@ -3,6 +3,24 @@ import { remoteConnectionManager, RemoteConnectionConfig } from '../utils/remote
 
 const router: Router = express.Router();
 
+// @group Security : Validate remote log file paths before shell interpolation
+const SHELL_UNSAFE_CHARS = /['"`;$|&<>(){}\\\n\r\0]/;
+const MAX_LOG_LINES = 10_000;
+
+const validateRemotePath = (filePath: string): boolean => {
+  if (!filePath) return false;
+  if (filePath.includes('..')) return false;
+  if (SHELL_UNSAFE_CHARS.test(filePath)) return false;
+  if (!/\.(log|gz)$/i.test(filePath)) return false;
+  return true;
+};
+
+const safeLogLines = (raw: string | undefined): number => {
+  const n = parseInt(raw || '200', 10);
+  if (!Number.isFinite(n) || n < 0) return 200;
+  return Math.min(n, MAX_LOG_LINES);
+};
+
 /**
  * Connect to an existing remote server
  * POST /api/remote/:connectionId/connect
@@ -620,7 +638,7 @@ router.get('/:connectionId/logs/:processId/:type', async (req, res) => {
   try {
     const { connectionId, processId, type } = req.params;
     const logType = type === 'err' ? 'err' : 'out';
-    const lines = parseInt((req.query.lines as string) || '200', 10);
+    const lines = safeLogLines(req.query.lines as string | undefined);
 
     const connection = remoteConnectionManager.getConnection(connectionId);
     if (!connection) return res.status(404).json({ success: false, error: 'Connection not found' });
@@ -763,13 +781,13 @@ router.get('/:connectionId/log-file', async (req, res) => {
   try {
     const { connectionId } = req.params;
     const filePath = req.query.path as string;
-    const lines    = parseInt((req.query.lines as string) || '200', 10);
+    const lines    = safeLogLines(req.query.lines as string | undefined);
 
     if (!filePath) return res.status(400).json({ error: 'path query parameter required' });
 
-    // Basic path safety — block traversal, require a log file extension
-    if (filePath.includes('..') || !/\.(log|gz)$/i.test(filePath)) {
-      return res.status(403).json({ error: 'Access denied: path is outside PM2 log directories' });
+    // Strict path validation — blocks traversal, shell metacharacters, and non-log extensions
+    if (!validateRemotePath(filePath)) {
+      return res.status(403).json({ error: 'Access denied: invalid or unsafe log file path' });
     }
 
     const connection = remoteConnectionManager.getConnection(connectionId);
@@ -813,30 +831,22 @@ router.get('/:connectionId/log-file/download', async (req, res) => {
     const filePath = req.query.path as string;
 
     if (!filePath) return res.status(400).json({ error: 'path query parameter required' });
-    if (filePath.includes('..') || !/\.(log|gz)$/i.test(filePath)) {
-      return res.status(403).json({ error: 'Access denied' });
+    if (!validateRemotePath(filePath)) {
+      return res.status(403).json({ error: 'Access denied: invalid or unsafe log file path' });
     }
 
     const connection = remoteConnectionManager.getConnection(connectionId);
     if (!connection) return res.status(404).json({ success: false, error: 'Connection not found' });
     if (!connection.isConnected()) return res.status(400).json({ success: false, error: 'Not connected' });
 
-    // .gz files: decompress via zcat (SFTP would give the raw compressed bytes)
+    // .gz files: stream via SFTP + local gunzip (no server-side memory buffering)
     if (filePath.endsWith('.gz')) {
-      let result = await connection.executeCommand(`zcat "${filePath}" 2>/dev/null`);
-      if (!result.stdout) {
-        result = await connection.executeCommand(`zcat "${filePath}" 2>/dev/null`, true);
-      }
-      if (!result.stdout) {
-        return res.status(500).json({ success: false, error: result.stderr || 'Could not decompress file' });
-      }
       const gzName = filePath.split('/').pop()!.replace(/\.gz$/, '');
-      res.setHeader('Content-Disposition', `attachment; filename="${gzName}"`);
-      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-      return res.send(result.stdout);
+      await connection.streamGzFileToResponse(filePath, res, gzName);
+      return;
     }
 
-    // Plain files: SFTP stream (no buffering, works for large files, handles permissions)
+    // Plain files: SFTP stream
     const fileName = filePath.split('/').pop()!;
     await connection.streamFileToResponse(filePath, res, fileName);
   } catch (error) {
