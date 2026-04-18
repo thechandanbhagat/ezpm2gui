@@ -147,3 +147,4 @@ update-windows-hosts.ps1
 
 excluded/
 install-windows-service.js
+.env
