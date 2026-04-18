@@ -20,6 +20,7 @@ import deployApplicationRoutes from './routes/deployApplication';
 import moduleRoutes from './routes/modules';
 import remoteConnectionRoutes from './routes/remoteConnections';
 import cronJobsRoutes from './routes/cronJobs';
+import updatesRoutes from './routes/updates';
 import { setupLogStreaming } from './routes/logStreaming';
 import { executePM2Command, disconnectFromPM2 } from './utils/pm2-connection';
 import { remoteConnectionManager } from './utils/remote-connection';
@@ -66,6 +67,7 @@ export function createServer() {
   app.use('/api/modules', moduleRoutes);
   app.use('/api/remote', remoteConnectionRoutes);
   app.use('/api/cron-jobs', cronJobsRoutes);
+  app.use('/api/update', updatesRoutes);
   
   // Setup log streaming with Socket.IO
   setupLogStreaming(io);  // PM2 API endpoints
