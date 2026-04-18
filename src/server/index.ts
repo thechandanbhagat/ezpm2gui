@@ -1,7 +1,14 @@
+import path from 'path';
+// @group Configuration : Load .env.local first (local overrides), then .env (defaults)
+// Must happen before any code reads process.env
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const dotenv = require('dotenv');
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+
 import express from 'express';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
-import path from 'path';
 import pm2 from 'pm2';
 import os from 'os';
 import { execSync } from 'child_process';
@@ -133,50 +140,191 @@ export function createServer() {
     res.json(metrics);
   });
 
-  // Get process logs
+  // @group LogHistory : Resolve log path from PM2 process descriptor
+  const resolveLocalLogPath = async (id: string, logType: 'out' | 'err'): Promise<string | null> => {
+    const processDesc = await executePM2Command<any[]>((callback) => {
+      pm2.describe(id, callback);
+    });
+    if (!processDesc || processDesc.length === 0) return null;
+    return processDesc[0]?.pm2_env?.[`pm_${logType}_log_path`] ?? null;
+  };
+
+  // @group LogHistory : Get log lines — ?lines=N (default 200, 0 = all)
   app.get('/api/logs/:id/:type', async (req, res) => {
     const { id, type } = req.params;
     const logType = type === 'err' ? 'err' : 'out';
+    const lines = parseInt((req.query.lines as string) || '200', 10);
 
     try {
-      const processDesc = await executePM2Command<any[]>((callback) => {
-        pm2.describe(id, callback);
-      });
-
-      if (!processDesc || processDesc.length === 0) {
-        res.status(404).json({ error: 'Process not found' });
-        return;
-      }
-
-      const logPath = processDesc[0]?.pm2_env?.[`pm_${logType}_log_path`];
+      const logPath = await resolveLocalLogPath(id, logType);
 
       if (!logPath) {
-        res.status(404).json({ error: `Log file for ${logType} not found` });
+        res.status(404).json({ error: 'Process not found or log path unavailable' });
         return;
       }
 
       const fs = require('fs');
-      let logContent = '';
-
-      if (fs.existsSync(logPath)) {
-        const stats = fs.statSync(logPath);
-        const fileSize = stats.size;
-        const readSize = Math.min(fileSize, 10 * 1024); // 10KB max
-        const position = Math.max(0, fileSize - readSize);
-
-        const buffer = Buffer.alloc(readSize);
-        const fd = fs.openSync(logPath, 'r');
-        fs.readSync(fd, buffer, 0, readSize, position);
-        fs.closeSync(fd);
-
-        logContent = buffer.toString('utf8');
+      if (!fs.existsSync(logPath)) {
+        res.json({ logs: [], logPath });
+        return;
       }
 
-      const logs = logContent.split('\n').filter((line: string) => line.trim() !== '');
-      res.json({ logs });
+      const content = fs.readFileSync(logPath, 'utf8') as string;
+      const allLines = content.split('\n').filter((l: string) => l.trim() !== '');
+      const result = lines === 0 ? allLines : allLines.slice(-lines);
+      res.json({ logs: result, logPath, totalLines: allLines.length });
     } catch (err) {
       console.error(`Error reading log file: ${err}`);
       res.status(500).json({ error: 'Failed to read log file' });
+    }
+  });
+
+  // @group LogHistory : Download full log file
+  app.get('/api/logs/:id/:type/download', async (req, res) => {
+    const { id, type } = req.params;
+    const logType = type === 'err' ? 'err' : 'out';
+
+    try {
+      const logPath = await resolveLocalLogPath(id, logType);
+
+      if (!logPath) {
+        res.status(404).json({ error: 'Process not found or log path unavailable' });
+        return;
+      }
+
+      const fs = require('fs');
+      if (!fs.existsSync(logPath)) {
+        res.status(404).json({ error: 'Log file does not exist yet' });
+        return;
+      }
+
+      const fileName = `${id}-${logType}.log`;
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      fs.createReadStream(logPath).pipe(res);
+    } catch (err) {
+      console.error(`Error downloading log file: ${err}`);
+      res.status(500).json({ error: 'Failed to download log file' });
+    }
+  });
+
+  // @group LogHistory : List all log files (current + rotated) for a process
+  // Uses /api/log-files/:id to avoid Express matching /:id/:type with type='files'
+  app.get('/api/log-files/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+      const fs   = require('fs')  as typeof import('fs');
+      const nodePath = require('path') as typeof import('path');
+
+      const [outPath, errPath] = await Promise.all([
+        resolveLocalLogPath(id, 'out'),
+        resolveLocalLogPath(id, 'err'),
+      ]);
+
+      if (!outPath && !errPath) {
+        res.status(404).json({ error: 'Process not found or no log paths available' });
+        return;
+      }
+
+      // Derive the process base name from the log path (strip -out.log suffix)
+      const baseName = outPath
+        ? nodePath.basename(outPath).replace(/-out\.log.*$/, '')
+        : nodePath.basename(errPath!).replace(/-(error|err)\.log.*$/, '');
+
+      const logDirs = new Set<string>();
+      if (outPath) logDirs.add(nodePath.dirname(outPath));
+      if (errPath) logDirs.add(nodePath.dirname(errPath));
+
+      const files: any[] = [];
+      for (const dir of logDirs) {
+        if (!fs.existsSync(dir)) continue;
+        for (const fileName of fs.readdirSync(dir)) {
+          if (!fileName.startsWith(baseName)) continue;
+          const filePath = nodePath.join(dir, fileName);
+          const stat = fs.statSync(filePath);
+          if (!stat.isFile()) continue;
+
+          let type: 'out' | 'err' | 'unknown' = 'unknown';
+          if (fileName.includes('-out'))                          type = 'out';
+          else if (fileName.includes('-error') || fileName.includes('-err')) type = 'err';
+
+          files.push({
+            name:       fileName,
+            path:       filePath,
+            size:       stat.size,
+            modified:   stat.mtime.toISOString(),
+            type,
+            compressed: fileName.endsWith('.gz'),
+          });
+        }
+      }
+
+      files.sort((a, b) => new Date(b.modified).getTime() - new Date(a.modified).getTime());
+      res.json({ files });
+    } catch (err) {
+      console.error('Error listing log files:', err);
+      res.status(500).json({ error: 'Failed to list log files' });
+    }
+  });
+
+  // @group LogHistory : Security helper — block path traversal; allow any absolute log file path
+  const isAllowedLogPath = (filePath: string): boolean => {
+    const nodePath = require('path') as typeof import('path');
+    const norm = nodePath.normalize(filePath);
+    // Prevent traversal attacks; require an absolute path ending in a log extension
+    return !norm.includes('..') && /\.(log|gz)$/i.test(norm);
+  };
+
+  // @group LogHistory : Read a specific log file by path — ?lines=N, supports .gz
+  // Uses /api/log-file (singular, top-level) to avoid clashing with /api/logs/:id/:type
+  app.get('/api/log-file', async (req, res) => {
+    const filePath = req.query.path as string;
+    const lines    = parseInt((req.query.lines as string) || '200', 10);
+
+    if (!filePath) { res.status(400).json({ error: 'path query parameter required' }); return; }
+    if (!isAllowedLogPath(filePath)) { res.status(403).json({ error: 'Access denied: path is outside PM2 log directories' }); return; }
+
+    try {
+      const fs   = require('fs')   as typeof import('fs');
+      const zlib = require('zlib') as typeof import('zlib');
+
+      if (!fs.existsSync(filePath)) { res.status(404).json({ error: 'File not found' }); return; }
+
+      let content = '';
+      if (filePath.endsWith('.gz')) {
+        const compressed = fs.readFileSync(filePath);
+        content = zlib.gunzipSync(compressed).toString('utf8');
+      } else {
+        content = fs.readFileSync(filePath, 'utf8') as string;
+      }
+
+      const allLines  = content.split('\n').filter((l: string) => l.trim() !== '');
+      const result    = lines === 0 ? allLines : allLines.slice(-lines);
+      res.json({ logs: result, totalLines: allLines.length });
+    } catch (err) {
+      console.error('Error reading log file:', err);
+      res.status(500).json({ error: 'Failed to read log file' });
+    }
+  });
+
+  // @group LogHistory : Download a specific log file by path (streams .gz as-is)
+  app.get('/api/log-file/download', async (req, res) => {
+    const filePath = req.query.path as string;
+    if (!filePath) { res.status(400).json({ error: 'path query parameter required' }); return; }
+    if (!isAllowedLogPath(filePath)) { res.status(403).json({ error: 'Access denied' }); return; }
+
+    try {
+      const fs       = require('fs')   as typeof import('fs');
+      const nodePath = require('path') as typeof import('path');
+      if (!fs.existsSync(filePath)) { res.status(404).json({ error: 'File not found' }); return; }
+
+      const fileName = nodePath.basename(filePath);
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      res.setHeader('Content-Type', filePath.endsWith('.gz') ? 'application/gzip' : 'text/plain; charset=utf-8');
+      fs.createReadStream(filePath).pipe(res);
+    } catch (err) {
+      console.error('Error downloading log file:', err);
+      res.status(500).json({ error: 'Failed to download file' });
     }
   });
   
@@ -238,7 +386,7 @@ export function createServer() {
 
 // Only start the server if this file is run directly
 if (require.main === module) {
-  const PORT = process.env.PORT || 3001;
+  const PORT = process.env.PORT || 3101;
   const HOST = process.env.HOST || 'localhost';
   
   const server = createServer();
