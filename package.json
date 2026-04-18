@@ -8,9 +8,9 @@
   },
   "scripts": {
     "start": "node dist/server/index.js",
-    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev": "concurrently --kill-others-on-fail --names \"server,client\" --prefix-colors \"cyan,green\" \"npm run dev:server\" \"npm run dev:client\"",
     "dev:server": "nodemon --exec ts-node src/server/index.ts",
-    "dev:client": "cd src/client && npm start",
+    "dev:client": "cd src/client && npm run dev",
     "build": "node scripts/build.js",
     "build:server": "tsc",
     "build:client": "cd src/client && npm run build",
@@ -43,6 +43,7 @@
     "@tailwindcss/postcss": "^4.1.14",
     "@types/node-cron": "^3.0.11",
     "axios": "^1.9.0",
+    "dotenv": "^16.5.0",
     "chart.js": "^4.4.9",
     "cron-parser": "^5.4.0",
     "express": "^4.18.3",
@@ -64,6 +65,7 @@
     "@types/ssh2": "^1.15.5",
     "@types/uuid": "^10.0.0",
     "concurrently": "^9.1.2",
+    "cross-env": "^10.1.0",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
