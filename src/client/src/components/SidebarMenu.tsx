@@ -12,7 +12,6 @@ import {
   Cog6ToothIcon,
   ScaleIcon,
   CloudIcon,
-  PresentationChartLineIcon,
   ClockIcon,
 } from '@heroicons/react/24/outline';
 
@@ -37,7 +36,6 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ toggleAbout, onItemClick }) =
   const menuItems = [
     { label: 'Processes',            path: '/processes',          icon: ChartBarIcon },
     { label: 'Monitoring',           path: '/monit',              icon: CpuChipIcon },
-    { label: 'Adv. Monitoring',      path: '/advanced-monitoring',icon: PresentationChartLineIcon },
     { label: 'Remote Servers',       path: '/remote',             icon: CloudIcon },
     { label: 'Deploy App',           path: '/deploy',             icon: PlusIcon },
     { label: 'PM2 Modules',          path: '/modules',            icon: PuzzlePieceIcon },
@@ -82,42 +80,38 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ toggleAbout, onItemClick }) =
             );
           })}
         </div>
-
-        {/* ── System ── */}
-        <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800 space-y-0.5">
-          <p className="px-1.5 mb-1 text-xs font-semibold text-neutral-400 dark:text-neutral-600 uppercase tracking-widest">
-            System
-          </p>
-
-          <button
-            onClick={() => { toggleAbout(); handleItemClick(); }}
-            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-medium
-                       text-neutral-600 dark:text-neutral-400
-                       hover:bg-neutral-100 dark:hover:bg-neutral-800
-                       hover:text-neutral-900 dark:hover:text-neutral-100
-                       transition-colors duration-100"
-          >
-            <InformationCircleIcon className="h-3.5 w-3.5 shrink-0 text-neutral-500 dark:text-neutral-500" />
-            <span>About</span>
-          </button>
-
-          <Link
-            to="/settings"
-            onClick={handleItemClick}
-            className={`
-              flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-medium
-              transition-colors duration-100
-              ${isActive('/settings')
-                ? 'bg-primary-600 text-white'
-                : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-100'
-              }
-            `}
-          >
-            <Cog6ToothIcon className={`h-3.5 w-3.5 shrink-0 ${isActive('/settings') ? 'text-white' : 'text-neutral-500 dark:text-neutral-500'}`} />
-            <span>Settings</span>
-          </Link>
-        </div>
       </nav>
+
+      {/* ── Bottom: About & Settings ── */}
+      <div className="px-2 pb-2 pt-2 border-t border-neutral-100 dark:border-neutral-800 space-y-0.5">
+        <button
+          onClick={() => { toggleAbout(); handleItemClick(); }}
+          className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-medium
+                     text-neutral-600 dark:text-neutral-400
+                     hover:bg-neutral-100 dark:hover:bg-neutral-800
+                     hover:text-neutral-900 dark:hover:text-neutral-100
+                     transition-colors duration-100"
+        >
+          <InformationCircleIcon className="h-3.5 w-3.5 shrink-0 text-neutral-500 dark:text-neutral-500" />
+          <span>About</span>
+        </button>
+
+        <Link
+          to="/settings"
+          onClick={handleItemClick}
+          className={`
+            flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-medium
+            transition-colors duration-100
+            ${isActive('/settings')
+              ? 'bg-primary-600 text-white'
+              : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-100'
+            }
+          `}
+        >
+          <Cog6ToothIcon className={`h-3.5 w-3.5 shrink-0 ${isActive('/settings') ? 'text-white' : 'text-neutral-500 dark:text-neutral-500'}`} />
+          <span>Settings</span>
+        </Link>
+      </div>
     </div>
   );
 };

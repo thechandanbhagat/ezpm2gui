@@ -3,6 +3,24 @@ import { remoteConnectionManager, RemoteConnectionConfig } from '../utils/remote
 
 const router: Router = express.Router();
 
+// @group Security : Validate remote log file paths before shell interpolation
+const SHELL_UNSAFE_CHARS = /['"`;$|&<>(){}\\\n\r\0]/;
+const MAX_LOG_LINES = 10_000;
+
+const validateRemotePath = (filePath: string): boolean => {
+  if (!filePath) return false;
+  if (filePath.includes('..')) return false;
+  if (SHELL_UNSAFE_CHARS.test(filePath)) return false;
+  if (!/\.(log|gz)$/i.test(filePath)) return false;
+  return true;
+};
+
+const safeLogLines = (raw: string | undefined): number => {
+  const n = parseInt(raw || '200', 10);
+  if (!Number.isFinite(n) || n < 0) return 200;
+  return Math.min(n, MAX_LOG_LINES);
+};
+
 /**
  * Connect to an existing remote server
  * POST /api/remote/:connectionId/connect
@@ -587,6 +605,255 @@ router.get('/:connectionId/logs/:processId', async (req, res) => {
       success: false,
       error: `Server error: ${error instanceof Error ? error.message : 'Unknown error'}`
     });
+  }
+});
+
+// @group LogHistory : Helper — resolve log path for a given process on a remote connection
+const resolveRemoteLogPath = async (connection: any, processId: string, logType: 'out' | 'err'): Promise<{ logPath: string | null; error?: string }> => {
+  const processInfoResult = await connection.executePM2Command('jlist');
+  if (processInfoResult.code !== 0) return { logPath: null, error: 'Failed to get PM2 process list' };
+
+  try {
+    let raw = processInfoResult.stdout.trim();
+    const start = raw.indexOf('[');
+    const end = raw.lastIndexOf(']') + 1;
+    if (start !== -1 && end > 0) raw = raw.substring(start, end);
+
+    const processList = JSON.parse(raw);
+    const proc = processList.find((p: any) => p.pm_id === parseInt(processId, 10) || p.name === processId);
+    if (!proc) return { logPath: null, error: 'Process not found' };
+
+    const key = logType === 'out' ? 'pm_out_log_path' : 'pm_err_log_path';
+    return { logPath: proc.pm2_env?.[key] ?? null };
+  } catch {
+    return { logPath: null, error: 'Failed to parse PM2 process list' };
+  }
+};
+
+/**
+ * Get log lines from a specific log type on a remote process — ?lines=N (default 200, 0 = all)
+ * GET /api/remote/:connectionId/logs/:processId/:type
+ */
+router.get('/:connectionId/logs/:processId/:type', async (req, res) => {
+  try {
+    const { connectionId, processId, type } = req.params;
+    const logType = type === 'err' ? 'err' : 'out';
+    const lines = safeLogLines(req.query.lines as string | undefined);
+
+    const connection = remoteConnectionManager.getConnection(connectionId);
+    if (!connection) return res.status(404).json({ success: false, error: 'Connection not found' });
+    if (!connection.isConnected()) return res.status(400).json({ success: false, error: 'Not connected' });
+
+    const { logPath, error } = await resolveRemoteLogPath(connection, processId, logType);
+    if (!logPath) return res.status(404).json({ success: false, error: error || 'Log path not found' });
+
+    // tail -n 0 = all lines; use wc -l to get total count alongside
+    const lineArg = lines === 0 ? '+1' : `-${lines}`;
+    const cmd = `{ wc -l < "${logPath}" 2>/dev/null || echo 0; } && tail -n ${lineArg} "${logPath}" 2>/dev/null`;
+    let result = await connection.executeCommand(cmd);
+
+    // Fallback to sudo if the file is unreadable (root-owned logs)
+    if (result.code !== 0 || !result.stdout.trim()) {
+      result = await connection.executeCommand(`{ sudo wc -l < "${logPath}" 2>/dev/null || echo 0; } && sudo tail -n ${lineArg} "${logPath}" 2>/dev/null`);
+    }
+
+    const outputLines = result.stdout.split('\n');
+    const totalLines = parseInt(outputLines[0]?.trim() || '0', 10);
+    const logLines = outputLines.slice(1).filter((l: string) => l.trim() !== '');
+
+    res.json({ logs: logLines, logPath, totalLines });
+  } catch (error) {
+    console.error('Error fetching remote log history:', error);
+    res.status(500).json({ success: false, error: `Server error: ${error instanceof Error ? error.message : 'Unknown error'}` });
+  }
+});
+
+/**
+ * Download full log file from a remote process via SSH
+ * GET /api/remote/:connectionId/logs/:processId/:type/download
+ */
+router.get('/:connectionId/logs/:processId/:type/download', async (req, res) => {
+  try {
+    const { connectionId, processId, type } = req.params;
+    const logType = type === 'err' ? 'err' : 'out';
+
+    const connection = remoteConnectionManager.getConnection(connectionId);
+    if (!connection) return res.status(404).json({ success: false, error: 'Connection not found' });
+    if (!connection.isConnected()) return res.status(400).json({ success: false, error: 'Not connected' });
+
+    const { logPath, error } = await resolveRemoteLogPath(connection, processId, logType);
+    if (!logPath) return res.status(404).json({ success: false, error: error || 'Log path not found' });
+
+    const fileName = `${processId}-${logType}.log`;
+    await connection.streamFileToResponse(logPath, res, fileName);
+  } catch (error) {
+    console.error('Error downloading remote log:', error);
+    if (!res.headersSent) {
+      res.status(500).json({ success: false, error: `Server error: ${error instanceof Error ? error.message : 'Unknown error'}` });
+    }
+  }
+});
+
+/**
+ * List all log files (current + rotated) for a remote process
+ * GET /api/remote/:connectionId/log-files/:processId
+ * Uses /log-files/ prefix to avoid Express matching /:processId/:type with type='files'
+ */
+router.get('/:connectionId/log-files/:processId', async (req, res) => {
+  try {
+    const { connectionId, processId } = req.params;
+
+    const connection = remoteConnectionManager.getConnection(connectionId);
+    if (!connection) return res.status(404).json({ success: false, error: 'Connection not found' });
+    if (!connection.isConnected()) return res.status(400).json({ success: false, error: 'Not connected' });
+
+    // Resolve both log paths so we know the directory and base name
+    const { logPath: outPath } = await resolveRemoteLogPath(connection, processId, 'out');
+    const { logPath: errPath } = await resolveRemoteLogPath(connection, processId, 'err');
+
+    if (!outPath && !errPath) {
+      return res.status(404).json({ success: false, error: 'No log paths found for this process' });
+    }
+
+    // Derive log directory + base name from the out log path (or err if out missing)
+    const refPath  = outPath || errPath!;
+    const logDir   = refPath.substring(0, refPath.lastIndexOf('/'));
+    const baseName = refPath.split('/').pop()!.replace(/-out\.log.*$/, '').replace(/-(error|err)\.log.*$/, '');
+
+    // List matching files in the log directory
+    const lsCmd = `ls -la "${logDir}" 2>/dev/null`;
+    let lsResult = await connection.executeCommand(lsCmd);
+    if (lsResult.code !== 0) lsResult = await connection.executeCommand(`sudo ${lsCmd}`);
+
+    const files: any[] = [];
+    if (lsResult.code === 0) {
+      for (const line of lsResult.stdout.split('\n')) {
+        // ls -la line: permissions links owner group size month day time name
+        const parts = line.trim().split(/\s+/);
+        if (parts.length < 9) continue;
+
+        const fileName = parts.slice(8).join(' ');
+        if (!fileName.startsWith(baseName)) continue;
+
+        const size     = parseInt(parts[4], 10) || 0;
+        const month    = parts[5];
+        const day      = parts[6];
+        const timeOrYr = parts[7];
+        const modified = `${month} ${day} ${timeOrYr}`;
+
+        let type: 'out' | 'err' | 'unknown' = 'unknown';
+        if (fileName.includes('-out'))                               type = 'out';
+        else if (fileName.includes('-error') || fileName.includes('-err')) type = 'err';
+
+        files.push({
+          name:       fileName,
+          path:       `${logDir}/${fileName}`,
+          size,
+          modified,
+          type,
+          compressed: fileName.endsWith('.gz'),
+        });
+      }
+    }
+
+    // Sort: current files first (no date suffix), then rotated newest first
+    files.sort((a: any, b: any) => {
+      const aRot = a.name.includes('__') || /\d{4}-\d{2}/.test(a.name);
+      const bRot = b.name.includes('__') || /\d{4}-\d{2}/.test(b.name);
+      if (!aRot && bRot) return -1;
+      if (aRot && !bRot) return 1;
+      return b.name.localeCompare(a.name);
+    });
+
+    res.json({ files });
+  } catch (error) {
+    console.error('Error listing remote log files:', error);
+    res.status(500).json({ success: false, error: `Server error: ${error instanceof Error ? error.message : 'Unknown error'}` });
+  }
+});
+
+/**
+ * Read a specific remote log file by path — ?lines=N, handles .gz via zcat
+ * GET /api/remote/:connectionId/log-file?path=...&lines=N
+ * Uses /log-file top-level to avoid clashing with /logs/:processId routes
+ */
+router.get('/:connectionId/log-file', async (req, res) => {
+  try {
+    const { connectionId } = req.params;
+    const filePath = req.query.path as string;
+    const lines    = safeLogLines(req.query.lines as string | undefined);
+
+    if (!filePath) return res.status(400).json({ error: 'path query parameter required' });
+
+    // Strict path validation — blocks traversal, shell metacharacters, and non-log extensions
+    if (!validateRemotePath(filePath)) {
+      return res.status(403).json({ error: 'Access denied: invalid or unsafe log file path' });
+    }
+
+    const connection = remoteConnectionManager.getConnection(connectionId);
+    if (!connection) return res.status(404).json({ success: false, error: 'Connection not found' });
+    if (!connection.isConnected()) return res.status(400).json({ success: false, error: 'Not connected' });
+
+    const isGz     = filePath.endsWith('.gz');
+    const catCmd   = isGz ? `zcat "${filePath}" 2>/dev/null` : `cat "${filePath}" 2>/dev/null`;
+    const lineArg  = lines === 0 ? '' : `| tail -n ${lines}`;
+    const countCmd = isGz
+      ? `zcat "${filePath}" 2>/dev/null | wc -l`
+      : `wc -l < "${filePath}" 2>/dev/null`;
+
+    const [contentResult, countResult] = await Promise.all([
+      connection.executeCommand(`${catCmd} ${lineArg}`).catch(() => ({ code: 1, stdout: '', stderr: '' })),
+      connection.executeCommand(countCmd).catch(() => ({ code: 1, stdout: '0', stderr: '' })),
+    ]);
+
+    // Fallback to sudo on permission error
+    const content = contentResult.code === 0 && contentResult.stdout.trim()
+      ? contentResult
+      : await connection.executeCommand(`sudo ${catCmd} ${lineArg}`);
+
+    const totalLines = parseInt(countResult.stdout?.trim() || '0', 10);
+    const logLines   = (content.stdout || '').split('\n').filter((l: string) => l.trim() !== '');
+
+    res.json({ logs: logLines, totalLines });
+  } catch (error) {
+    console.error('Error reading remote log file:', error);
+    res.status(500).json({ success: false, error: `Server error: ${error instanceof Error ? error.message : 'Unknown error'}` });
+  }
+});
+
+/**
+ * Download a specific remote log file by path via SSH cat/zcat
+ * GET /api/remote/:connectionId/log-file/download?path=...
+ */
+router.get('/:connectionId/log-file/download', async (req, res) => {
+  try {
+    const { connectionId } = req.params;
+    const filePath = req.query.path as string;
+
+    if (!filePath) return res.status(400).json({ error: 'path query parameter required' });
+    if (!validateRemotePath(filePath)) {
+      return res.status(403).json({ error: 'Access denied: invalid or unsafe log file path' });
+    }
+
+    const connection = remoteConnectionManager.getConnection(connectionId);
+    if (!connection) return res.status(404).json({ success: false, error: 'Connection not found' });
+    if (!connection.isConnected()) return res.status(400).json({ success: false, error: 'Not connected' });
+
+    // .gz files: stream via SFTP + local gunzip (no server-side memory buffering)
+    if (filePath.endsWith('.gz')) {
+      const gzName = filePath.split('/').pop()!.replace(/\.gz$/, '');
+      await connection.streamGzFileToResponse(filePath, res, gzName);
+      return;
+    }
+
+    // Plain files: SFTP stream
+    const fileName = filePath.split('/').pop()!;
+    await connection.streamFileToResponse(filePath, res, fileName);
+  } catch (error) {
+    console.error('Error downloading remote log file:', error);
+    if (!res.headersSent) {
+      res.status(500).json({ success: false, error: `Server error: ${error instanceof Error ? error.message : 'Unknown error'}` });
+    }
   }
 });
 

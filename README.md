@@ -1,6 +1,6 @@
 # EZ PM2 GUI
 
-A modern web-based graphical user interface for the PM2 process manager, built with TypeScript and Material UI.
+A modern web-based graphical user interface for the PM2 process manager, built with TypeScript, Tailwind CSS, and React.
 
 ## Features
 
@@ -11,7 +11,7 @@ A modern web-based graphical user interface for the PM2 process manager, built w
 - **WebSocket for live updates** - Get instant updates without refreshing
 - **Process CPU and memory charts** - Visualize performance metrics over time
 - **Filter processes by status or name** - Quickly find the processes you need
-- **Dark mode support** - Easy on the eyes for late-night monitoring
+- **Dark/light mode** - Fully supported across all pages with Tailwind CSS
 - **Cluster management** - Easily scale your Node.js applications
 - **Application deployment** - Deploy new applications directly from the UI
 - **Ecosystem configuration** - Create and manage your PM2 ecosystem files
@@ -19,7 +19,7 @@ A modern web-based graphical user interface for the PM2 process manager, built w
 - **Cron Jobs** - Schedule and manage automated tasks with visual cron expression builder
 - **Remote Server Management** - Connect and manage PM2 on remote servers via SSH
 - **Advanced Monitoring Dashboard** - Real-time performance charts with health scoring
-- **Modern UI with Material UI components** - Clean and intuitive interface
+- **Tailwind CSS UI** - Sleek, compact, and responsive design with consistent dark/light theming
 - **Fully typed with TypeScript** - Robust and maintainable codebase
 
 ## Detailed Features
@@ -85,12 +85,13 @@ Monitor key system metrics including:
 - System uptime
 - Load averages (1, 5, and 15 minutes)
 
-### User Interface Customization
-Customize the ezPM2GUI interface to suit your preferences:
-- Toggle dark mode for reduced eye strain
-- Select color themes
-- Configure dashboard refresh intervals
-- Adjust log display settings
+### User Interface
+ezPM2GUI uses Tailwind CSS for a sleek, compact, and fully responsive interface:
+- Dark and light mode support across all pages
+- Consistent color theming with smooth transitions
+- Compact layout with small fonts and reduced spacing for information density
+- `PageHeader` and `LogStatusBar` reusable components for a consistent look
+- Configure dashboard refresh intervals and log display settings from Settings
 
 ## Installation
 
@@ -287,7 +288,7 @@ ISC
 
 ## Credits
 
-Built with ❤️ by [Chandan Bhagat](https://github.com/thechandanbhagat) as a modern alternative to pm2-gui.
+Built by [Chandan Bhagat](https://github.com/thechandanbhagat) as a modern alternative to pm2-gui.
 
 ---
 

@@ -12,7 +12,7 @@ interface StartOptions {
  * @returns The HTTP server instance
  */
 export function start(options: StartOptions = {}) {
-  const port = options.port || process.env.PORT || 3001;
+  const port = options.port || process.env.PORT || 3101;
   const host = options.host || process.env.HOST || 'localhost';
   
   process.env.PORT = port.toString();
