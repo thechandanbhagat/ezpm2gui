@@ -13,7 +13,7 @@ interface MonitDashboardProps {
 
 const MonitDashboard: React.FC<MonitDashboardProps> = ({ processes, onRefresh }) => {
   const navigate = useNavigate();
-  const [sortField, setSortField] = useState<'cpu' | 'memory'>('cpu');
+  const [sortField, setSortField] = useState<'id' | 'name' | 'status' | 'cpu' | 'memory' | 'uptime' | 'restarts'>('cpu');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   // @group Utilities : Format helpers
@@ -36,12 +36,26 @@ const MonitDashboard: React.FC<MonitDashboardProps> = ({ processes, onRefresh })
 
   // @group Sorting : Sort process list
   const sortedProcesses = [...processes].sort((a, b) => {
-    const vA = sortField === 'cpu' ? a.monit.cpu : a.monit.memory;
-    const vB = sortField === 'cpu' ? b.monit.cpu : b.monit.memory;
-    return sortDirection === 'asc' ? vA - vB : vB - vA;
+    let vA: number | string;
+    let vB: number | string;
+    switch (sortField) {
+      case 'id':       vA = a.pm_id;              vB = b.pm_id;              break;
+      case 'name':     vA = a.name.toLowerCase();  vB = b.name.toLowerCase(); break;
+      case 'status':   vA = a.pm2_env.status;      vB = b.pm2_env.status;     break;
+      case 'cpu':      vA = a.monit.cpu;           vB = b.monit.cpu;          break;
+      case 'memory':   vA = a.monit.memory;        vB = b.monit.memory;       break;
+      case 'uptime':   vA = a.pm2_env.status === 'online' ? a.pm2_env.pm_uptime : 0;
+                       vB = b.pm2_env.status === 'online' ? b.pm2_env.pm_uptime : 0; break;
+      case 'restarts': vA = a.pm2_env.restart_time; vB = b.pm2_env.restart_time; break;
+      default:         return 0;
+    }
+    if (typeof vA === 'string' && typeof vB === 'string') {
+      return sortDirection === 'asc' ? vA.localeCompare(vB) : vB.localeCompare(vA);
+    }
+    return sortDirection === 'asc' ? (vA as number) - (vB as number) : (vB as number) - (vA as number);
   });
 
-  const handleSort = (field: 'cpu' | 'memory') => {
+  const handleSort = (field: typeof sortField) => {
     if (field === sortField) setSortDirection(d => d === 'asc' ? 'desc' : 'asc');
     else { setSortField(field); setSortDirection('desc'); }
   };
@@ -91,18 +105,18 @@ const MonitDashboard: React.FC<MonitDashboardProps> = ({ processes, onRefresh })
             <thead className="bg-neutral-50 dark:bg-neutral-800/50 border-b border-neutral-200 dark:border-neutral-800">
               <tr>
                 {[
-                  { key: null,     label: 'Name' },
-                  { key: null,     label: 'ID' },
-                  { key: null,     label: 'Status' },
-                  { key: 'cpu',    label: 'CPU' },
-                  { key: 'memory', label: 'Memory' },
-                  { key: null,     label: 'Uptime' },
-                  { key: null,     label: 'Restarts' },
+                  { key: 'id' as const,       label: 'ID' },
+                  { key: 'name' as const,     label: 'Name' },
+                  { key: 'status' as const,   label: 'Status' },
+                  { key: 'cpu' as const,      label: 'CPU' },
+                  { key: 'memory' as const,   label: 'Memory' },
+                  { key: 'uptime' as const,   label: 'Uptime' },
+                  { key: 'restarts' as const, label: 'Restarts' },
                 ].map(({ key, label }) => (
                   <th
                     key={label}
-                    onClick={key ? () => handleSort(key as 'cpu' | 'memory') : undefined}
-                    className={`px-3 py-2 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide select-none ${key ? 'cursor-pointer hover:text-neutral-800 dark:hover:text-neutral-200' : ''}`}
+                    onClick={() => handleSort(key)}
+                    className="px-3 py-2 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide select-none cursor-pointer hover:text-neutral-800 dark:hover:text-neutral-200"
                   >
                     <span className="flex items-center gap-1">
                       {label}
@@ -129,8 +143,8 @@ const MonitDashboard: React.FC<MonitDashboardProps> = ({ processes, onRefresh })
                   onClick={() => navigate(`/process/${proc.pm_id}`)}
                   className="cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors"
                 >
-                  <td className="px-3 py-2 font-medium text-neutral-900 dark:text-neutral-100">{proc.name}</td>
                   <td className="px-3 py-2 text-neutral-500 dark:text-neutral-400">{proc.pm_id}</td>
+                  <td className="px-3 py-2 font-medium text-neutral-900 dark:text-neutral-100">{proc.name}</td>
                   <td className="px-3 py-2">
                     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
                       proc.pm2_env.status === 'online'
