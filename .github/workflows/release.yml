@@ -30,10 +30,10 @@ jobs:
 
       # @group Dependencies : Install root and client deps
       - name: Install root dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Install client dependencies
-        run: cd src/client && npm ci
+        run: cd src/client && npm ci --legacy-peer-deps
 
       # @group Build : Full three-step build (server TS + React client + bin TS)
       - name: Build
