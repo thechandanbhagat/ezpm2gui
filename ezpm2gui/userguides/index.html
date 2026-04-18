@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>User Guides - ezPM2GUI</title>
+  <meta name="description" content="Complete user guides and documentation for ezPM2GUI — the modern web-based GUI for PM2 process manager." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    /* ── Variables ── */
+    :root {
+      --primary:       #4f46e5;
+      --primary-light: #6366f1;
+      --primary-dark:  #4338ca;
+      --secondary:     #8b5cf6;
+      --accent:        #06b6d4;
+      --success:       #10b981;
+      --warning:       #f59e0b;
+      --error:         #ef4444;
+
+      --dark-bg:    #111827;
+      --darker-bg:  #030712;
+      --light-bg:   #f9fafb;
+      --card-bg:    #ffffff;
+      --border:     #e5e7eb;
+      --text:       #111827;
+      --text-light: #6b7280;
+      --text-white: #ffffff;
+
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 20px;
+      --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -1px rgba(0,0,0,.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,.1), 0 4px 6px -2px rgba(0,0,0,.05);
+      --gradient:  linear-gradient(135deg, var(--primary), var(--secondary));
+    }
+
+    [data-theme="dark"] {
+      --light-bg:   #0f172a;
+      --card-bg:    #1e293b;
+      --border:     #334155;
+      --text:       #f1f5f9;
+      --text-light: #94a3b8;
+    }
+
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--light-bg);
+      color: var(--text);
+      transition: background .3s, color .3s;
+      opacity: 0;
+    }
+    body.loaded { opacity: 1; transition: opacity .5s ease; }
+    a { color: var(--primary-light); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code {
+      font-family: 'Courier New', monospace;
+      background: rgba(99,102,241,.12);
+      color: var(--primary-light);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: .88em;
+    }
+    pre {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 1.2rem 1.5rem;
+      border-radius: var(--radius-lg);
+      overflow-x: auto;
+      font-size: .875rem;
+      line-height: 1.7;
+      border-left: 3px solid var(--primary);
+      margin: 1rem 0;
+    }
+    pre code { background: none; color: inherit; padding: 0; font-size: inherit; }
+
+    /* ── Nav ── */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      background: rgba(249,250,251,.85);
+      border-bottom: 1px solid var(--border);
+      transition: background .3s, border-color .3s;
+    }
+    [data-theme="dark"] .nav {
+      background: rgba(15,23,42,.85);
+    }
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .logo .grad { background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+    .nav-links a { color: var(--text-light); font-size: .9rem; font-weight: 500; transition: color .2s; }
+    .nav-links a:hover { color: var(--primary-light); text-decoration: none; }
+    .nav-right { display: flex; align-items: center; gap: .75rem; }
+    .theme-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-light);
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: var(--transition);
+    }
+    .theme-btn:hover { border-color: var(--primary-light); color: var(--primary-light); }
+    .github-btn {
+      display: flex; align-items: center; gap: .4rem;
+      padding: .4rem .9rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      font-size: .85rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: var(--transition);
+    }
+    .github-btn:hover { border-color: var(--primary); color: var(--primary); text-decoration: none; }
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+    }
+
+    /* ── Hero ── */
+    .hero {
+      background: var(--gradient);
+      padding: 4rem 1.5rem 5rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+    }
+    .hero-content { position: relative; max-width: 700px; margin: 0 auto; }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255,255,255,.15);
+      border: 1px solid rgba(255,255,255,.25);
+      color: #fff;
+      padding: .3rem .9rem;
+      border-radius: 999px;
+      font-size: .8rem;
+      font-weight: 600;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+    .hero h1 { font-size: clamp(2rem, 5vw, 3rem); font-weight: 800; color: #fff; line-height: 1.2; margin-bottom: .75rem; }
+    .hero p { font-size: 1.1rem; color: rgba(255,255,255,.85); max-width: 520px; margin: 0 auto 1.75rem; }
+    .hero-actions { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; gap: .5rem;
+      padding: .65rem 1.4rem;
+      border-radius: var(--radius-md);
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      border: none;
+      text-decoration: none !important;
+    }
+    .btn-white { background: #fff; color: var(--primary-dark); }
+    .btn-white:hover { background: #f1f5f9; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+    .btn-outline-white { background: transparent; color: #fff; border: 2px solid rgba(255,255,255,.5); }
+    .btn-outline-white:hover { background: rgba(255,255,255,.1); border-color: #fff; }
+
+    /* ── Layout ── */
+    .page { max-width: 1200px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; display: grid; grid-template-columns: 240px 1fr; gap: 2.5rem; align-items: start; }
+    @media (max-width: 900px) { .page { grid-template-columns: 1fr; } }
+
+    /* ── Sidebar TOC ── */
+    .toc {
+      position: sticky;
+      top: 76px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      max-height: calc(100vh - 100px);
+      overflow-y: auto;
+    }
+    .toc h3 { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--text-light); margin-bottom: .75rem; }
+    .toc ul { list-style: none; display: flex; flex-direction: column; gap: .15rem; }
+    .toc li a {
+      display: block;
+      padding: .3rem .6rem;
+      border-radius: var(--radius-sm);
+      font-size: .84rem;
+      color: var(--text-light);
+      transition: background .2s, color .2s;
+    }
+    .toc li a:hover, .toc li a.active { background: rgba(99,102,241,.1); color: var(--primary-light); text-decoration: none; }
+    .toc li.toc-section > a { font-weight: 600; font-size: .82rem; color: var(--text); margin-top: .5rem; }
+    .toc li.toc-section:first-child > a { margin-top: 0; }
+    .toc li.toc-sub > a { padding-left: 1.25rem; font-size: .81rem; }
+    @media (max-width: 900px) { .toc { position: static; max-height: none; } }
+
+    /* ── Content ── */
+    .content section { margin-bottom: 3rem; }
+    .section-anchor { display: block; height: 80px; margin-top: -80px; visibility: hidden; }
+
+    .section-title {
+      display: flex; align-items: center; gap: .6rem;
+      font-size: 1.5rem; font-weight: 700;
+      color: var(--text);
+      padding-bottom: .75rem;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 1.5rem;
+    }
+    .section-title .icon {
+      width: 36px; height: 36px;
+      background: var(--gradient);
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff;
+      font-size: .9rem;
+      flex-shrink: 0;
+    }
+
+    .subsection { margin-bottom: 2rem; }
+    .subsection h3 { font-size: 1.1rem; font-weight: 600; color: var(--text); margin-bottom: .75rem; display: flex; align-items: center; gap: .5rem; }
+    .subsection h3 .dot { width: 8px; height: 8px; background: var(--primary-light); border-radius: 50%; flex-shrink: 0; }
+    .subsection p { color: var(--text-light); line-height: 1.75; margin-bottom: .75rem; font-size: .95rem; }
+
+    /* ── Cards ── */
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; margin: 1rem 0; }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      transition: var(--transition);
+    }
+    .card:hover { border-color: var(--primary-light); box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+    .card-icon { font-size: 1.5rem; margin-bottom: .6rem; }
+    .card h4 { font-size: .95rem; font-weight: 600; margin-bottom: .4rem; color: var(--text); }
+    .card p { font-size: .85rem; color: var(--text-light); line-height: 1.6; }
+
+    /* ── Steps ── */
+    .steps { display: flex; flex-direction: column; gap: 1rem; margin: 1rem 0; }
+    .step { display: flex; gap: 1rem; align-items: flex-start; }
+    .step-num {
+      width: 32px; height: 32px;
+      background: var(--gradient);
+      color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .8rem; font-weight: 700;
+      flex-shrink: 0;
+      margin-top: .1rem;
+    }
+    .step-body h4 { font-size: .95rem; font-weight: 600; color: var(--text); margin-bottom: .25rem; }
+    .step-body p { font-size: .875rem; color: var(--text-light); line-height: 1.65; }
+
+    /* ── Callouts ── */
+    .callout {
+      display: flex; gap: .75rem;
+      padding: 1rem 1.25rem;
+      border-radius: var(--radius-md);
+      margin: 1rem 0;
+      font-size: .9rem;
+      line-height: 1.6;
+      border-left: 4px solid;
+    }
+    .callout i { margin-top: .15rem; flex-shrink: 0; }
+    .callout-info    { background: rgba(6,182,212,.08);  border-color: var(--accent);   color: var(--text); }
+    .callout-info i  { color: var(--accent); }
+    .callout-warning { background: rgba(245,158,11,.08); border-color: var(--warning);  color: var(--text); }
+    .callout-warning i { color: var(--warning); }
+    .callout-success { background: rgba(16,185,129,.08); border-color: var(--success);  color: var(--text); }
+    .callout-success i { color: var(--success); }
+
+    /* ── Table ── */
+    .table-wrap { overflow-x: auto; margin: 1rem 0; }
+    table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+    th { background: rgba(99,102,241,.1); color: var(--primary-light); font-weight: 600; text-align: left; padding: .65rem 1rem; }
+    td { padding: .6rem 1rem; border-bottom: 1px solid var(--border); color: var(--text-light); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(99,102,241,.04); }
+
+    /* ── Badge ── */
+    .badge {
+      display: inline-block;
+      padding: .2rem .55rem;
+      border-radius: 999px;
+      font-size: .75rem;
+      font-weight: 600;
+    }
+    .badge-blue   { background: rgba(99,102,241,.15);  color: var(--primary-light); }
+    .badge-green  { background: rgba(16,185,129,.15);  color: var(--success); }
+    .badge-orange { background: rgba(245,158,11,.15);  color: var(--warning); }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      background: var(--card-bg);
+      text-align: center;
+      padding: 2rem 1.5rem;
+      color: var(--text-light);
+      font-size: .875rem;
+    }
+    footer a { color: var(--primary-light); }
+    footer a:hover { text-decoration: underline; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-light); }
+  </style>
+</head>
+<body>
+
+  <!-- ── Nav ── -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="../index.html" class="logo" style="text-decoration:none">
+        <span>ezPM2<span class="grad">GUI</span></span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="#getting-started">Getting Started</a></li>
+        <li><a href="#dashboard">Dashboard</a></li>
+        <li><a href="#processes">Processes</a></li>
+        <li><a href="#remote">Remote Servers</a></li>
+        <li><a href="#settings">Settings</a></li>
+      </ul>
+      <div class="nav-right">
+        <button class="theme-btn" id="themeToggle" title="Toggle theme" aria-label="Toggle dark mode">
+          <i class="fas fa-moon"></i>
+        </button>
+        <a class="github-btn" href="https://github.com/thechandanbhagat/ezpm2gui" target="_blank" rel="noopener">
+          <i class="fab fa-github"></i> GitHub
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Hero ── -->
+  <section class="hero">
+    <div class="hero-content">
+      <span class="hero-badge"><i class="fas fa-book-open"></i> User Guides</span>
+      <h1>Everything you need to master ezPM2GUI</h1>
+      <p>Step-by-step guides covering installation, process management, remote servers, monitoring, and more.</p>
+      <div class="hero-actions">
+        <a href="#getting-started" class="btn btn-white"><i class="fas fa-rocket"></i> Get Started</a>
+        <a href="https://github.com/thechandanbhagat/ezpm2gui" target="_blank" rel="noopener" class="btn btn-outline-white"><i class="fab fa-github"></i> View on GitHub</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Main Layout ── -->
+  <div class="page">
+
+    <!-- Sidebar TOC -->
+    <aside class="toc">
+      <h3><i class="fas fa-list"></i> On this page</h3>
+      <ul>
+        <li class="toc-section"><a href="#getting-started">Getting Started</a></li>
+        <li class="toc-sub"><a href="#installation">Installation</a></li>
+        <li class="toc-sub"><a href="#first-launch">First Launch</a></li>
+
+        <li class="toc-section"><a href="#dashboard">Dashboard</a></li>
+        <li class="toc-sub"><a href="#overview">Overview</a></li>
+        <li class="toc-sub"><a href="#metrics">Live Metrics</a></li>
+
+        <li class="toc-section"><a href="#processes">Process Management</a></li>
+        <li class="toc-sub"><a href="#start-stop">Start / Stop / Restart</a></li>
+        <li class="toc-sub"><a href="#logs">Viewing Logs</a></li>
+        <li class="toc-sub"><a href="#cluster">Cluster Mode</a></li>
+
+        <li class="toc-section"><a href="#remote">Remote Servers</a></li>
+        <li class="toc-sub"><a href="#add-connection">Add a Connection</a></li>
+        <li class="toc-sub"><a href="#switch-server">Switch Servers</a></li>
+
+        <li class="toc-section"><a href="#deploy">Deploy Application</a></li>
+
+        <li class="toc-section"><a href="#cron">Cron Jobs</a></li>
+
+        <li class="toc-section"><a href="#settings">Settings</a></li>
+        <li class="toc-sub"><a href="#updates">Checking for Updates</a></li>
+        <li class="toc-sub"><a href="#theme">Theme</a></li>
+
+        <li class="toc-section"><a href="#faq">FAQ</a></li>
+      </ul>
+    </aside>
+
+    <!-- Content -->
+    <main class="content">
+
+      <!-- Getting Started -->
+      <section id="getting-started">
+        <span class="section-anchor"></span>
+        <h2 class="section-title">
+          <span class="icon"><i class="fas fa-rocket"></i></span>
+          Getting Started
+        </h2>
+
+        <div class="subsection" id="installation">
+          <h3><span class="dot"></span> Installation</h3>
+          <p>ezPM2GUI requires <strong>Node.js 18+</strong> and <strong>PM2</strong> to be installed globally. Install both with:</p>
+          <pre><code># Install PM2 globally (skip if already installed)
+npm install -g pm2
+
+# Install ezPM2GUI globally
+npm install -g ezpm2gui</code></pre>
+          <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <div>If you get a permission error on Linux/macOS, prefix with <code>sudo</code> or configure npm to use a user-writable directory.</div>
+          </div>
+        </div>
+
+        <div class="subsection" id="first-launch">
+          <h3><span class="dot"></span> First Launch</h3>
+          <div class="steps">
+            <div class="step">
+              <div class="step-num">1</div>
+              <div class="step-body">
+                <h4>Start the GUI server</h4>
+                <p>Run <code>ezpm2gui</code> from any terminal. The server starts on port <strong>3101</strong> by default.</p>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-num">2</div>
+              <div class="step-body">
+                <h4>Open the dashboard</h4>
+                <p>Navigate to <a href="http://localhost:3101" target="_blank">http://localhost:3101</a> in your browser.</p>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-num">3</div>
+              <div class="step-body">
+                <h4>Explore your processes</h4>
+                <p>All PM2 processes on the local machine are listed immediately — no configuration needed.</p>
+              </div>
+            </div>
+          </div>
+          <div class="callout callout-success">
+            <i class="fas fa-check-circle"></i>
+            <div>To run ezPM2GUI as a background service on Linux, use the provided <code>ezpm2gui.service</code> systemd unit file.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Dashboard -->
+      <section id="dashboard">
+        <span class="section-anchor"></span>
+        <h2 class="section-title">
+          <span class="icon"><i class="fas fa-chart-line"></i></span>
+          Dashboard
+        </h2>
+
+        <div class="subsection" id="overview">
+          <h3><span class="dot"></span> Overview</h3>
+          <p>The main dashboard gives you an at-a-glance view of all running processes. Each process card shows:</p>
+          <div class="card-grid">
+            <div class="card"><div class="card-icon">🟢</div><h4>Status</h4><p>Online, stopped, errored, or one-launch process state with live color indicator.</p></div>
+            <div class="card"><div class="card-icon">📊</div><h4>CPU &amp; Memory</h4><p>Real-time CPU percentage and heap memory usage updated every 2 seconds.</p></div>
+            <div class="card"><div class="card-icon">♻️</div><h4>Restarts</h4><p>Total restart count — useful for detecting crash loops.</p></div>
+            <div class="card"><div class="card-icon">⏱️</div><h4>Uptime</h4><p>Human-readable uptime since the process last started.</p></div>
+          </div>
+        </div>
+
+        <div class="subsection" id="metrics">
+          <h3><span class="dot"></span> Live Metrics</h3>
+          <p>The <strong>Monit</strong> page shows real-time performance charts per process. Charts refresh automatically via WebSocket — no manual polling needed.</p>
+          <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <div>CPU usage spikes above <strong>80%</strong> turn the bar red; 60–80% shows orange. Memory thresholds follow the same pattern.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Process Management -->
+      <section id="processes">
+        <span class="section-anchor"></span>
+        <h2 class="section-title">
+          <span class="icon"><i class="fas fa-microchip"></i></span>
+          Process Management
+        </h2>
+
+        <div class="subsection" id="start-stop">
+          <h3><span class="dot"></span> Start / Stop / Restart</h3>
+          <p>Every process card has action buttons:</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Action</th><th>Description</th><th>Shortcut</th></tr></thead>
+              <tbody>
+                <tr><td><span class="badge badge-green">Start</span></td><td>Start a stopped process</td><td>Click the play icon on the card</td></tr>
+                <tr><td><span class="badge badge-orange">Restart</span></td><td>Gracefully restart with zero downtime (cluster mode)</td><td>Click the refresh icon</td></tr>
+                <tr><td><span class="badge badge-blue">Stop</span></td><td>Stop a running process (keeps it in PM2 list)</td><td>Click the stop icon</td></tr>
+                <tr><td>Delete</td><td>Remove process from PM2 list entirely</td><td>Click the trash icon (confirmation required)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="subsection" id="logs">
+          <h3><span class="dot"></span> Viewing Logs</h3>
+          <p>Click any process name to open the <strong>Process Detail</strong> page, then select the <em>Logs</em> tab. You can:</p>
+          <div class="steps">
+            <div class="step">
+              <div class="step-num">1</div>
+              <div class="step-body"><h4>Switch log type</h4><p>Toggle between <code>stdout</code> and <code>stderr</code> logs using the tab selector.</p></div>
+            </div>
+            <div class="step">
+              <div class="step-num">2</div>
+              <div class="step-body"><h4>Adjust line count</h4><p>Use the line count control (50 / 200 / 500 / All) to fetch more history.</p></div>
+            </div>
+            <div class="step">
+              <div class="step-num">3</div>
+              <div class="step-body"><h4>Download full log</h4><p>Click the <strong>Download</strong> button to save the complete log file to your computer.</p></div>
+            </div>
+          </div>
+          <div class="callout callout-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            <div>Log file paths are read directly from PM2's process descriptor. If PM2 was started without log paths configured, logs may be unavailable.</div>
+          </div>
+        </div>
+
+        <div class="subsection" id="cluster">
+          <h3><span class="dot"></span> Cluster Mode</h3>
+          <p>Navigate to <strong>Cluster Management</strong> in the sidebar to scale processes across CPU cores. You can:</p>
+          <ul style="margin:.5rem 0 .5rem 1.25rem; color:var(--text-light); font-size:.9rem; line-height:2;">
+            <li>Scale up or down the number of instances</li>
+            <li>Perform a rolling reload with zero downtime</li>
+            <li>Monitor per-instance CPU/memory breakdown</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Remote Servers -->
+      <section id="remote">
+        <span class="section-anchor"></span>
+        <h2 class="section-title">
+          <span class="icon"><i class="fas fa-server"></i></span>
+          Remote Servers
+        </h2>
+
+        <div class="subsection" id="add-connection">
+          <h3><span class="dot"></span> Add a Connection</h3>
+          <p>Go to <strong>Settings &rarr; Remote Connections</strong> and click <em>Add Connection</em>. Fill in:</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Field</th><th>Notes</th></tr></thead>
+              <tbody>
+                <tr><td>Name</td><td>A friendly label shown in the server switcher</td></tr>
+                <tr><td>Host</td><td>IP address or hostname of the remote server</td></tr>
+                <tr><td>Port</td><td>SSH port (default: 22)</td></tr>
+                <tr><td>Username</td><td>SSH user (must have PM2 access)</td></tr>
+                <tr><td>Auth type</td><td>Password or private key (PEM format)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <div>Passwords are encrypted at rest using AES-256-GCM before being saved to the config file. Private keys are never stored — only referenced by path.</div>
+          </div>
+        </div>
+
+        <div class="subsection" id="switch-server">
+          <h3><span class="dot"></span> Switch Servers</h3>
+          <p>Use the <strong>server switcher</strong> in the top navigation bar (the globe/server icon) to instantly switch context between the local machine and any connected remote server. All dashboard data, logs, and metrics will update to reflect the selected server.</p>
+          <div class="callout callout-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            <div>PM2 must be installed on the remote server and accessible in the SSH user's PATH. If detection fails, use the <em>Install PM2</em> button inside the connection settings.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Deploy Application -->
+      <section id="deploy">
+        <span class="section-anchor"></span>
+        <h2 class="section-title">
+          <span class="icon"><i class="fas fa-upload"></i></span>
+          Deploy Application
+        </h2>
+        <div class="subsection">
+          <p>The <strong>Deploy</strong> page allows you to run predefined deployment scripts from the GUI. To set one up:</p>
+          <div class="steps">
+            <div class="step">
+              <div class="step-num">1</div>
+              <div class="step-body"><h4>Create a project config</h4><p>Go to <strong>Settings &rarr; Projects</strong> and add a new project with its name, working directory, and deploy script path.</p></div>
+            </div>
+            <div class="step">
+              <div class="step-num">2</div>
+              <div class="step-body"><h4>Trigger a deploy</h4><p>Open the <strong>Deploy</strong> page, select the project, and click <em>Deploy</em>. Output streams live to the log panel.</p></div>
+            </div>
+            <div class="step">
+              <div class="step-num">3</div>
+              <div class="step-body"><h4>Review deployment history</h4><p>Each deployment is logged with timestamp, exit code, and output in the deployment log file.</p></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Cron Jobs -->
+      <section id="cron">
+        <span class="section-anchor"></span>
+        <h2 class="section-title">
+          <span class="icon"><i class="fas fa-clock"></i></span>
+          Cron Jobs
+        </h2>
+        <div class="subsection">
+          <p>The <strong>Cron Jobs</strong> page lets you schedule recurring tasks without touching a crontab. Jobs are stored in <code>src/server/config/cron-jobs.json</code> and run inside the ezPM2GUI server process.</p>
+          <div class="card-grid">
+            <div class="card"><div class="card-icon">🕐</div><h4>Schedule</h4><p>Use standard 5-field or 6-field cron expressions (seconds supported).</p></div>
+            <div class="card"><div class="card-icon">💻</div><h4>Command types</h4><p>Shell commands, Node.js scripts, Python scripts, and .NET executables are all supported.</p></div>
+            <div class="card"><div class="card-icon">📋</div><h4>Run log</h4><p>Each execution result (exit code, stdout, stderr) is saved for review.</p></div>
+          </div>
+          <div class="callout callout-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            <div>Cron jobs run as the same OS user as the ezPM2GUI server process. Ensure the user has required permissions for the commands being executed.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Settings -->
+      <section id="settings">
+        <span class="section-anchor"></span>
+        <h2 class="section-title">
+          <span class="icon"><i class="fas fa-cog"></i></span>
+          Settings
+        </h2>
+
+        <div class="subsection" id="updates">
+          <h3><span class="dot"></span> Checking for Updates</h3>
+          <p>Go to <strong>Settings &rarr; Updates</strong>. Click <em>Check for Updates</em> — ezPM2GUI queries the npm registry and compares your installed version against the latest published release.</p>
+          <p>If an update is available, an <strong>Install</strong> button appears. The installation runs <code>npm install -g ezpm2gui@latest</code> and streams output live. After a successful install, click <em>Restart Server</em> to apply the update.</p>
+          <div class="callout callout-info">
+            <i class="fas fa-info-circle"></i>
+            <div>A pulsing yellow badge also appears in the top navbar whenever a newer version is detected (checked automatically 4 seconds after page load).</div>
+          </div>
+        </div>
+
+        <div class="subsection" id="theme">
+          <h3><span class="dot"></span> Theme</h3>
+          <p>Click the <i class="fas fa-moon"></i> / <i class="fas fa-sun"></i> icon in the top-right of the navigation bar to toggle between <strong>dark</strong> and <strong>light</strong> mode. Your preference is applied instantly across all pages.</p>
+        </div>
+      </section>
+
+      <!-- FAQ -->
+      <section id="faq">
+        <span class="section-anchor"></span>
+        <h2 class="section-title">
+          <span class="icon"><i class="fas fa-question-circle"></i></span>
+          FAQ
+        </h2>
+
+        <div class="subsection">
+          <h3><span class="dot"></span> ezPM2GUI says "PM2 not connected" on startup</h3>
+          <p>This usually means PM2 isn't running any processes. Start at least one process with <code>pm2 start &lt;app&gt;</code> and refresh the page.</p>
+        </div>
+
+        <div class="subsection">
+          <h3><span class="dot"></span> Remote server shows "PM2 not found"</h3>
+          <p>PM2 is installed in a non-standard PATH on the remote machine. ezPM2GUI tries several detection methods automatically. If all fail, use the <em>Install PM2</em> button in the connection settings, or SSH in manually and run <code>npm install -g pm2</code>.</p>
+        </div>
+
+        <div class="subsection">
+          <h3><span class="dot"></span> Can I run multiple instances of ezPM2GUI?</h3>
+          <p>Yes — set a different port with the <code>PORT</code> environment variable: <code>PORT=3102 ezpm2gui</code>.</p>
+        </div>
+
+        <div class="subsection">
+          <h3><span class="dot"></span> How do I run ezPM2GUI as a system service?</h3>
+          <p>On Linux, copy the provided <code>ezpm2gui.service</code> file to <code>/etc/systemd/system/</code>, then run:</p>
+          <pre><code>sudo systemctl daemon-reload
+sudo systemctl enable --now ezpm2gui</code></pre>
+          <p>On Windows, run <code>install-windows-service.js</code> with Node.js (requires administrator privileges).</p>
+        </div>
+
+        <div class="subsection">
+          <h3><span class="dot"></span> Where are config files stored?</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>File</th><th>Purpose</th></tr></thead>
+              <tbody>
+                <tr><td><code>src/server/config/remote-connections.json</code></td><td>Remote SSH connections (passwords AES-256 encrypted)</td></tr>
+                <tr><td><code>src/server/config/project-configs.json</code></td><td>Deployment project definitions</td></tr>
+                <tr><td><code>src/server/config/cron-jobs.json</code></td><td>Scheduled cron job definitions</td></tr>
+                <tr><td><code>src/server/logs/deployment.log</code></td><td>Deployment history log</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ── Footer ── -->
+  <footer>
+    <p>
+      <strong>ezPM2GUI</strong> is open source &mdash;
+      <a href="https://github.com/thechandanbhagat/ezpm2gui" target="_blank" rel="noopener">Star it on GitHub</a>
+      &nbsp;|&nbsp;
+      <a href="https://www.npmjs.com/package/ezpm2gui" target="_blank" rel="noopener">View on npm</a>
+      &nbsp;|&nbsp;
+      <a href="../index.html">Back to homepage</a>
+    </p>
+    <p style="margin-top:.5rem;font-size:.8rem;">Built with care by <a href="https://github.com/thechandanbhagat" target="_blank" rel="noopener">Chandan Bhagat</a></p>
+  </footer>
+
+  <script>
+    // Page load fade-in
+    document.body.classList.add('loaded');
+
+    // Dark mode toggle — persists to localStorage
+    const root = document.documentElement;
+    const btn  = document.getElementById('themeToggle');
+    const icon = btn.querySelector('i');
+
+    function applyTheme(dark) {
+      root.setAttribute('data-theme', dark ? 'dark' : 'light');
+      icon.className = dark ? 'fas fa-sun' : 'fas fa-moon';
+    }
+
+    const saved = localStorage.getItem('ezpm2gui-theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    let isDark = saved ? saved === 'dark' : prefersDark;
+    applyTheme(isDark);
+
+    btn.addEventListener('click', () => {
+      isDark = !isDark;
+      applyTheme(isDark);
+      localStorage.setItem('ezpm2gui-theme', isDark ? 'dark' : 'light');
+    });
+
+    // Active TOC highlight on scroll
+    const sections = document.querySelectorAll('section[id]');
+    const tocLinks = document.querySelectorAll('.toc a[href^="#"]');
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          tocLinks.forEach(a => {
+            a.classList.toggle('active', a.getAttribute('href') === '#' + entry.target.id);
+          });
+        }
+      });
+    }, { rootMargin: '-60px 0px -70% 0px' });
+
+    sections.forEach(s => observer.observe(s));
+  </script>
+</body>
+</html>
