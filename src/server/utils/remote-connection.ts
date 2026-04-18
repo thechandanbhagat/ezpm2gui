@@ -258,6 +258,23 @@ export class RemoteConnection extends EventEmitter {
       }
     };
 
+    const escapeRemotePathForShell = (value: string): string => {
+      if (/[\0\n\r]/.test(value)) {
+        throw new Error('Invalid remote path');
+      }
+      return `'${value.replace(/'/g, `'\"'\"'`)}'`;
+    };
+
+    let escapedRemotePath: string;
+    try {
+      escapedRemotePath = escapeRemotePathForShell(remotePath);
+    } catch {
+      if (!res.headersSent) {
+        res.status(400).json({ success: false, error: 'Invalid remote path' });
+      }
+      return;
+    }
+
     // @group StreamFileToResponse : Helper — pipe an exec channel stdout to response
     const pipeExec = (cmd: string, sudoPassword?: string): Promise<'ok' | 'empty' | 'error'> =>
       new Promise((resolve) => {
@@ -304,15 +321,15 @@ export class RemoteConnection extends EventEmitter {
     if (sftpOk) return;
 
     // ── 2. Plain cat ─────────────────────────────────────────────────────
-    if (await pipeExec(`cat "${remotePath}"`) === 'ok') return;
+    if (await pipeExec(`cat -- ${escapedRemotePath}`) === 'ok') return;
 
     // ── 3. sudo -S cat (password auth) ───────────────────────────────────
     if (this.config.password) {
-      if (await pipeExec(`sudo -S cat "${remotePath}"`, this.config.password) === 'ok') return;
+      if (await pipeExec(`sudo -S cat -- ${escapedRemotePath}`, this.config.password) === 'ok') return;
     }
 
     // ── 4. sudo cat without -S (NOPASSWD / key-based auth) ───────────────
-    if (await pipeExec(`sudo cat "${remotePath}"`) === 'ok') return;
+    if (await pipeExec(`sudo cat -- ${escapedRemotePath}`) === 'ok') return;
 
     // All attempts failed
     if (!res.headersSent) {
