@@ -33,7 +33,9 @@ import { RemoteConnection } from './types/remote';
 import {
   MoonIcon,
   SunIcon,
-  Bars3Icon
+  Bars3Icon,
+  ArrowUpCircleIcon,
+  StarIcon
 } from '@heroicons/react/24/outline';
 
 // Initialize socket connection with improved settings
@@ -77,6 +79,9 @@ const App: React.FC = () => {
   const [namespaceFilter, setNamespaceFilter] = useState<string>('all');
   const [showAbout, setShowAbout] = useState<boolean>(false);
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
+
+  // @group Updates : Silently check for a newer npm version after initial load
+  const [updateAvailable, setUpdateAvailable] = useState<boolean>(false);
   
   // Theme state — default dark, respect system preference
   const [darkMode, setDarkMode] = useState<boolean>(
@@ -316,6 +321,22 @@ const App: React.FC = () => {
       document.documentElement.classList.remove('dark');
     }
   }, [darkMode]);
+
+  // @group Updates : Check for update once after 4 s — non-blocking, silent on failure
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch('/api/update/check');
+        const json = await res.json();
+        if (json.success && json.data?.updateAvailable) {
+          setUpdateAvailable(true);
+        }
+      } catch {
+        // silent — update check is best-effort
+      }
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Process control functions
   const handleProcessAction = (id: number, action: string): void => {
@@ -565,8 +586,68 @@ const App: React.FC = () => {
                 <span className="text-gradient">EZ PM2 GUI</span>
               </Link>
 
-              {/* Right side: server switcher + dark-mode toggle */}
-              <div className="flex items-center gap-2">
+              {/* Right side */}
+              <div className="flex items-center gap-1.5">
+
+                {/* @group Updates : Pulse badge — visible when a newer npm version exists */}
+                {updateAvailable && (
+                  <Link
+                    to="/settings"
+                    title="A newer version of ezpm2gui is available"
+                    className={`relative flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium no-underline border transition-colors ${
+                      darkMode
+                        ? 'bg-yellow-400/10 border-yellow-400/30 text-yellow-400 hover:bg-yellow-400/20'
+                        : 'bg-yellow-50 border-yellow-300 text-yellow-700 hover:bg-yellow-100'
+                    }`}
+                  >
+                    <ArrowUpCircleIcon className="h-3.5 w-3.5" />
+                    <span>Update</span>
+                    <span className="flex h-1.5 w-1.5 ml-0.5">
+                      <span className="animate-ping absolute inline-flex h-1.5 w-1.5 rounded-full bg-yellow-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-yellow-400"></span>
+                    </span>
+                  </Link>
+                )}
+
+                {/* Divider */}
+                <span className={`h-4 w-px mx-0.5 ${darkMode ? 'bg-neutral-700' : 'bg-neutral-200'}`} />
+
+                {/* @group GitHub : Star button */}
+                <a
+                  href="https://github.com/thechandanbhagat/ezpm2gui"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Star ezpm2gui on GitHub"
+                  className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium no-underline border transition-colors ${
+                    darkMode
+                      ? 'bg-neutral-800 border-neutral-700 text-neutral-300 hover:border-yellow-400/60 hover:text-yellow-400'
+                      : 'bg-neutral-50 border-neutral-200 text-neutral-600 hover:border-yellow-400 hover:text-yellow-600'
+                  }`}
+                >
+                  <StarIcon className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Star</span>
+                </a>
+
+                {/* @group GitHub : Repo link */}
+                <a
+                  href="https://github.com/thechandanbhagat/ezpm2gui"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="View on GitHub"
+                  className={`p-1 rounded transition-colors ${
+                    darkMode
+                      ? 'text-neutral-400 hover:text-white'
+                      : 'text-neutral-500 hover:text-neutral-900'
+                  }`}
+                >
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+                    <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+                  </svg>
+                </a>
+
+                {/* Divider */}
+                <span className={`h-4 w-px mx-0.5 ${darkMode ? 'bg-neutral-700' : 'bg-neutral-200'}`} />
+
                 {/* @group ServerSwitcher : Global server context switcher */}
                 <ServerSwitcher
                   activeServerId={activeServerId}
