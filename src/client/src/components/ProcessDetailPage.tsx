@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PM2Process } from '../types/pm2';
 import ProcessLogs from './ProcessLogs';
+import LogFileBrowser from './LogFileBrowser';
 import MetricsChart from './MetricsChart';
 import axios from 'axios';
 import {
@@ -49,10 +50,12 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index, ...other })
 
 interface ProcessDetailPageProps {
   onAction?: (id: number, action: string) => void;
+  /** When set, loads process from the given remote connection instead of local PM2 */
+  connectionId?: string;
 }
 
 // @group ProcessDetailPage : Detail view for a single PM2 process
-const ProcessDetailPage: React.FC<ProcessDetailPageProps> = ({ onAction }) => {
+const ProcessDetailPage: React.FC<ProcessDetailPageProps> = ({ onAction, connectionId }) => {
   const { id } = useParams<{ id: string }>();
   const [process, setProcess] = useState<PM2Process | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -60,11 +63,14 @@ const ProcessDetailPage: React.FC<ProcessDetailPageProps> = ({ onAction }) => {
   const [activeTab, setActiveTab] = useState<number>(0);
   const navigate = useNavigate();
 
-  // @group DataFetching : Load process details and poll for updates
+  // @group DataFetching : Load process details — local or remote based on connectionId
   useEffect(() => {
     const fetchProcess = async () => {
       try {
-        const response = await axios.get<PM2Process[]>('/api/processes');
+        const url = connectionId
+          ? `/api/remote/${connectionId}/processes`
+          : '/api/processes';
+        const response = await axios.get<PM2Process[]>(url);
         const found = response.data.find(p => p.pm_id === Number(id));
         if (found) {
           setProcess(found);
@@ -82,7 +88,7 @@ const ProcessDetailPage: React.FC<ProcessDetailPageProps> = ({ onAction }) => {
     if (id) fetchProcess();
     const interval = setInterval(() => { if (id) fetchProcess(); }, 3000);
     return () => clearInterval(interval);
-  }, [id]);
+  }, [id, connectionId]);
 
   // @group Utilities : Format helpers
   const formatDate = (timestamp: number | undefined): string => {
@@ -132,9 +138,9 @@ const ProcessDetailPage: React.FC<ProcessDetailPageProps> = ({ onAction }) => {
   if (error || !process) {
     return (
       <Box>
-        <Alert severity={error ? 'error' : 'warning'} sx={{ mb: 2 }}>
+        {/* <Alert severity={error ? 'error' : 'warning'} sx={{ mb: 2 }}>
           {error || 'Process not found'}
-        </Alert>
+        </Alert> */}
         <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => navigate('/')}>
           Back to Process List
         </Button>
@@ -147,7 +153,7 @@ const ProcessDetailPage: React.FC<ProcessDetailPageProps> = ({ onAction }) => {
     <Box>
       <PageHeader
         title={process.name}
-        subtitle={`PID ${process.pm_id} · ${process.pm2_env.exec_mode || 'fork'} mode`}
+        subtitle={`PID ${process.pm_id} · ${process.pm2_env.exec_mode || 'fork'} mode · ns: ${process.pm2_env.namespace || 'default'}`}
         actions={
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Chip
@@ -221,9 +227,10 @@ const ProcessDetailPage: React.FC<ProcessDetailPageProps> = ({ onAction }) => {
       <Paper variant="outlined">
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)} aria-label="process details tabs">
-            <Tab label="Details"  id="process-tab-0" aria-controls="process-tabpanel-0" />
-            <Tab label="Logs"     id="process-tab-1" aria-controls="process-tabpanel-1" />
-            <Tab label="Metrics"  id="process-tab-2" aria-controls="process-tabpanel-2" />
+            <Tab label="Details"   id="process-tab-0" aria-controls="process-tabpanel-0" />
+            <Tab label="Logs"      id="process-tab-1" aria-controls="process-tabpanel-1" />
+            <Tab label="Log Files" id="process-tab-2" aria-controls="process-tabpanel-2" />
+            <Tab label="Metrics"   id="process-tab-3" aria-controls="process-tabpanel-3" />
           </Tabs>
         </Box>
 
@@ -234,6 +241,7 @@ const ProcessDetailPage: React.FC<ProcessDetailPageProps> = ({ onAction }) => {
               <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>Process Information</Typography>
               <Grid container spacing={1.5}>
                 {[
+                  { label: 'Namespace',   value: process.pm2_env.namespace || 'default' },
                   { label: 'Exec Mode',   value: process.pm2_env.exec_mode || 'N/A' },
                   { label: 'Instances',   value: process.pm2_env.instances || 1 },
                   { label: 'Created At',  value: formatDate(process.pm2_env.created_at) },
@@ -271,13 +279,26 @@ const ProcessDetailPage: React.FC<ProcessDetailPageProps> = ({ onAction }) => {
           </Grid>
         </TabPanel>
 
-        {/* Logs tab */}
+        {/* Logs tab — live tail / history */}
         <TabPanel value={activeTab} index={1}>
-          <ProcessLogs processId={process.pm_id} processName={process.name} />
+          <ProcessLogs
+            processId={process.pm_id}
+            processName={process.name}
+            connectionId={connectionId}
+          />
+        </TabPanel>
+
+        {/* Log Files tab — browse & download rotated files */}
+        <TabPanel value={activeTab} index={2}>
+          <LogFileBrowser
+            processId={process.pm_id}
+            processName={process.name}
+            connectionId={connectionId}
+          />
         </TabPanel>
 
         {/* Metrics tab */}
-        <TabPanel value={activeTab} index={2}>
+        <TabPanel value={activeTab} index={3}>
           <MetricsChart processId={process.pm_id} initialData={process} />
         </TabPanel>
       </Paper>
