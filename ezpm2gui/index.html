@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ezPM2GUI - Supercharge Your Node.js Process Management</title>
+    <meta name="description" content="A modern web-based graphical user interface for the PM2 process manager, built with TypeScript and Material UI">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Particles.js for interactive background -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+</head>
+<body>    <!-- Particle background -->
+    <div id="particles-bg"></div>
+      <!-- Theme toggle button -->
+    <div class="theme-toggle" id="themeToggle">
+        <i class="fas fa-moon"></i>
+    </div>
+    
+    <!-- Back to top button -->
+    <div class="back-to-top" id="backToTop">
+        <i class="fas fa-chevron-up"></i>
+    </div>
+
+    <header class="animated-header">
+        <nav class="glass-nav">
+            <div class="container">
+                <div class="logo">
+                    <img src="images/logo.svg" alt="ezPM2GUI Logo">
+                    <span>ezPM2<span class="text-gradient">GUI</span></span>
+                </div>
+                <ul class="nav-links">
+                    <li><a href="#features" class="nav-link">Features</a></li>
+                    <li><a href="#screenshots" class="nav-link">Screenshots</a></li>
+                    <li><a href="#installation" class="nav-link">Installation</a></li>
+                    <li><a href="#documentation" class="nav-link">Docs</a></li>
+                    <li><a href="https://github.com/thechandanbhagat/ezpm2gui" target="_blank" class="github-link"><i class="fab fa-github"></i> GitHub</a></li>
+                </ul>
+                <div class="mobile-menu-btn">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </nav>
+
+        <div class="hero">
+            <div class="container hero-container">
+                <div class="hero-content">
+                    <span class="badge">Node.js Process Manager</span>
+                    <h1 class="hero-title">
+                        <span class="text-gradient">Control</span> Your Node.js Apps 
+                        <span class="text-gradient">Like Never Before</span>
+                    </h1>
+                    <p class="hero-subtitle">A powerful, intuitive dashboard to monitor, manage, and deploy your Node.js applications with PM2. Visualize performance, scale effortlessly, and take complete control.</p>
+                    <div class="hero-buttons">
+                        <a href="#installation" class="btn btn-primary pulse-animation">
+                            <span>Get Started</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                        <a href="#features" class="btn btn-secondary">
+                            <i class="fas fa-star"></i>
+                            <span>Explore Features</span>
+                        </a>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="stat-item">
+                            <span class="stat-number">8.5K+</span>
+                            <span class="stat-label">Downloads</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">4.8<i class="fas fa-star"></i></span>
+                            <span class="stat-label">Rating</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">100%</span>
+                            <span class="stat-label">Open Source</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-image animated-float">
+                    <div class="image-wrapper">
+                        <img src="./screenshots/screenshot-1747156076728.png" alt="ezPM2GUI Dashboard">
+                        <div class="image-decoration"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="scroll-indicator">
+                <span>Scroll to explore</span>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section id="features" class="section features-section">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-badge">Features</span>
+                    <h2 class="section-title">Everything You Need to <span class="text-gradient">Master PM2</span></h2>
+                    <p class="section-description">Supercharge your Node.js application management with these powerful features</p>
+                </div>
+                
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon pulse-bg">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3>Real-time Monitoring</h3>
+                        <p>Track all your PM2 processes with live updates on CPU, memory usage and status. Spot issues before they become problems.</p>
+                    </div>                    <div class="feature-card">
+                        <div class="feature-icon glow-bg">
+                            <i class="fas fa-gamepad"></i>
+                        </div>
+                        <h3>Process Management</h3>
+                        <p>Start, stop, restart, and delete processes with one click through an intuitive interface with real-time feedback.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon pulse-bg">
+                            <i class="fas fa-tachometer-alt"></i>
+                        </div>
+                        <h3>System Metrics</h3>
+                        <p>Monitor CPU, memory usage, and system uptime with beautiful visualizations and performance alerts.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon glow-bg">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <h3>Enhanced Logging</h3>
+                        <p>View and filter logs from multiple processes with advanced search, filtering, and real-time streaming.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon pulse-bg">
+                            <i class="fas fa-sync"></i>
+                        </div>
+                        <h3>WebSocket Updates</h3>
+                        <p>Get instant updates without refreshing thanks to real-time WebSocket connections and push notifications.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon glow-bg">
+                            <i class="fas fa-server"></i>
+                        </div>
+                        <h3>Cluster Management</h3>
+                        <p>Scale your Node.js applications with intelligent load balancing and automatic failover protection.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon pulse-bg">
+                            <i class="fas fa-rocket"></i>
+                        </div>
+                        <h3>One-Click Deployment</h3>
+                        <p>Deploy applications with comprehensive configuration options and environment management tools.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon glow-bg">
+                            <i class="fas fa-cog"></i>
+                        </div>
+                        <h3>Ecosystem Config</h3>
+                        <p>Create and manage your PM2 ecosystem files with visual editing tools and version control support.</p>
+                    </div>                </div>
+            </div>
+            
+            <!-- Tech stack section -->
+            <div class="tech-stack-wrapper">
+                <div class="container">
+                    <div class="tech-stack">
+                        <div class="tech-item">
+                            <i class="fab fa-node-js"></i>
+                            <span>Node.js</span>
+                        </div>
+                        <div class="tech-item">
+                            <i class="fab fa-react"></i>
+                            <span>React</span>
+                        </div>
+                        <div class="tech-item">
+                            <i class="fab fa-typescript"></i>
+                            <span>TypeScript</span>
+                        </div>
+                        <div class="tech-item">
+                            <i class="fas fa-server"></i>
+                            <span>Express</span>
+                        </div>
+                        <div class="tech-item">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Chart.js</span>
+                        </div>
+                        <div class="tech-item">
+                            <i class="fas fa-palette"></i>
+                            <span>Material UI</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="screenshots" class="section section-dark curved-section">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-badge">Interface</span>
+                    <h2 class="section-title">Beautiful <span class="text-gradient">Dashboard</span> Experience</h2>
+                    <p class="section-description">See ezPM2GUI in action with these screenshots of the main features</p>
+                </div>
+                
+                <div class="screenshot-slider">
+                    <div class="screenshot">
+                        <img src="./screenshots/screenshot-1747156076728.png" alt="Process Monitor Dashboard">
+                        <div class="screenshot-caption">
+                            <h3>Process Monitor Dashboard</h3>
+                            <p>Comprehensive view of all your PM2 processes with real-time metrics.</p>
+                        </div>
+                    </div>
+                    <div class="screenshot">
+                        <img src="./screenshots/screenshot-1747156118224.png" alt="System Metrics">
+                        <div class="screenshot-caption">
+                            <h3>System Metrics & Process Management</h3>
+                            <p>Monitor system resources and manage processes with intuitive controls.</p>
+                        </div>
+                    </div>
+                    <div class="screenshot">
+                        <img src="./screenshots/screenshot-1747156060890.png" alt="Deploy Application">
+                        <div class="screenshot-caption">
+                            <h3>Deploy New Application</h3>
+                            <p>Easily deploy new Node.js applications with a user-friendly form interface.</p>
+                        </div>
+                    </div>
+                    <div class="screenshot">
+                        <img src="./screenshots/screenshot-1747156042956.png" alt="Settings">
+                        <div class="screenshot-caption">
+                            <h3>Application Settings</h3>
+                            <p>Customize the interface and configure your PM2 connection settings.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="slider-nav">
+                    <button class="prev-btn" id="prevBtn"><i class="fas fa-chevron-left"></i></button>
+                    <button class="next-btn" id="nextBtn"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+        </section>        <section id="installation" class="section installation-section">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-badge">Quick Start</span>
+                    <h2 class="section-title">Up and Running in <span class="text-gradient">Seconds</span></h2>
+                    <p class="section-description">Get started with ezPM2GUI in just a few simple steps</p>
+                </div>
+                
+                <div class="installation-tabs">
+                    <div class="tab-headers">
+                        <button class="tab-btn active" data-target="global">
+                            <i class="fas fa-globe"></i>
+                            <span>Global Installation</span>
+                        </button>
+                        <button class="tab-btn" data-target="local">
+                            <i class="fas fa-laptop-code"></i>
+                            <span>Local Installation</span>
+                        </button>
+                        <button class="tab-btn" data-target="docker">
+                            <i class="fab fa-docker"></i>
+                            <span>Docker</span>
+                        </button>
+                    </div>
+                    
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="global">
+                            <div class="install-steps">
+                                <div class="install-step">
+                                    <div class="step-number">01</div>
+                                    <div class="step-content">
+                                        <h4>Install globally using npm</h4>
+                                        <div class="code-block">
+                                            <code>npm install -g ezpm2gui</code>
+                                            <button class="copy-btn" data-code="npm install -g ezpm2gui"><i class="fas fa-copy"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="install-step">
+                                    <div class="step-number">02</div>
+                                    <div class="step-content">
+                                        <h4>Run from anywhere</h4>
+                                        <div class="code-block">
+                                            <code>ezpm2gui</code>
+                                            <button class="copy-btn" data-code="ezpm2gui"><i class="fas fa-copy"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="install-step">
+                                    <div class="step-number">03</div>
+                                    <div class="step-content">
+                                        <h4>Access the dashboard</h4>
+                                        <p>Open your browser and navigate to <code>http://localhost:5000</code></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="tab-pane" id="local">
+                            <div class="install-steps">
+                                <div class="install-step">
+                                    <div class="step-number">01</div>
+                                    <div class="step-content">
+                                        <h4>Install locally in your project</h4>
+                                        <div class="code-block">
+                                            <code>npm install ezpm2gui</code>
+                                            <button class="copy-btn" data-code="npm install ezpm2gui"><i class="fas fa-copy"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="install-step">
+                                    <div class="step-number">02</div>
+                                    <div class="step-content">
+                                        <h4>Run using npx</h4>
+                                        <div class="code-block">
+                                            <code>npx ezpm2gui</code>
+                                            <button class="copy-btn" data-code="npx ezpm2gui"><i class="fas fa-copy"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="install-step">
+                                    <div class="step-number">03</div>
+                                    <div class="step-content">
+                                        <h4>Add to your package.json scripts</h4>
+                                        <div class="code-block">
+                                            <code>"scripts": { "pm2-ui": "ezpm2gui" }</code>
+                                            <button class="copy-btn" data-code="\"scripts\": { \"pm2-ui\": \"ezpm2gui\" }"><i class="fas fa-copy"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="tab-pane" id="docker">
+                            <div class="install-steps">
+                                <div class="install-step">
+                                    <div class="step-number">01</div>
+                                    <div class="step-content">
+                                        <h4>Pull and run the Docker image</h4>
+                                        <div class="code-block">
+                                            <code>docker run -p 5000:5000 -v /path/to/pm2/data:/root/.pm2 thechandanbhagat/ezpm2gui</code>
+                                            <button class="copy-btn" data-code="docker run -p 5000:5000 -v /path/to/pm2/data:/root/.pm2 thechandanbhagat/ezpm2gui"><i class="fas fa-copy"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="install-step">
+                                    <div class="step-number">02</div>
+                                    <div class="step-content">
+                                        <h4>Using with docker-compose</h4>
+                                        <div class="code-block">
+                                            <code>services:
+  ezpm2gui:
+    image: thechandanbhagat/ezpm2gui
+    ports:
+      - "5000:5000"
+    volumes:
+      - /path/to/pm2/data:/root/.pm2</code>
+                                            <button class="copy-btn" data-code="services:
+  ezpm2gui:
+    image: thechandanbhagat/ezpm2gui
+    ports:
+      - \"5000:5000\"
+    volumes:
+      - /path/to/pm2/data:/root/.pm2"><i class="fas fa-copy"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="compatibility-note">
+                    <i class="fas fa-info-circle"></i>
+                    <p>Compatible with all major operating systems - Linux, macOS, and Windows. Requires Node.js 14.x or higher.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="documentation" class="section section-dark">
+            <div class="container">
+                <h2 class="section-title">Documentation</h2>
+                <p class="section-description">Learn how to use all the features of ezPM2GUI.</p>
+                
+                <div class="documentation-grid">
+                    <div class="doc-card">
+                        <div class="doc-icon"><i class="fas fa-book"></i></div>
+                        <h3>User Guide</h3>
+                        <p>Comprehensive guide to using all features of ezPM2GUI.</p>
+                        <a href="#" class="doc-link">Read Guide <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                    <div class="doc-card">
+                        <div class="doc-icon"><i class="fas fa-code"></i></div>
+                        <h3>API Documentation</h3>
+                        <p>Information about the ezPM2GUI API for developers.</p>
+                        <a href="#" class="doc-link">View API Docs <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                    <div class="doc-card">
+                        <div class="doc-icon"><i class="fas fa-video"></i></div>
+                        <h3>Video Tutorials</h3>
+                        <p>Step-by-step video tutorials for visual learners.</p>
+                        <a href="#" class="doc-link">Watch Tutorials <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                    <div class="doc-card">
+                        <div class="doc-icon"><i class="fas fa-question-circle"></i></div>
+                        <h3>FAQ</h3>
+                        <p>Answers to commonly asked questions about ezPM2GUI.</p>
+                        <a href="#" class="doc-link">Read FAQ <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <img src="images/logo.svg" alt="ezPM2GUI Logo">
+                    <span>ezPM2GUI</span>
+                </div>
+                <p>A modern web-based graphical user interface for the PM2 process manager.</p>
+                <div class="social-links">
+                    <a href="https://github.com/thechandanbhagat/ezpm2gui" target="_blank"><i class="fab fa-github"></i></a>
+                    <a href="#"><i class="fab fa-npm"></i></a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2023-2025 ezPM2GUI. Created by Chandan Bhagat.</p>
+                <div class="footer-links">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                    <a href="#">Contact</a>
+                </div>
+            </div>
+        </div>    </footer>    <!-- Particles.js for background effect -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script src="script.js"></script>
+    <script src="js/particles-config.js"></script>
+</body>
+</html>

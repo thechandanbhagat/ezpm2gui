@@ -225,6 +225,167 @@ export class RemoteConnection extends EventEmitter {
   }
 
   /**
+   * Stream a remote file directly into an HTTP response without buffering.
+   *
+   * Strategy (tried in order):
+   *   1. SFTP createReadStream  — best; handles large files, uses file-transfer protocol
+   *   2. exec `cat <file>`      — current SSH user, direct pipe to response
+   *   3. exec `sudo -S cat`     — password-based sudo (when password auth is configured)
+   *   4. exec `sudo cat`        — NOPASSWD sudo (key-based auth where sudo needs no password)
+   */
+  // @group Security : Shell metacharacter allowlist for remote file paths
+  private static readonly SHELL_UNSAFE = /['"`$|&;<>(){}\\\n\r\0]/;
+
+  private static validateRemotePath(remotePath: string): boolean {
+    if (!remotePath) return false;
+    if (remotePath.includes('..')) return false;
+    if (RemoteConnection.SHELL_UNSAFE.test(remotePath)) return false;
+    if (!/\.(log|gz)$/i.test(remotePath)) return false;
+    return true;
+  }
+
+  async streamFileToResponse(remotePath: string, res: import('express').Response, fileName: string): Promise<void> {
+    // Validate path before any shell interpolation (fallback methods 2-4 use exec)
+    if (!RemoteConnection.validateRemotePath(remotePath)) {
+      if (!res.headersSent) res.status(400).json({ success: false, error: 'Invalid log file path' });
+      return;
+    }
+
+    const setHeaders = () => {
+      if (!res.headersSent) {
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      }
+    };
+
+    const escapeRemotePathForShell = (value: string): string => {
+      if (/[\0\n\r]/.test(value)) {
+        throw new Error('Invalid remote path');
+      }
+      return `'${value.replace(/'/g, `'\"'\"'`)}'`;
+    };
+
+    let escapedRemotePath: string;
+    try {
+      escapedRemotePath = escapeRemotePathForShell(remotePath);
+    } catch {
+      if (!res.headersSent) {
+        res.status(400).json({ success: false, error: 'Invalid remote path' });
+      }
+      return;
+    }
+
+    // @group StreamFileToResponse : Helper — pipe an exec channel stdout to response
+    const pipeExec = (cmd: string, sudoPassword?: string): Promise<'ok' | 'empty' | 'error'> =>
+      new Promise((resolve) => {
+        this.client.exec(cmd, (err, channel) => {
+          if (err) { resolve('error'); return; }
+
+          if (sudoPassword) {
+            channel.stdin.write(sudoPassword + '\n');
+          }
+          channel.stdin.end();
+
+          let hasData = false;
+
+          channel.on('data', (chunk: Buffer) => {
+            if (!hasData) { setHeaders(); hasData = true; }
+            res.write(chunk);
+          });
+
+          channel.on('close', (code: number | null) => {
+            if (hasData) { res.end(); resolve('ok'); }
+            else resolve(code === 0 ? 'empty' : 'error');
+          });
+
+          channel.on('error', () => resolve('error'));
+          channel.stderr.resume(); // Discard stderr so it doesn't block the channel
+        });
+      });
+
+    // ── 1. SFTP (preferred — real streaming, no exec overhead) ──────────
+    const sftpOk = await new Promise<boolean>((resolve) => {
+      this.client.sftp((err, sftp) => {
+        if (err) { resolve(false); return; }
+        const stream = sftp.createReadStream(remotePath);
+        let hasData = false;
+
+        stream.on('data', (chunk: Buffer) => {
+          if (!hasData) { setHeaders(); hasData = true; }
+          res.write(chunk);
+        });
+        stream.on('end',   () => { if (hasData) { res.end(); resolve(true); } else resolve(false); });
+        stream.on('error', () => resolve(false));
+      });
+    });
+    if (sftpOk) return;
+
+    // ── 2. Plain cat ─────────────────────────────────────────────────────
+    if (await pipeExec(`cat -- ${escapedRemotePath}`) === 'ok') return;
+
+    // ── 3. sudo -S cat (password auth) ───────────────────────────────────
+    if (this.config.password) {
+      if (await pipeExec(`sudo -S cat -- ${escapedRemotePath}`, this.config.password) === 'ok') return;
+    }
+
+    // ── 4. sudo cat without -S (NOPASSWD / key-based auth) ───────────────
+    if (await pipeExec(`sudo cat -- ${escapedRemotePath}`) === 'ok') return;
+
+    // All attempts failed
+    if (!res.headersSent) {
+      res.status(403).json({ success: false, error: 'Cannot read log file — check file permissions or sudo configuration' });
+    }
+  }
+
+  /**
+   * Stream a remote .gz file to an HTTP response, decompressing it on the fly.
+   * Uses SFTP + local zlib.createGunzip() pipeline — no server-side buffering.
+   * Falls back to exec `zcat` if SFTP is unavailable.
+   */
+  async streamGzFileToResponse(remotePath: string, res: import('express').Response, fileName: string): Promise<void> {
+    if (!RemoteConnection.validateRemotePath(remotePath)) {
+      if (!res.headersSent) res.status(400).json({ success: false, error: 'Invalid log file path' });
+      return;
+    }
+
+    const zlib = require('zlib') as typeof import('zlib');
+    const setHeaders = () => {
+      if (!res.headersSent) {
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      }
+    };
+
+    // ── SFTP + local gunzip (preferred — no exec, streaming, no buffering) ──
+    const sftpOk = await new Promise<boolean>((resolve) => {
+      this.client.sftp((err, sftp) => {
+        if (err) { resolve(false); return; }
+        const inputStream = sftp.createReadStream(remotePath);
+        const gunzip      = zlib.createGunzip();
+        setHeaders();
+        inputStream.pipe(gunzip).pipe(res);
+        gunzip.on('finish', () => resolve(true));
+        gunzip.on('error', () => { inputStream.destroy(); resolve(false); });
+        inputStream.on('error', () => resolve(false));
+      });
+    });
+    if (sftpOk) return;
+
+    // ── Fallback: exec zcat and buffer (path already validated) ──────────
+    if (!res.headersSent) {
+      const result = await this.executeCommand(`zcat -- "${remotePath}" 2>/dev/null`);
+      const decompressed = result.stdout ||
+        (await this.executeCommand(`sudo zcat -- "${remotePath}" 2>/dev/null`)).stdout;
+      if (decompressed) {
+        setHeaders();
+        res.send(decompressed);
+      } else if (!res.headersSent) {
+        res.status(500).json({ success: false, error: 'Could not decompress file' });
+      }
+    }
+  }
+
+  /**
    * Check if PM2 is installed on the remote server
    * Uses multiple detection methods for better reliability
    */
@@ -400,14 +561,43 @@ export class RemoteConnection extends EventEmitter {
 
     try {
       const processList = JSON.parse(cleanedOutput);
+      // Return the full PM2 process shape (pm2_env + monit) so all frontend
+      // components work without modification when viewing a remote server.
       return processList.map((proc: any) => ({
-        name: proc.name,
-        pm_id: proc.pm_id,
-        status: proc.pm2_env ? proc.pm2_env.status : 'unknown',
-        cpu: proc.monit ? (proc.monit.cpu || 0).toFixed(1) : '0.0',
-        memory: proc.monit ? this.formatMemory(proc.monit.memory) : '0 B',
-        uptime: proc.pm2_env ? this.formatUptime(proc.pm2_env.pm_uptime) : 'N/A',
-        restarts: proc.pm2_env ? (proc.pm2_env.restart_time || 0) : 0
+        pid:   proc.pid   || 0,
+        pm_id: proc.pm_id || 0,
+        name:  proc.name  || '',
+        monit: {
+          cpu:    proc.monit ? (proc.monit.cpu    || 0) : 0,
+          memory: proc.monit ? (proc.monit.memory || 0) : 0,
+        },
+        pm2_env: {
+          // identity
+          pm_id:     proc.pm_id || 0,
+          name:      proc.name  || '',
+          namespace: proc.pm2_env?.namespace  || 'default',
+          version:   proc.pm2_env?.version    || '',
+          versioning: proc.pm2_env?.versioning || null,
+          // timing
+          pm_uptime:  proc.pm2_env?.pm_uptime  || 0,
+          created_at: proc.pm2_env?.created_at || 0,
+          // paths
+          pm_cwd:        proc.pm2_env?.pm_cwd        || '',
+          pm_exec_path:  proc.pm2_env?.pm_exec_path  || '',
+          pm_out_log_path: proc.pm2_env?.pm_out_log_path || '',
+          pm_err_log_path: proc.pm2_env?.pm_err_log_path || '',
+          // runtime
+          exec_interpreter: proc.pm2_env?.exec_interpreter || 'node',
+          exec_mode:  proc.pm2_env?.exec_mode  || 'fork',
+          instances:  proc.pm2_env?.instances  || 1,
+          node_args:  proc.pm2_env?.node_args  || [],
+          status:     proc.pm2_env?.status     || 'unknown',
+          restart_time:       proc.pm2_env?.restart_time       || 0,
+          unstable_restarts:  proc.pm2_env?.unstable_restarts  || 0,
+          autorestart: proc.pm2_env?.autorestart ?? true,
+          watch:       proc.pm2_env?.watch      || false,
+          env:         proc.pm2_env?.env        || {},
+        },
       }));
     } catch (error) {
       console.error('Error parsing PM2 process list:', error);

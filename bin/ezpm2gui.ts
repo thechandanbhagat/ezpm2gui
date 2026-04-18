@@ -21,7 +21,7 @@ console.log('\x1b[36m%s\x1b[0m', `
 ║          ezPM2GUI Started          ║
 ╚════════════════════════════════════╝
 
-Web interface available at: \x1b[1mhttp://localhost:3001\x1b[0m
+Web interface available at: \x1b[1mhttp://localhost:3101\x1b[0m
 
 Press Ctrl+C to stop the server.
 `);
