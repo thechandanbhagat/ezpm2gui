@@ -9,6 +9,9 @@ const rootDir = path.resolve(__dirname, '..');
 const binDir = path.join(rootDir, 'bin');
 const distDir = path.join(rootDir, 'dist');
 const clientDir = path.join(rootDir, 'src', 'client');
+const serverConfigSrc = path.join(rootDir, 'src', 'server', 'config', 'project-configs.json');
+const serverConfigDistDir = path.join(distDir, 'server', 'config');
+const serverConfigDist = path.join(serverConfigDistDir, 'project-configs.json');
 
 // Ensure dist directory exists
 if (!fs.existsSync(distDir)) {
@@ -85,6 +88,18 @@ try {
 } catch (error) {
   console.error('✗ Bin directory build failed:');
   console.error(error.stdout || error.message);
+  process.exit(1);
+}
+
+// Copy server config files required at runtime
+console.log('\n4. Copying server configuration files...');
+try {
+  fs.mkdirSync(serverConfigDistDir, { recursive: true });
+  fs.copyFileSync(serverConfigSrc, serverConfigDist);
+  console.log('✓ Server configuration files copied successfully');
+} catch (error) {
+  console.error('✗ Failed to copy server configuration files:');
+  console.error(error.message || error);
   process.exit(1);
 }
 
