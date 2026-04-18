@@ -91,14 +91,14 @@ try {
   process.exit(1);
 }
 
-// Copy server config files required at runtime
-console.log('\n4. Copying server configuration files...');
+// Copy server config file required at runtime
+console.log('\n4. Copying server configuration file...');
 try {
   fs.mkdirSync(serverConfigDistDir, { recursive: true });
   fs.copyFileSync(serverConfigSrc, serverConfigDist);
-  console.log('✓ Server configuration files copied successfully');
+  console.log('✓ Server configuration file copied successfully');
 } catch (error) {
-  console.error('✗ Failed to copy server configuration files:');
+  console.error('✗ Failed to copy server configuration file:');
   console.error(error.message || error);
   process.exit(1);
 }
