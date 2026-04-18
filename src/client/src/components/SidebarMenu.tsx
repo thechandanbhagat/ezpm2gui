@@ -36,7 +36,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ toggleAbout, onItemClick }) =
   const menuItems = [
     { label: 'Processes',            path: '/processes',          icon: ChartBarIcon },
     { label: 'Monitoring',           path: '/monit',              icon: CpuChipIcon },
-{ label: 'Remote Servers',       path: '/remote',             icon: CloudIcon },
+    { label: 'Remote Servers',       path: '/remote',             icon: CloudIcon },
     { label: 'Deploy App',           path: '/deploy',             icon: PlusIcon },
     { label: 'PM2 Modules',          path: '/modules',            icon: PuzzlePieceIcon },
     { label: 'Ecosystem Config',     path: '/ecosystem',          icon: DocumentTextIcon },

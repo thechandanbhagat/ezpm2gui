@@ -233,7 +233,24 @@ export class RemoteConnection extends EventEmitter {
    *   3. exec `sudo -S cat`     — password-based sudo (when password auth is configured)
    *   4. exec `sudo cat`        — NOPASSWD sudo (key-based auth where sudo needs no password)
    */
+  // @group Security : Shell metacharacter allowlist for remote file paths
+  private static readonly SHELL_UNSAFE = /['"`$|&;<>(){}\\\n\r\0]/;
+
+  private static validateRemotePath(remotePath: string): boolean {
+    if (!remotePath) return false;
+    if (remotePath.includes('..')) return false;
+    if (RemoteConnection.SHELL_UNSAFE.test(remotePath)) return false;
+    if (!/\.(log|gz)$/i.test(remotePath)) return false;
+    return true;
+  }
+
   async streamFileToResponse(remotePath: string, res: import('express').Response, fileName: string): Promise<void> {
+    // Validate path before any shell interpolation (fallback methods 2-4 use exec)
+    if (!RemoteConnection.validateRemotePath(remotePath)) {
+      if (!res.headersSent) res.status(400).json({ success: false, error: 'Invalid log file path' });
+      return;
+    }
+
     const setHeaders = () => {
       if (!res.headersSent) {
         res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
@@ -300,6 +317,54 @@ export class RemoteConnection extends EventEmitter {
     // All attempts failed
     if (!res.headersSent) {
       res.status(403).json({ success: false, error: 'Cannot read log file — check file permissions or sudo configuration' });
+    }
+  }
+
+  /**
+   * Stream a remote .gz file to an HTTP response, decompressing it on the fly.
+   * Uses SFTP + local zlib.createGunzip() pipeline — no server-side buffering.
+   * Falls back to exec `zcat` if SFTP is unavailable.
+   */
+  async streamGzFileToResponse(remotePath: string, res: import('express').Response, fileName: string): Promise<void> {
+    if (!RemoteConnection.validateRemotePath(remotePath)) {
+      if (!res.headersSent) res.status(400).json({ success: false, error: 'Invalid log file path' });
+      return;
+    }
+
+    const zlib = require('zlib') as typeof import('zlib');
+    const setHeaders = () => {
+      if (!res.headersSent) {
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      }
+    };
+
+    // ── SFTP + local gunzip (preferred — no exec, streaming, no buffering) ──
+    const sftpOk = await new Promise<boolean>((resolve) => {
+      this.client.sftp((err, sftp) => {
+        if (err) { resolve(false); return; }
+        const inputStream = sftp.createReadStream(remotePath);
+        const gunzip      = zlib.createGunzip();
+        setHeaders();
+        inputStream.pipe(gunzip).pipe(res);
+        gunzip.on('finish', () => resolve(true));
+        gunzip.on('error', () => { inputStream.destroy(); resolve(false); });
+        inputStream.on('error', () => resolve(false));
+      });
+    });
+    if (sftpOk) return;
+
+    // ── Fallback: exec zcat and buffer (path already validated) ──────────
+    if (!res.headersSent) {
+      const result = await this.executeCommand(`zcat -- "${remotePath}" 2>/dev/null`);
+      const decompressed = result.stdout ||
+        (await this.executeCommand(`sudo zcat -- "${remotePath}" 2>/dev/null`)).stdout;
+      if (decompressed) {
+        setHeaders();
+        res.send(decompressed);
+      } else if (!res.headersSent) {
+        res.status(500).json({ success: false, error: 'Could not decompress file' });
+      }
     }
   }
 

@@ -171,10 +171,8 @@ export function createServer() {
         return;
       }
 
-      const content = fs.readFileSync(logPath, 'utf8') as string;
-      const allLines = content.split('\n').filter((l: string) => l.trim() !== '');
-      const result = lines === 0 ? allLines : allLines.slice(-lines);
-      res.json({ logs: result, logPath, totalLines: allLines.length });
+      const { lines: result, total } = await streamTailLines(fs.createReadStream(logPath), lines);
+      res.json({ logs: result, logPath, totalLines: total });
     } catch (err) {
       console.error(`Error reading log file: ${err}`);
       res.status(500).json({ error: 'Failed to read log file' });
@@ -273,8 +271,36 @@ export function createServer() {
   const isAllowedLogPath = (filePath: string): boolean => {
     const nodePath = require('path') as typeof import('path');
     const norm = nodePath.normalize(filePath);
-    // Prevent traversal attacks; require an absolute path ending in a log extension
-    return !norm.includes('..') && /\.(log|gz)$/i.test(norm);
+    // Require absolute path; reject shell-dangerous characters; require log extension
+    const SHELL_UNSAFE = /['"`;$|&<>(){}\\\n\r\0]/;
+    return (
+      nodePath.isAbsolute(norm) &&
+      !norm.includes('..') &&
+      !SHELL_UNSAFE.test(norm) &&
+      /\.(log|gz)$/i.test(norm)
+    );
+  };
+
+  // @group LogHistory : Stream last N lines from a readable stream (ring buffer, no full-file load)
+  const streamTailLines = (inputStream: NodeJS.ReadableStream, maxLines: number): Promise<{ lines: string[]; total: number }> => {
+    return new Promise((resolve, reject) => {
+      const rl = require('readline').createInterface({ input: inputStream, crlfDelay: Infinity });
+      const buffer: string[] = [];
+      let total = 0;
+      rl.on('line', (line: string) => {
+        if (line.trim() === '') return;
+        total++;
+        if (maxLines > 0) {
+          buffer.push(line);
+          if (buffer.length > maxLines) buffer.shift();
+        } else {
+          buffer.push(line);
+        }
+      });
+      rl.on('close', () => resolve({ lines: buffer, total }));
+      rl.on('error', reject);
+      inputStream.on('error', reject);
+    });
   };
 
   // @group LogHistory : Read a specific log file by path — ?lines=N, supports .gz
@@ -292,17 +318,12 @@ export function createServer() {
 
       if (!fs.existsSync(filePath)) { res.status(404).json({ error: 'File not found' }); return; }
 
-      let content = '';
-      if (filePath.endsWith('.gz')) {
-        const compressed = fs.readFileSync(filePath);
-        content = zlib.gunzipSync(compressed).toString('utf8');
-      } else {
-        content = fs.readFileSync(filePath, 'utf8') as string;
-      }
+      const inputStream: NodeJS.ReadableStream = filePath.endsWith('.gz')
+        ? fs.createReadStream(filePath).pipe(zlib.createGunzip())
+        : fs.createReadStream(filePath);
 
-      const allLines  = content.split('\n').filter((l: string) => l.trim() !== '');
-      const result    = lines === 0 ? allLines : allLines.slice(-lines);
-      res.json({ logs: result, totalLines: allLines.length });
+      const { lines: result, total } = await streamTailLines(inputStream, lines);
+      res.json({ logs: result, totalLines: total });
     } catch (err) {
       console.error('Error reading log file:', err);
       res.status(500).json({ error: 'Failed to read log file' });
@@ -317,13 +338,20 @@ export function createServer() {
 
     try {
       const fs       = require('fs')   as typeof import('fs');
+      const zlib     = require('zlib') as typeof import('zlib');
       const nodePath = require('path') as typeof import('path');
       if (!fs.existsSync(filePath)) { res.status(404).json({ error: 'File not found' }); return; }
 
-      const fileName = nodePath.basename(filePath);
-      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-      res.setHeader('Content-Type', filePath.endsWith('.gz') ? 'application/gzip' : 'text/plain; charset=utf-8');
-      fs.createReadStream(filePath).pipe(res);
+      // Decompress .gz server-side so the download is always plain text
+      const baseName = nodePath.basename(filePath).replace(/\.gz$/i, '');
+      res.setHeader('Content-Disposition', `attachment; filename="${baseName}"`);
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+
+      if (filePath.endsWith('.gz')) {
+        fs.createReadStream(filePath).pipe(zlib.createGunzip()).pipe(res);
+      } else {
+        fs.createReadStream(filePath).pipe(res);
+      }
     } catch (err) {
       console.error('Error downloading log file:', err);
       res.status(500).json({ error: 'Failed to download file' });
