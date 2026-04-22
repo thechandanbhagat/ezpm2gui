@@ -1,6 +1,6 @@
 [
   {
-    "name": "cv-forge",
+    "name": "Job1",
     "description": "",
     "scriptType": "shell",
     "scriptMode": "inline",
@@ -13,10 +13,10 @@
     "enabled": false,
     "id": "5e8ec09e-afaa-44bd-a4d4-7901aa3b3b86",
     "createdAt": "2025-11-03T15:20:46.999Z",
-    "updatedAt": "2026-04-05T19:28:49.444Z"
+    "updatedAt": "2026-04-22T02:29:27.462Z"
   },
   {
-    "name": "ms-rule-engine",
+    "name": "Job2",
     "description": "",
     "scriptType": "shell",
     "scriptMode": "inline",
@@ -29,6 +29,6 @@
     "enabled": false,
     "id": "7a07f917-8ac4-48e4-953b-3df86e52c362",
     "createdAt": "2025-11-05T10:19:23.256Z",
-    "updatedAt": "2026-04-05T19:28:50.663Z"
+    "updatedAt": "2026-04-22T02:29:46.783Z"
   }
 ]
