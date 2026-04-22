@@ -51,7 +51,7 @@ try {
     console.log(`PM2 ecosystem file generated at: ${fullPath}`);
     console.log('\nTo start your PM2 processes with this configuration:');
     console.log('  pm2 start ecosystem.config.js');
-    console.log('\nTo monitor your processes with ezPM2GUI:');
+    console.log('\nTo monitor your processes with EZ PM2 GUI:');
     console.log('  ezpm2gui');
 }
 catch (error) {
