@@ -1,6 +1,10 @@
 document.addEventListener('DOMContentLoaded', function() {
     const particlesBg = document.getElementById('particles-bg');
     
+    // Check if light mode is active
+    const isLightTheme = document.body.classList.contains('light-theme') || localStorage.getItem('theme') === 'light';
+    const particleColor = isLightTheme ? "#4f46e5" : "#ffffff";
+    
     if (particlesBg && typeof particlesJS !== 'undefined') {
         particlesJS('particles-bg', {
             "particles": {
@@ -12,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 },
                 "color": {
-                    "value": "#ffffff"
+                    "value": particleColor
                 },
                 "shape": {
                     "type": "circle",
@@ -40,12 +44,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         "size_min": 0.1,
                         "sync": false
                     }
-                },
-                "line_linked": {
+                },                "line_linked": {
                     "enable": true,
                     "distance": 150,
-                    "color": "#ffffff",
-                    "opacity": 0.4,
+                    "color": particleColor,
+                    "opacity": isLightTheme ? 0.2 : 0.4,
                     "width": 1
                 },
                 "move": {
