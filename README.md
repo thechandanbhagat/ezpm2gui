@@ -2,6 +2,30 @@
 
 A modern web-based graphical user interface for the PM2 process manager, built with TypeScript, Tailwind CSS, and React.
 
+## Screenshots
+
+**Process Dashboard** — live system metrics and every PM2 process at a glance:
+
+![Process Dashboard](ezpm2gui/screenshots/01-processes.png)
+
+**Monitoring** — real-time CPU, memory and uptime per process:
+
+![Process Monitor](ezpm2gui/screenshots/02-monitoring.png)
+
+**Deploy App** — start new PM2 processes from a structured form:
+
+![Deploy App](ezpm2gui/screenshots/04-deploy-app.png)
+
+**Cron Jobs** — schedule recurring tasks without touching crontab:
+
+![Cron Jobs](ezpm2gui/screenshots/08-cron-jobs.png)
+
+**Settings** — auto-saved preferences for refresh, logs, theme and security:
+
+![Settings](ezpm2gui/screenshots/11-settings.png)
+
+> See the full visual walkthrough in [https://ezpm2gui.vercel.app/](https://ezpm2gui.vercel.app/) — every screen is annotated with a screenshot.
+
 ## Features
 
 - **Real-time process monitoring** - Keep track of all your PM2 processes in real-time
@@ -86,7 +110,7 @@ Monitor key system metrics including:
 - Load averages (1, 5, and 15 minutes)
 
 ### User Interface
-ezPM2GUI uses Tailwind CSS for a sleek, compact, and fully responsive interface:
+EZ PM2 GUI uses Tailwind CSS for a sleek, compact, and fully responsive interface:
 - Dark and light mode support across all pages
 - Consistent color theming with smooth transitions
 - Compact layout with small fonts and reduced spacing for information density
@@ -112,7 +136,7 @@ npm install ezpm2gui
 ### As a Command Line Tool (Global Installation)
 
 ```bash
-# Start the ezPM2GUI web interface
+# Start the EZ PM2 GUI web interface
 ezpm2gui
 
 # Start on a specific port
@@ -155,14 +179,14 @@ http://localhost:3001
 
 ## Configuration
 
-ezPM2GUI uses environment variables for configuration:
+EZ PM2 GUI uses environment variables for configuration:
 
 - `PORT`: The port to run the server on (default: 3001)
 - `HOST`: The host to bind to (default: localhost)
 
 ## Load Balancing with PM2
 
-ezPM2GUI provides an easy interface to manage PM2's load balancing capabilities:
+EZ PM2 GUI provides an easy interface to manage PM2's load balancing capabilities:
 
 ### Setting Up Load Balancing
 
@@ -257,34 +281,36 @@ npm run lint
 
 ## FAQ
 
-### Q: How does ezPM2GUI differ from pm2-gui and PM2 Plus?
+### Q: How does EZ PM2 GUI differ from pm2-gui and PM2 Plus?
 
-A: ezPM2GUI is a modern, TypeScript-based alternative to pm2-gui with a more user-friendly interface and additional features. Unlike PM2 Plus, it's completely free and open-source, running locally on your server rather than in the cloud.
+A: EZ PM2 GUI is a modern, TypeScript-based alternative to pm2-gui with a more user-friendly interface and additional features. Unlike PM2 Plus, it's completely free and open-source, running locally on your server rather than in the cloud.
 
-### Q: Can I use ezPM2GUI with PM2 running on a different machine?
+### Q: Can I use EZ PM2 GUI with PM2 running on a different machine?
 
-A: Yes, you can configure ezPM2GUI to connect to a remote PM2 installation. You'll need to specify the connection details in the application settings.
+A: Yes, you can configure EZ PM2 GUI to connect to a remote PM2 installation. You'll need to specify the connection details in the application settings.
 
 ### Q: How do I generate an ecosystem file from my existing processes?
 
 A: Use the `ezpm2gui-generate-ecosystem` command-line tool, or visit the Ecosystem Config section in the web UI.
 
-### Q: Can ezPM2GUI handle a large number of processes?
+### Q: Can EZ PM2 GUI handle a large number of processes?
 
-A: Yes, ezPM2GUI is designed to handle dozens of processes efficiently. The UI is optimized to present large amounts of information in a digestible format.
+A: Yes, EZ PM2 GUI is designed to handle dozens of processes efficiently. The UI is optimized to present large amounts of information in a digestible format.
 
-### Q: Is ezPM2GUI secure?
+### Q: Is EZ PM2 GUI secure?
 
-A: By default, ezPM2GUI binds to localhost for security reasons. If you expose the interface to other machines, consider adding authentication through a reverse proxy like Nginx.
+A: By default, EZ PM2 GUI binds to localhost for security reasons. If you expose the interface to other machines, consider adding authentication through a reverse proxy like Nginx.
 
 ## Related Projects
 
-- [PM2](https://github.com/Unitech/pm2) - The process manager that ezPM2GUI works with
+- [PM2](https://github.com/Unitech/pm2) - The process manager that EZ PM2 GUI works with
 - [pm2-gui](https://github.com/Tjatse/pm2-gui) - The original inspiration for this project
 
 ## License
 
-ISC
+GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later). See [LICENSE](LICENSE).
+
+EZ PM2 GUI interfaces with [PM2](https://github.com/Unitech/pm2), which is licensed under AGPL-3.0. Because this project links PM2 as a library, it is distributed under the same license.
 
 ## Credits
 
@@ -292,4 +318,4 @@ Built by [Chandan Bhagat](https://github.com/thechandanbhagat) as a modern alter
 
 ---
 
-**Note**: ezPM2GUI is not officially affiliated with PM2 or PM2 Plus. It's an independent tool that interfaces with the PM2 process manager.
+**Note**: EZ PM2 GUI is not officially affiliated with PM2 or PM2 Plus. It's an independent tool that interfaces with the PM2 process manager.
