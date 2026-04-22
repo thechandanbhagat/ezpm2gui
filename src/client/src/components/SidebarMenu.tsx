@@ -13,15 +13,17 @@ import {
   ScaleIcon,
   CloudIcon,
   ClockIcon,
+  SparklesIcon,
 } from '@heroicons/react/24/outline';
 
 interface SidebarMenuProps {
   toggleAbout: () => void;
   onItemClick?: () => void;
+  onWhatsNew?: () => void;
 }
 
 // @group SidebarMenu : Navigation menu for the application sidebar
-const SidebarMenu: React.FC<SidebarMenuProps> = ({ toggleAbout, onItemClick }) => {
+const SidebarMenu: React.FC<SidebarMenuProps> = ({ toggleAbout, onItemClick, onWhatsNew }) => {
   const location = useLocation();
   const currentPath = location.pathname;
 
@@ -49,7 +51,6 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ toggleAbout, onItemClick }) =
   // @group Render : Sidebar layout with sections
   return (
     <div className="h-full flex flex-col bg-white dark:bg-neutral-900">
-
       {/* ── Process Management ── */}
       <nav className="flex-1 px-2 py-2 overflow-y-auto">
         <p className="px-1.5 mb-1 text-xs font-semibold text-neutral-400 dark:text-neutral-600 uppercase tracking-widest">
@@ -68,13 +69,16 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ toggleAbout, onItemClick }) =
                 className={`
                   flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-medium
                   transition-colors duration-100
-                  ${active
-                    ? 'bg-primary-600 text-white'
-                    : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-100'
+                  ${
+                    active
+                      ? "bg-primary-600 text-white"
+                      : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-100"
                   }
                 `}
               >
-                <Icon className={`h-3.5 w-3.5 shrink-0 ${active ? 'text-white' : 'text-neutral-500 dark:text-neutral-500'}`} />
+                <Icon
+                  className={`h-3.5 w-3.5 shrink-0 ${active ? "text-white" : "text-neutral-500 dark:text-neutral-500"}`}
+                />
                 <span className="truncate">{item.label}</span>
               </Link>
             );
@@ -82,10 +86,36 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ toggleAbout, onItemClick }) =
         </div>
       </nav>
 
-      {/* ── Bottom: About & Settings ── */}
+      {/* ── Bottom: What's New, About & Settings ── */}
       <div className="px-2 pb-2 pt-2 border-t border-neutral-100 dark:border-neutral-800 space-y-0.5">
+        {/* What's New — animated version badge, opens popup */}
         <button
-          onClick={() => { toggleAbout(); handleItemClick(); }}
+          onClick={() => {
+            onWhatsNew?.();
+            handleItemClick();
+          }}
+          className="w-full relative flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-medium
+                     text-neutral-600 dark:text-neutral-400
+                     hover:bg-neutral-100 dark:hover:bg-neutral-800
+                     hover:text-neutral-900 dark:hover:text-neutral-100
+                     transition-colors duration-100"
+        >
+          <SparklesIcon className="h-3.5 w-3.5 shrink-0 text-violet-500" />
+          <span className="truncate">What's New</span>
+          {/* Animated version pill */}
+          <span
+            className="ml-auto shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none
+                           bg-violet-500/15 text-violet-500 border border-violet-400/60 animate-pulse"
+          >
+            v1.6.0
+          </span>
+        </button>
+
+        <button
+          onClick={() => {
+            toggleAbout();
+            handleItemClick();
+          }}
           className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-medium
                      text-neutral-600 dark:text-neutral-400
                      hover:bg-neutral-100 dark:hover:bg-neutral-800
@@ -102,15 +132,25 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ toggleAbout, onItemClick }) =
           className={`
             flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-medium
             transition-colors duration-100
-            ${isActive('/settings')
-              ? 'bg-primary-600 text-white'
-              : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-100'
+            ${
+              isActive("/settings")
+                ? "bg-primary-600 text-white"
+                : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-100"
             }
           `}
         >
-          <Cog6ToothIcon className={`h-3.5 w-3.5 shrink-0 ${isActive('/settings') ? 'text-white' : 'text-neutral-500 dark:text-neutral-500'}`} />
+          <Cog6ToothIcon
+            className={`h-3.5 w-3.5 shrink-0 ${isActive("/settings") ? "text-white" : "text-neutral-500 dark:text-neutral-500"}`}
+          />
           <span>Settings</span>
         </Link>
+      </div>
+
+      {/* ── Version watermark ── */}
+      <div className="px-3 pb-2 pt-1">
+        <p className="text-[10px] text-neutral-300 dark:text-neutral-700 text-center select-none">
+          EZ PM2 GUI &middot; v1.6.0
+        </p>
       </div>
     </div>
   );
