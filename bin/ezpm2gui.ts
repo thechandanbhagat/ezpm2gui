@@ -18,7 +18,7 @@ const server: ChildProcess = spawn('node', [serverPath], { stdio: 'inherit' });
 // Log startup message
 console.log('\x1b[36m%s\x1b[0m', `
 ╔════════════════════════════════════╗
-║          ezPM2GUI Started          ║
+║         EZ PM2 GUI Started         ║
 ╚════════════════════════════════════╝
 
 Web interface available at: \x1b[1mhttp://localhost:3101\x1b[0m
@@ -41,11 +41,11 @@ server.on('exit', (code: number | null) => {
 
 // Handle termination signals
 process.on('SIGINT', () => {
-  console.log('\nShutting down ezPM2GUI...');
+  console.log('\nShutting down EZ PM2 GUI...');
   server.kill();
 });
 
 process.on('SIGTERM', () => {
-  console.log('\nShutting down ezPM2GUI...');
+  console.log('\nShutting down EZ PM2 GUI...');
   server.kill();
 });

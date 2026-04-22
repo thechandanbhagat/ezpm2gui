@@ -1,8 +1,8 @@
-# ezPM2GUI Development Guide
+# EZ PM2 GUI Development Guide
 
 ## Project Structure
 
-The ezPM2GUI application is structured as follows:
+The EZ PM2 GUI application is structured as follows:
 
 - `src/server`: TypeScript server code using Express and Socket.IO
 - `src/client`: React-based frontend with TypeScript and Material UI
@@ -110,25 +110,25 @@ npm run dev
 After installing globally:
 
 ```
-npm install -g ezpm2gui
+npm install -g EZ PM2 GUI
 ```
 
 You can run:
 
 ```
-ezpm2gui
+EZ PM2 GUI
 ```
 
 ## Usage as a Module
 
 ```javascript
-const ezpm2gui = require('ezpm2gui');
+const EZ PM2 GUI = require('EZ PM2 GUI');
 
 // Start with default options
-ezpm2gui.start();
+EZ PM2 GUI.start();
 
 // Or with custom options
-ezpm2gui.start({
+EZ PM2 GUI.start({
   port: 3030,
   host: '0.0.0.0'
 });

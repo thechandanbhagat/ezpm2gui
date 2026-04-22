@@ -2,7 +2,7 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-console.log('Starting ezPM2GUI build process...');
+console.log('Starting EZ PM2 GUI build process...');
 
 // Paths
 const rootDir = path.resolve(__dirname, '..');
@@ -103,7 +103,7 @@ try {
   process.exit(1);
 }
 
-console.log('\n✅ ezPM2GUI build completed successfully!');
+console.log('\n✅ EZ PM2 GUI build completed successfully!');
 console.log('You can now run the application with:');
 console.log('  npm start');
 console.log('Or if installed globally:');

@@ -7,7 +7,7 @@ interface StartOptions {
 }
 
 /**
- * Start the ezPM2GUI server
+ * Start the EZ PM2 GUI server
  * @param options Configuration options
  * @returns The HTTP server instance
  */

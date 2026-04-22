@@ -19,6 +19,9 @@ import LoadBalancingGuide from './components/LoadBalancingGuide';
 import RemoteConnections from './components/RemoteConnections';
 import CronJobsPage from './components/CronJobsPage';
 import ServerSwitcher from './components/ServerSwitcher';
+import PasswordGate from './components/PasswordGate';
+import WhatsNew from './components/WhatsNew';
+import WhatsNewModal, { shouldShowWhatsNew, markWhatsNewSeen } from './components/WhatsNewModal';
 import {
   Dialog,
   DialogContent,
@@ -35,7 +38,9 @@ import {
   SunIcon,
   Bars3Icon,
   ArrowUpCircleIcon,
-  StarIcon
+  StarIcon,
+  LockClosedIcon,
+  ShieldExclamationIcon,
 } from '@heroicons/react/24/outline';
 
 // Initialize socket connection with improved settings
@@ -82,6 +87,19 @@ const App: React.FC = () => {
 
   // @group Updates : Silently check for a newer npm version after initial load
   const [updateAvailable, setUpdateAvailable] = useState<boolean>(false);
+
+  // @group Auth : Password-protection state
+  // null = not yet fetched, false = no password set, true = password set
+  const [passwordSet,  setPasswordSet]  = useState<boolean | null>(null);
+  const [pinSet,       setPinSet]       = useState<boolean | null>(null);
+  // Persist unlock across page refreshes within the same browser tab/session
+  const [appUnlocked,  setAppUnlocked]  = useState<boolean>(
+    () => sessionStorage.getItem('ezpm2_unlocked') === '1'
+  );
+  const autoLockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // @group WhatsNew : Show popup once per session
+  const [showWhatsNew, setShowWhatsNew] = useState<boolean>(false);
   
   // Theme state — default dark, respect system preference
   const [darkMode, setDarkMode] = useState<boolean>(
@@ -338,6 +356,61 @@ const App: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // @group Auth : Fetch password-protection status on mount; also load autoLockMinutes
+  const [autoLockMinutes, setAutoLockMinutes] = useState<number>(0);
+  useEffect(() => {
+    fetch('/api/auth/status')
+      .then(r => r.json())
+      .then(j => {
+        setPasswordSet(j.passwordSet ?? false);
+        setPinSet(j.pinSet ?? false);
+        setAutoLockMinutes(j.autoLockMinutes ?? 0);
+      })
+      .catch(() => { setPasswordSet(false); setPinSet(false); });
+  }, []);
+
+  // @group Auth : Sync sessionStorage when unlock state changes
+  useEffect(() => {
+    if (appUnlocked) {
+      sessionStorage.setItem('ezpm2_unlocked', '1');
+    } else {
+      sessionStorage.removeItem('ezpm2_unlocked');
+    }
+  }, [appUnlocked]);
+
+  // @group Auth : Auto-lock on inactivity — resets on mouse/key/touch events
+  useEffect(() => {
+    if (!appUnlocked || autoLockMinutes <= 0) return;
+
+    const ms = autoLockMinutes * 60 * 1000;
+
+    const resetTimer = () => {
+      if (autoLockTimerRef.current) clearTimeout(autoLockTimerRef.current);
+      autoLockTimerRef.current = setTimeout(() => {
+        setAppUnlocked(false);
+      }, ms);
+    };
+
+    const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'];
+    events.forEach(ev => window.addEventListener(ev, resetTimer, { passive: true }));
+    resetTimer(); // start the initial timer
+
+    return () => {
+      events.forEach(ev => window.removeEventListener(ev, resetTimer));
+      if (autoLockTimerRef.current) clearTimeout(autoLockTimerRef.current);
+    };
+  }, [appUnlocked, autoLockMinutes]);
+
+  // @group Auth : Listen for autoLockMinutes changes dispatched from Settings page
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ autoLockMinutes: number }>).detail;
+      setAutoLockMinutes(detail.autoLockMinutes);
+    };
+    window.addEventListener('ezpm2_autolock_changed', handler);
+    return () => window.removeEventListener('ezpm2_autolock_changed', handler);
+  }, []);
+
   // Process control functions
   const handleProcessAction = (id: number, action: string): void => {
     // For destructive actions, show confirmation dialog
@@ -398,6 +471,18 @@ const App: React.FC = () => {
   const toggleAbout = (): void => {
     setShowAbout(!showAbout);
   };
+
+  // @group WhatsNew : Auto-show on first visit this session (only when unlocked/no auth)
+  useEffect(() => {
+    if (shouldShowWhatsNew()) {
+      // Small delay so the app renders first
+      const t = setTimeout(() => {
+        setShowWhatsNew(true);
+        markWhatsNewSeen();
+      }, 800);
+      return () => clearTimeout(t);
+    }
+  }, []);
   
   const toggleDarkMode = (): void => {
     setDarkMode(!darkMode);
@@ -560,6 +645,16 @@ const App: React.FC = () => {
   return (
     <ThemeProvider theme={muiTheme}>
     <Router>
+      {/* @group Auth : Password/PIN gate — rendered before anything else when locked */}
+      {(passwordSet === true || pinSet === true) && !appUnlocked && (
+        <PasswordGate
+          darkMode={darkMode}
+          onUnlock={() => setAppUnlocked(true)}
+          pinSet={pinSet ?? false}
+          passwordSet={passwordSet ?? false}
+        />
+      )}
+
       <div className={`min-h-screen ${darkMode ? 'bg-neutral-950' : 'bg-neutral-100'}`}>
         <div className="flex">
 
@@ -586,6 +681,22 @@ const App: React.FC = () => {
                 <span className="text-gradient">EZ PM2 GUI</span>
               </Link>
 
+              {/* @group Auth : No-password banner — shown when password protection is not yet enabled */}
+              {passwordSet === false && (
+                <Link
+                  to="/settings?section=security"
+                  title="Enable password protection in Settings"
+                  className={`hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium no-underline border transition-colors ${
+                    darkMode
+                      ? 'bg-orange-400/10 border-orange-400/30 text-orange-400 hover:bg-orange-400/20'
+                      : 'bg-orange-50 border-orange-300 text-orange-700 hover:bg-orange-100'
+                  }`}
+                >
+                  <ShieldExclamationIcon className="h-3.5 w-3.5" />
+                  <span>No password set — go to Settings / Security to enable</span>
+                </Link>
+              )}
+
               {/* Right side */}
               <div className="flex items-center gap-1.5">
 
@@ -593,7 +704,7 @@ const App: React.FC = () => {
                 {updateAvailable && (
                   <Link
                     to="/settings"
-                    title="A newer version of ezpm2gui is available"
+                    title="A newer version of EZ PM2 GUI is available"
                     className={`relative flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium no-underline border transition-colors ${
                       darkMode
                         ? 'bg-yellow-400/10 border-yellow-400/30 text-yellow-400 hover:bg-yellow-400/20'
@@ -609,6 +720,19 @@ const App: React.FC = () => {
                   </Link>
                 )}
 
+                {/* @group Auth : Lock button — click to immediately re-lock the app */}
+                {passwordSet === true && appUnlocked && (
+                  <button
+                    onClick={() => setAppUnlocked(false)}
+                    title="Lock app"
+                    className={`p-1 rounded transition-colors ${
+                      darkMode ? 'text-green-400 hover:text-red-400' : 'text-green-600 hover:text-red-500'
+                    }`}
+                  >
+                    <LockClosedIcon className="h-3.5 w-3.5" />
+                  </button>
+                )}
+
                 {/* Divider */}
                 <span className={`h-4 w-px mx-0.5 ${darkMode ? 'bg-neutral-700' : 'bg-neutral-200'}`} />
 
@@ -617,7 +741,7 @@ const App: React.FC = () => {
                   href="https://github.com/thechandanbhagat/ezpm2gui"
                   target="_blank"
                   rel="noopener noreferrer"
-                  title="Star ezpm2gui on GitHub"
+                  title="Star EZ PM2 GUI on GitHub"
                   className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium no-underline border transition-colors ${
                     darkMode
                       ? 'bg-neutral-800 border-neutral-700 text-neutral-300 hover:border-yellow-400/60 hover:text-yellow-400'
@@ -680,7 +804,7 @@ const App: React.FC = () => {
                 darkMode ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-200'
               }`}>
                 <div className="pt-9 h-full overflow-y-auto">
-                  <SidebarMenu toggleAbout={toggleAbout} onItemClick={toggleMenu} />
+                  <SidebarMenu toggleAbout={toggleAbout} onItemClick={toggleMenu} onWhatsNew={() => setShowWhatsNew(true)} />
                 </div>
               </div>
             </div>
@@ -690,7 +814,7 @@ const App: React.FC = () => {
           <div className={`hidden sm:flex flex-col fixed left-0 top-9 h-[calc(100vh-2.25rem)] w-[200px] border-r overflow-y-auto ${
             darkMode ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-200'
           }`}>
-            <SidebarMenu toggleAbout={toggleAbout} />
+            <SidebarMenu toggleAbout={toggleAbout} onWhatsNew={() => setShowWhatsNew(true)} />
           </div>
 
           {/* ── Main Content ── */}
@@ -798,6 +922,7 @@ const App: React.FC = () => {
                 <Route path="/cron-jobs" element={<CronJobsPage />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/load-balancing-guide" element={<LoadBalancingGuide />} />
+                <Route path="/whats-new" element={<WhatsNew />} />
               </Routes>
             </div>{/* /px-3 py-3 */}
           </main>
@@ -813,6 +938,12 @@ const App: React.FC = () => {
         />
 
         {/* @group AboutDialog : About popup dialog */}
+        <WhatsNewModal
+          open={showWhatsNew}
+          onClose={() => setShowWhatsNew(false)}
+          darkMode={darkMode}
+        />
+
         <Dialog open={showAbout} onClose={toggleAbout} maxWidth="xs" fullWidth>
           <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pb: 1 }}>
             <div style={{
@@ -824,7 +955,7 @@ const App: React.FC = () => {
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 600, fontSize: '0.9375rem', lineHeight: 1.3 }}>EZ PM2 GUI</div>
-              <div style={{ fontSize: '0.75rem', opacity: 0.5, fontWeight: 400 }}>v1.3.1 · Chandan Bhagat</div>
+              <div style={{ fontSize: '0.75rem', opacity: 0.5, fontWeight: 400 }}>v1.6.0 · Chandan Bhagat</div>
             </div>
             <IconButton size="small" onClick={toggleAbout} sx={{ ml: 'auto' }}>
               <CloseIcon fontSize="small" />
