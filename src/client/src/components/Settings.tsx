@@ -24,10 +24,12 @@ import DeleteSweepIcon  from '@mui/icons-material/DeleteSweep';
 import CheckCircleIcon  from '@mui/icons-material/CheckCircle';
 import RestartAltIcon   from '@mui/icons-material/RestartAlt';
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
+import LockIcon         from '@mui/icons-material/Lock';
+import LockOpenIcon     from '@mui/icons-material/LockOpen';
 import PageHeader from './PageHeader';
 
 // @group Types : Settings page types
-type SectionId = 'general' | 'appearance' | 'pm2' | 'advanced' | 'updates';
+type SectionId = 'general' | 'appearance' | 'pm2' | 'advanced' | 'updates' | 'security';
 
 // @group Types : npm update check response
 interface VersionInfo {
@@ -56,17 +58,253 @@ const SECTIONS: Section[] = [
   { id: 'pm2',        label: 'PM2',        icon: <TerminalIcon sx={{ fontSize: 16 }} /> },
   { id: 'advanced',   label: 'Advanced',   icon: <DeleteSweepIcon sx={{ fontSize: 16 }} /> },
   { id: 'updates',    label: 'Updates',    icon: <SystemUpdateAltIcon sx={{ fontSize: 16 }} /> },
+  { id: 'security',   label: 'Security',   icon: <LockIcon sx={{ fontSize: 16 }} /> },
 ];
 
 // @group Utilities : Load setting from localStorage with fallback
 const load = (key: string, fallback: string) =>
   localStorage.getItem(key) ?? fallback;
 
+// @group Components : Reusable setting row — label/description left, control right
+// Defined outside Settings to keep a stable reference across re-renders (prevents focus loss)
+const SettingRow: React.FC<{
+  label: string;
+  description?: string;
+  control: React.ReactNode;
+  last?: boolean;
+}> = ({ label, description, control, last }) => (
+  <>
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1.5, gap: 3 }}>
+      <Box sx={{ minWidth: 0 }}>
+        <Typography variant="body2" sx={{ fontWeight: 500 }}>{label}</Typography>
+        {description && (
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25 }}>
+            {description}
+          </Typography>
+        )}
+      </Box>
+      <Box sx={{ flexShrink: 0 }}>{control}</Box>
+    </Box>
+    {!last && <Divider />}
+  </>
+);
+
+// @group Components : Section wrapper card
+// Defined outside Settings to keep a stable reference across re-renders (prevents focus loss)
+const SectionCard: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+  <Paper variant="outlined" sx={{ mb: 2 }}>
+    <Box sx={{ px: 2, py: 1.25, borderBottom: 1, borderColor: 'divider', bgcolor: 'action.hover' }}>
+      <Typography variant="subtitle2" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.6875rem' }}>
+        {title}
+      </Typography>
+    </Box>
+    <Box sx={{ px: 2 }}>{children}</Box>
+  </Paper>
+);
+
 // @group Settings : Main Settings page component
 const Settings: React.FC = () => {
 
-  // @group State : Active sidebar section
-  const [activeSection, setActiveSection] = useState<SectionId>('general');
+  // @group State : Active sidebar section — allow external deep-link via ?section=security
+  const [activeSection, setActiveSection] = useState<SectionId>(() => {
+    const params = new URLSearchParams(window.location.search);
+    const s = params.get('section');
+    const valid: SectionId[] = ['general', 'appearance', 'pm2', 'advanced', 'updates', 'security'];
+    return (valid.includes(s as SectionId) ? s : 'general') as SectionId;
+  });
+
+  // @group State : Security section
+  const [secPasswordSet,     setSecPasswordSet]     = useState<boolean | null>(null);
+  const [secNewPassword,     setSecNewPassword]     = useState('');
+  const [secConfirmPassword, setSecConfirmPassword] = useState('');
+  const [secCurrentPassword, setSecCurrentPassword] = useState('');
+  const [secRemovePassword,  setSecRemovePassword]  = useState('');
+  const [secSaving,          setSecSaving]          = useState(false);
+  const [secRemoving,        setSecRemoving]         = useState(false);
+  const [secError,           setSecError]           = useState<string | null>(null);
+  const [secSuccess,         setSecSuccess]         = useState<string | null>(null);
+  const [autoLockMinutes,    setAutoLockMinutes]    = useState<number>(0);
+  const [autoLockSaving,     setAutoLockSaving]     = useState(false);
+  // PIN state
+  const [pinSet,             setPinSet]             = useState<boolean | null>(null);
+  const [pinNew,             setPinNew]             = useState('');
+  const [pinConfirm,         setPinConfirm]         = useState('');
+  const [pinRemovePassword,  setPinRemovePassword]  = useState('');
+  const [pinSaving,          setPinSaving]          = useState(false);
+  const [pinRemoving,        setPinRemoving]        = useState(false);
+
+  // @group Effects : Load security status when the security section is opened
+  React.useEffect(() => {
+    if (activeSection !== 'security' || secPasswordSet !== null) return;
+    fetch('/api/auth/status')
+      .then(r => r.json())
+      .then(j => {
+        setSecPasswordSet(j.passwordSet ?? false);
+        setPinSet(j.pinSet ?? false);
+        setAutoLockMinutes(j.autoLockMinutes ?? 0);
+      })
+      .catch(() => setSecPasswordSet(false));
+  }, [activeSection, secPasswordSet]);
+
+  // @group Handlers : Set or change PIN
+  const handlePinSave = async () => {
+    setSecError(null);
+    setSecSuccess(null);
+    if (!/^\d{4}$/.test(pinNew)) {
+      setSecError('PIN must be exactly 4 digits');
+      return;
+    }
+    if (pinNew !== pinConfirm) {
+      setSecError('PINs do not match');
+      return;
+    }
+    setPinSaving(true);
+    try {
+      const res  = await fetch('/api/auth/pin/set', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: pinNew }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setPinSet(true);
+        setPinNew('');
+        setPinConfirm('');
+        setSecSuccess(pinSet ? 'PIN changed successfully' : 'PIN protection enabled');
+      } else {
+        setSecError(json.error || 'Failed to save PIN');
+      }
+    } catch {
+      setSecError('Network error — could not reach the server');
+    } finally {
+      setPinSaving(false);
+    }
+  };
+
+  // @group Handlers : Remove PIN
+  const handlePinRemove = async () => {
+    setSecError(null);
+    setSecSuccess(null);
+    if (!pinRemovePassword) {
+      setSecError('Enter your current password to remove the PIN');
+      return;
+    }
+    setPinRemoving(true);
+    try {
+      const res  = await fetch('/api/auth/pin/remove', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pinRemovePassword }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setPinSet(false);
+        setPinRemovePassword('');
+        setSecSuccess('PIN protection removed');
+      } else {
+        setSecError(json.error || 'Failed to remove PIN');
+      }
+    } catch {
+      setSecError('Network error — could not reach the server');
+    } finally {
+      setPinRemoving(false);
+    }
+  };
+
+  // @group Handlers : Set or change password
+  const handleSecSave = async () => {
+    setSecError(null);
+    setSecSuccess(null);
+    if (secNewPassword.length < 4) {
+      setSecError('Password must be at least 4 characters');
+      return;
+    }
+    if (secNewPassword !== secConfirmPassword) {
+      setSecError('Passwords do not match');
+      return;
+    }
+    setSecSaving(true);
+    try {
+      const body: Record<string, string> = { password: secNewPassword };
+      if (secPasswordSet) body.currentPassword = secCurrentPassword;
+      const res  = await fetch('/api/auth/set', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setSecPasswordSet(true);
+        setSecNewPassword('');
+        setSecConfirmPassword('');
+        setSecCurrentPassword('');
+        setSecSuccess(secPasswordSet ? 'Password changed successfully' : 'Password protection enabled');
+      } else {
+        setSecError(json.error || 'Failed to save password');
+      }
+    } catch {
+      setSecError('Network error — could not reach the server');
+    } finally {
+      setSecSaving(false);
+    }
+  };
+
+  // @group Handlers : Remove password
+  const handleSecRemove = async () => {
+    setSecError(null);
+    setSecSuccess(null);
+    if (!secRemovePassword) {
+      setSecError('Enter your current password to remove protection');
+      return;
+    }
+    setSecRemoving(true);
+    try {
+      const res  = await fetch('/api/auth/remove', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: secRemovePassword }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setSecPasswordSet(false);
+        setSecRemovePassword('');
+        setSecSuccess('Password protection removed');
+      } else {
+        setSecError(json.error || 'Failed to remove password');
+      }
+    } catch {
+      setSecError('Network error — could not reach the server');
+    } finally {
+      setSecRemoving(false);
+    }
+  };
+
+  // @group Handlers : Save auto-lock timeout
+  const handleAutoLockSave = async (minutes: number) => {
+    setAutoLockSaving(true);
+    setSecError(null);
+    setSecSuccess(null);
+    try {
+      const res  = await fetch('/api/auth/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ autoLockMinutes: minutes }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setAutoLockMinutes(json.autoLockMinutes);
+        setSecSuccess(json.autoLockMinutes === 0 ? 'Auto-lock disabled' : `Auto-lock set to ${json.autoLockMinutes} minute${json.autoLockMinutes !== 1 ? 's' : ''}`);
+        // Notify App.tsx so the inactivity timer updates immediately
+        window.dispatchEvent(new CustomEvent('ezpm2_autolock_changed', { detail: { autoLockMinutes: json.autoLockMinutes } }));
+      } else {
+        setSecError(json.error || 'Failed to save auto-lock setting');
+      }
+    } catch {
+      setSecError('Network error — could not reach the server');
+    } finally {
+      setAutoLockSaving(false);
+    }
+  };
 
   // @group State : Update section
   const [versionInfo,    setVersionInfo]    = useState<VersionInfo | null>(null);
@@ -198,41 +436,6 @@ const Settings: React.FC = () => {
       } catch { /* still restarting */ }
     }, 1500);
   };
-
-  // @group Components : Reusable setting row — label/description left, control right
-  const SettingRow: React.FC<{
-    label: string;
-    description?: string;
-    control: React.ReactNode;
-    last?: boolean;
-  }> = ({ label, description, control, last }) => (
-    <>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1.5, gap: 3 }}>
-        <Box sx={{ minWidth: 0 }}>
-          <Typography variant="body2" sx={{ fontWeight: 500 }}>{label}</Typography>
-          {description && (
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25 }}>
-              {description}
-            </Typography>
-          )}
-        </Box>
-        <Box sx={{ flexShrink: 0 }}>{control}</Box>
-      </Box>
-      {!last && <Divider />}
-    </>
-  );
-
-  // @group Components : Section wrapper card
-  const SectionCard: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-    <Paper variant="outlined" sx={{ mb: 2 }}>
-      <Box sx={{ px: 2, py: 1.25, borderBottom: 1, borderColor: 'divider', bgcolor: 'action.hover' }}>
-        <Typography variant="subtitle2" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.6875rem' }}>
-          {title}
-        </Typography>
-      </Box>
-      <Box sx={{ px: 2 }}>{children}</Box>
-    </Paper>
-  );
 
   // @group Render : Section content panels
   const renderSection = () => {
@@ -618,6 +821,257 @@ const Settings: React.FC = () => {
               <Alert severity="error" sx={{ fontSize: '0.8125rem' }}>
                 Update failed. Check the output above. You can also run <code>npm install -g ezpm2gui@latest</code> manually.
               </Alert>
+            )}
+          </>
+        );
+      }
+
+      // ── Security ───────────────────────────────────────────────
+      case 'security': {
+        const isLoading = secPasswordSet === null;
+        return (
+          <>
+            {secError   && <Alert severity="error"   sx={{ mb: 2, fontSize: '0.8125rem' }} onClose={() => setSecError(null)}>{secError}</Alert>}
+            {secSuccess && <Alert severity="success" sx={{ mb: 2, fontSize: '0.8125rem' }} onClose={() => setSecSuccess(null)}>{secSuccess}</Alert>}
+
+            {isLoading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                <CircularProgress size={20} />
+              </Box>
+            ) : (
+              <>
+                {/* Status */}
+                <SectionCard title="Status">
+                  <SettingRow
+                    label="Password Protection"
+                    description="When enabled, a password is required to access EZ PM2 GUI"
+                    last
+                    control={
+                      <Chip
+                        label={secPasswordSet ? 'Enabled' : 'Disabled'}
+                        size="small"
+                        color={secPasswordSet ? 'success' : 'default'}
+                        variant={secPasswordSet ? 'filled' : 'outlined'}
+                        icon={secPasswordSet ? <LockIcon sx={{ fontSize: '12px !important' }} /> : <LockOpenIcon sx={{ fontSize: '12px !important' }} />}
+                      />
+                    }
+                  />
+                </SectionCard>
+
+                {/* Set / Change password */}
+                <SectionCard title={secPasswordSet ? 'Change Password' : 'Set Password'}>
+                  {secPasswordSet && (
+                    <SettingRow
+                      label="Current Password"
+                      description="Required to change the existing password"
+                      control={
+                        <TextField
+                          type="password"
+                          size="small"
+                          value={secCurrentPassword}
+                          onChange={e => setSecCurrentPassword(e.target.value)}
+                          placeholder="Current password"
+                          sx={{ width: 200 }}
+                        />
+                      }
+                    />
+                  )}
+                  <SettingRow
+                    label="New Password"
+                    description="Minimum 4 characters"
+                    control={
+                      <TextField
+                        type="password"
+                        size="small"
+                        value={secNewPassword}
+                        onChange={e => setSecNewPassword(e.target.value)}
+                        placeholder="New password"
+                        sx={{ width: 200 }}
+                      />
+                    }
+                  />
+                  <SettingRow
+                    label="Confirm Password"
+                    description="Re-enter new password to confirm"
+                    last
+                    control={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <TextField
+                          type="password"
+                          size="small"
+                          value={secConfirmPassword}
+                          onChange={e => setSecConfirmPassword(e.target.value)}
+                          placeholder="Confirm password"
+                          sx={{ width: 200 }}
+                        />
+                        <Button
+                          variant="contained"
+                          size="small"
+                          onClick={handleSecSave}
+                          disabled={secSaving || !secNewPassword || !secConfirmPassword}
+                          startIcon={secSaving ? <CircularProgress size={12} color="inherit" /> : <LockIcon fontSize="small" />}
+                        >
+                          {secSaving ? 'Saving...' : secPasswordSet ? 'Change' : 'Enable'}
+                        </Button>
+                      </Box>
+                    }
+                  />
+                </SectionCard>
+
+                {/* Remove password */}
+                {secPasswordSet && (
+                  <SectionCard title="Remove Password">
+                    <SettingRow
+                      label="Disable Protection"
+                      description="Enter your current password to remove password protection"
+                      last
+                      control={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <TextField
+                            type="password"
+                            size="small"
+                            value={secRemovePassword}
+                            onChange={e => setSecRemovePassword(e.target.value)}
+                            placeholder="Current password"
+                            sx={{ width: 160 }}
+                          />
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            color="error"
+                            onClick={handleSecRemove}
+                            disabled={secRemoving || !secRemovePassword}
+                            startIcon={secRemoving ? <CircularProgress size={12} color="inherit" /> : <LockOpenIcon fontSize="small" />}
+                          >
+                            {secRemoving ? 'Removing...' : 'Remove'}
+                          </Button>
+                        </Box>
+                      }
+                    />
+                  </SectionCard>
+                )}
+
+                {/* PIN Protection */}
+                {secPasswordSet && (
+                  <SectionCard title="PIN Protection">
+                    <SettingRow
+                      label="PIN Status"
+                      description="A 4-digit PIN can be used on the lock screen as an alternative to your password"
+                      control={
+                        <Chip
+                          size="small"
+                          label={pinSet ? 'Enabled' : 'Disabled'}
+                          color={pinSet ? 'success' : 'default'}
+                          variant={pinSet ? 'filled' : 'outlined'}
+                        />
+                      }
+                    />
+                    <SettingRow
+                      label={pinSet ? 'Change PIN' : 'Set PIN'}
+                      description="Enter a 4-digit numeric PIN"
+                      control={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <TextField
+                            size="small"
+                            value={pinNew}
+                            onChange={e => setPinNew(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                            placeholder="New PIN"
+                            inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 4 }}
+                            sx={{ width: 100 }}
+                          />
+                          <TextField
+                            size="small"
+                            value={pinConfirm}
+                            onChange={e => setPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                            placeholder="Confirm"
+                            inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 4 }}
+                            sx={{ width: 100 }}
+                          />
+                          <Button
+                            variant="contained"
+                            size="small"
+                            onClick={handlePinSave}
+                            disabled={pinSaving || pinNew.length !== 4 || pinConfirm.length !== 4}
+                            startIcon={pinSaving ? <CircularProgress size={12} color="inherit" /> : undefined}
+                          >
+                            {pinSaving ? 'Saving...' : pinSet ? 'Change' : 'Enable'}
+                          </Button>
+                        </Box>
+                      }
+                    />
+                    {pinSet && (
+                      <SettingRow
+                        label="Remove PIN"
+                        description="Enter your current password to remove PIN protection"
+                        last
+                        control={
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <TextField
+                              type="password"
+                              size="small"
+                              value={pinRemovePassword}
+                              onChange={e => setPinRemovePassword(e.target.value)}
+                              placeholder="Current password"
+                              sx={{ width: 160 }}
+                            />
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              color="error"
+                              onClick={handlePinRemove}
+                              disabled={pinRemoving || !pinRemovePassword}
+                              startIcon={pinRemoving ? <CircularProgress size={12} color="inherit" /> : <LockOpenIcon fontSize="small" />}
+                            >
+                              {pinRemoving ? 'Removing...' : 'Remove'}
+                            </Button>
+                          </Box>
+                        }
+                      />
+                    )}
+                    {!pinSet && <Box />}
+                  </SectionCard>
+                )}
+
+                {/* Auto-lock timeout */}
+                {secPasswordSet && (
+                  <SectionCard title="Auto-Lock">
+                    <SettingRow
+                      label="Lock after inactivity"
+                      description="Automatically lock the app after a period of inactivity. Set to 0 to disable."
+                      last
+                      control={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <TextField
+                            type="number"
+                            size="small"
+                            value={autoLockMinutes}
+                            onChange={e => setAutoLockMinutes(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                            inputProps={{ min: 0, max: 480, step: 1 }}
+                            sx={{ width: 80 }}
+                          />
+                          <Typography variant="caption" color="text.secondary">min</Typography>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={() => handleAutoLockSave(autoLockMinutes)}
+                            disabled={autoLockSaving}
+                            startIcon={autoLockSaving ? <CircularProgress size={12} color="inherit" /> : undefined}
+                          >
+                            {autoLockSaving ? 'Saving...' : 'Save'}
+                          </Button>
+                        </Box>
+                      }
+                    />
+                  </SectionCard>
+                )}
+
+                <Paper variant="outlined" sx={{ p: 2 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    The password is hashed with PBKDF2 (SHA-512, 100,000 iterations) and stored server-side.
+                    It is never stored in plain text.
+                  </Typography>
+                </Paper>
+              </>
             )}
           </>
         );
