@@ -1,5 +1,5 @@
 /**
- * Cron Job Types for ezPM2GUI
+ * Cron Job Types for EZ PM2 GUI
  * Using PM2's native cron_restart feature
  */
 
