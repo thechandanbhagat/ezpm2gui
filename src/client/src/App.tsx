@@ -53,8 +53,8 @@ const socket = io(API_URL, {
   reconnectionDelay: 1000,
   reconnectionDelayMax: 5000,
   reconnectionAttempts: Infinity,
-  // Connection timeout settings
-  timeout: 10000,
+  // Connection timeout settings - increased for VPN/remote scenarios
+  timeout: 20000,  // Increased from 10s to 20s for high-latency connections
   // Transport configuration
   transports: ['websocket', 'polling'],
   // Upgrade timeout
