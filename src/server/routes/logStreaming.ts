@@ -69,15 +69,26 @@ const getLogStream = (io: any, processId: string, logType: string) => {
 // Get remote log stream (or create a new one)
 const getRemoteLogStream = async (io: any, connectionId: string, processId: string) => {
   const streamKey = `${connectionId}-${processId}`;
-  
+
   // If stream already exists, return it
   if (activeRemoteStreams[streamKey]) {
     return activeRemoteStreams[streamKey];
   }
-  
+
   const connection = remoteConnectionManager.getConnection(connectionId);
-  if (!connection || !connection.isConnected()) {
-    throw new Error('Connection not found or not connected');
+  if (!connection) {
+    throw new Error('Connection not found');
+  }
+
+  // Ensure connection is active before starting log stream
+  if (!connection.isConnected()) {
+    console.log(`Connection ${connectionId} not active, attempting to connect...`);
+    try {
+      await connection.connect();
+      console.log(`Successfully connected to ${connectionId} for log streaming`);
+    } catch (error) {
+      throw new Error(`Failed to connect: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   // Get process info using the multi-path fallback so pm2 is found regardless of PATH
@@ -200,10 +211,25 @@ const getRemoteLogStream = async (io: any, connectionId: string, processId: stri
         processName,
         error: error.message
       });
+      // Clean up on error
+      if (activeRemoteStreams[streamKey]) {
+        delete activeRemoteStreams[streamKey];
+      }
     });
-    
+
     logStream.on('close', (code: any) => {
       console.log(`PM2 logs stream closed for ${processName} with code:`, code);
+      // Notify clients that the stream has closed
+      io.to(streamKey).emit('remote-log-closed', {
+        connectionId,
+        processId,
+        processName,
+        code
+      });
+      // Clean up the stream reference
+      if (activeRemoteStreams[streamKey]) {
+        delete activeRemoteStreams[streamKey];
+      }
     });
     
     streams.combined = logStream;
@@ -294,22 +320,27 @@ const setupLogStreaming = (io: any) => {
     // Unsubscribe from remote log stream
     socket.on('unsubscribe-remote-logs', ({ connectionId, processId }) => {
       const streamKey = `${connectionId}-${processId}`;
-      
+
       // Remove socket from the room
       socket.leave(streamKey);
-      
+
       console.log(`Client unsubscribed from remote logs: ${streamKey}`);
-      
+
       // If no more clients in this room, stop the streams
       const room = io.sockets.adapter.rooms.get(streamKey);
       if (!room || room.size === 0) {
         const streams = activeRemoteStreams[streamKey];
         if (streams) {
           console.log(`Stopping remote log streams: ${streamKey}`);
-          if (streams.stdout && streams.stdout.kill) {
+          // Kill the log stream properly
+          if (streams.combined && typeof streams.combined.kill === 'function') {
+            streams.combined.kill();
+          }
+          // Also handle legacy stdout/stderr streams if they exist
+          if (streams.stdout && typeof streams.stdout.kill === 'function') {
             streams.stdout.kill();
           }
-          if (streams.stderr && streams.stderr.kill) {
+          if (streams.stderr && typeof streams.stderr.kill === 'function') {
             streams.stderr.kill();
           }
           delete activeRemoteStreams[streamKey];
