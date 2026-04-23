@@ -38,15 +38,15 @@ export function createServer() {
       origin: '*',
       methods: ['GET', 'POST']
     },
-    // Increase ping timeout to prevent false positive disconnections
-    pingTimeout: 10000,  // How long to wait for a pong response (default: 5000ms)
+    // Increase ping timeout to prevent false positive disconnections in VPN/remote scenarios
+    pingTimeout: 20000,  // How long to wait for a pong response (increased from 10s to 20s)
     pingInterval: 25000, // How often to send ping packets (default: 25000ms)
     // Allow reconnection attempts
     allowEIO3: true,
     // Transport configuration
     transports: ['websocket', 'polling'],
     // Upgrade timeout
-    upgradeTimeout: 10000
+    upgradeTimeout: 20000  // Increased from 10s to 20s for slow VPN connections
   });
   
   // Configure middleware

@@ -116,9 +116,9 @@ export class RemoteConnection extends EventEmitter {
         host: this.config.host,
         port: this.config.port || 22,
         username: this.config.username,
-        // Add reasonable timeouts
-        readyTimeout: 10000,
-        keepaliveInterval: 30000
+        // Add reasonable timeouts optimized for VPN/remote scenarios
+        readyTimeout: 20000,       // 20 seconds to establish connection (was 10s)
+        keepaliveInterval: 10000   // Send keepalive every 10 seconds (was 30s) for aggressive firewalls
       };
 
       // Debug output
