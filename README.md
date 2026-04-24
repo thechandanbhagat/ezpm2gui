@@ -1,5 +1,7 @@
 # EZ PM2 GUI
 
+[![Discord](https://img.shields.io/discord/1234567890?logo=discord&logoColor=white&label=Discord&color=5865F2)](https://discord.gg/ttgc2zqK7b)
+
 A modern web-based graphical user interface for the PM2 process manager, built with TypeScript, Tailwind CSS, and React.
 
 ## Screenshots
