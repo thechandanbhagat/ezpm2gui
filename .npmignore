@@ -28,11 +28,22 @@ test/
 tsconfig.json
 src/client/tsconfig.json
 
+# Mobile app (not part of npm package)
+mobile-app/
+dist/mobile/
+
+# Daemon/service files (Windows service wrapper)
+dist/server/daemon/
+
 # Docs
 DEVELOPMENT.md
 
 # Logs
 *.log
+dist/server/daemon/*.log
+dist/server/daemon/*.err.log
+dist/server/daemon/*.out.log
+dist/server/daemon/*.wrapper.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
