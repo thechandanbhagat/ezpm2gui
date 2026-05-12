@@ -6,7 +6,7 @@ import { projectSetupService } from '../services/ProjectSetupService';
 
 const router: Router = Router();
 
-// Deploy a new application
+// Deploy a new application (SSE streaming)
 router.post('/', async (req, res) => {
   const {
     name,
@@ -22,67 +22,74 @@ router.post('/', async (req, res) => {
     appType,
     autoSetup = true
   } = req.body;
-  
-  // Validate required fields
+
+  // Validate required fields before starting SSE
   if (!name || !script) {
     return res.status(400).json({ error: 'Name and script path are required' });
   }
-  
-  // Validate script path exists
   if (!fs.existsSync(script)) {
     return res.status(400).json({ error: `Script file not found: ${script}` });
   }
 
+  // Switch to SSE
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  const send = (type: string, data: Record<string, unknown>) => {
+    if (!res.writableEnded) {
+      res.write(`data: ${JSON.stringify({ type, ...data })}\n\n`);
+    }
+  };
+  const log = (message: string) => send('log', { message });
+  const done = (success: boolean, extra: Record<string, unknown> = {}) => {
+    send('done', { success, ...extra });
+    res.end();
+  };
+
   try {
     const projectPath = cwd || path.dirname(script);
-    let setupResult = null;
     let finalEnv = env || {};
     let interpreterPath = '';
+    let setupResult = null;
 
-    // Auto-detect project type if not provided
+    // Auto-detect project type
     let detectedType = appType;
     if (!detectedType) {
       detectedType = projectSetupService.detectProjectType(projectPath);
       if (detectedType) {
-        console.log(`Auto-detected project type: ${detectedType}`);
+        log(`Auto-detected project type: ${detectedType}`);
       }
     }
 
-    // Run project setup if auto-setup is enabled and project type is detected
+    // Run project setup
     if (autoSetup && detectedType && ['node', 'python', 'dotnet'].includes(detectedType)) {
-      console.log(`Running setup for ${detectedType} project...`);
-      
+      log(`Running ${detectedType} project setup...`);
       try {
-        setupResult = await projectSetupService.setupProject(projectPath, detectedType);
-        
+        setupResult = await projectSetupService.setupProject(projectPath, detectedType, log);
+
         if (!setupResult.success) {
-          return res.status(500).json({
+          return done(false, {
             error: 'Project setup failed',
             details: setupResult.errors,
-            warnings: setupResult.warnings,
-            steps: setupResult.steps
+            warnings: setupResult.warnings
           });
         }
 
-        // Merge environment variables from setup
         finalEnv = { ...setupResult.environment, ...finalEnv };
-        
-        // Set interpreter path for Python projects
         if (setupResult.interpreterPath) {
           interpreterPath = setupResult.interpreterPath;
         }
-
-        console.log('Project setup completed successfully');
       } catch (setupError) {
-        console.error('Setup error:', setupError);
-        return res.status(500).json({
+        return done(false, {
           error: 'Project setup failed',
           details: setupError instanceof Error ? setupError.message : 'Unknown setup error'
         });
       }
     }
 
-    // Create deployment configuration
+    // Build PM2 config
     const appConfig: any = {
       name,
       script,
@@ -96,48 +103,38 @@ router.post('/', async (req, res) => {
       env: finalEnv
     };
 
-    // Set interpreter for Python projects
     if (detectedType === 'python' && interpreterPath) {
       appConfig.interpreter = interpreterPath;
     } else if (detectedType === 'dotnet') {
       appConfig.interpreter = 'dotnet';
-      // For .NET projects, update script to point to the published DLL if available
       const publishedDll = path.join(projectPath, 'publish', `${path.basename(projectPath)}.dll`);
       if (fs.existsSync(publishedDll)) {
         appConfig.script = publishedDll;
       }
     }
-  
-    pm2.connect((err) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).json({ error: 'Failed to connect to PM2' });
-      }
-      
-      pm2.start(appConfig, (err) => {
-        pm2.disconnect();
-        
-        if (err) {
-          console.error('PM2 start error:', err);
-          return res.status(500).json({
-            error: `Failed to deploy application: ${err.message || 'Unknown error'}`
-          });
-        }
-        
-        res.json({
-          success: true,
-          message: `Application ${name} deployed successfully`,
-          setupResult: setupResult ? {
-            steps: setupResult.steps,
-            warnings: setupResult.warnings
-          } : null
+
+    log(`Starting PM2 process: ${name}`);
+
+    await new Promise<void>((resolve, reject) => {
+      pm2.connect((err) => {
+        if (err) return reject(err);
+        pm2.start(appConfig, (startErr) => {
+          pm2.disconnect();
+          if (startErr) return reject(startErr);
+          resolve();
         });
       });
     });
 
+    log(`Process "${name}" started successfully.`);
+    done(true, {
+      message: `Application ${name} deployed successfully`,
+      setupResult: setupResult ? { steps: setupResult.steps, warnings: setupResult.warnings } : null
+    });
+
   } catch (error) {
     console.error('Deployment error:', error);
-    return res.status(500).json({
+    done(false, {
       error: 'Deployment failed',
       details: error instanceof Error ? error.message : 'Unknown error'
     });

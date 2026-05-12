@@ -1,61 +1,168 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   ChartBarIcon,
-  CpuChipIcon,
   PlusIcon,
   PuzzlePieceIcon,
   DocumentTextIcon,
   ServerStackIcon,
   ChartPieIcon,
-  InformationCircleIcon,
-  Cog6ToothIcon,
   ScaleIcon,
   CloudIcon,
   ClockIcon,
-  SparklesIcon,
+  ServerIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  CpuChipIcon,
 } from '@heroicons/react/24/outline';
+import axios from 'axios';
 
 interface SidebarMenuProps {
-  toggleAbout: () => void;
   onItemClick?: () => void;
-  onWhatsNew?: () => void;
+  collapsed?: boolean;
+}
+
+// @group Types : Process entry for log sidebar tree
+interface SidebarProcess {
+  id: number;
+  name: string;
+  status: string;
+}
+
+// @group Types : Server group for log sidebar tree
+interface SidebarServerGroup {
+  serverId: string;
+  serverName: string;
+  isRemote: boolean;
+  connected: boolean;
+  processes: SidebarProcess[];
+  loading: boolean;
 }
 
 // @group SidebarMenu : Navigation menu for the application sidebar
-const SidebarMenu: React.FC<SidebarMenuProps> = ({ toggleAbout, onItemClick, onWhatsNew }) => {
+const SidebarMenu: React.FC<SidebarMenuProps> = ({ onItemClick, collapsed = false }) => {
   const location = useLocation();
+  const navigate  = useNavigate();
   const currentPath = location.pathname;
 
   const handleItemClick = () => onItemClick?.();
 
   const isActive = (path: string) => {
     if (path === '/' && (currentPath === '/' || currentPath === '/processes')) return true;
-    return currentPath === path;
+    return currentPath === path || currentPath.startsWith(path + '/');
+  };
+
+  // @group LogTree : Server/process tree state
+  const [serverGroups,    setServerGroups]    = useState<SidebarServerGroup[]>([]);
+  const [expandedServers, setExpandedServers] = useState<Set<string>>(new Set(['local']));
+  const [treeLoading,     setTreeLoading]     = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      setTreeLoading(true);
+      try {
+        const [localRes, remoteRes] = await Promise.all([
+          axios.get('/api/processes'),
+          axios.get('/api/remote/connections').catch(() => ({ data: [] })),
+        ]);
+
+        const localProcesses: SidebarProcess[] = localRes.data.map((p: any) => ({
+          id: p.pm_id,
+          name: p.name,
+          status: p.pm2_env?.status ?? p.status ?? 'unknown',
+        }));
+
+        const groups: SidebarServerGroup[] = [
+          { serverId: 'local', serverName: 'Local Server', isRemote: false, connected: true, processes: localProcesses, loading: false },
+        ];
+
+        const connections: any[] = remoteRes.data;
+        for (const conn of connections) {
+          groups.push({ serverId: conn.id, serverName: conn.name, isRemote: true, connected: conn.connected, processes: [], loading: conn.connected });
+        }
+
+        if (!cancelled) setServerGroups(groups);
+
+        // Fetch remote processes in parallel
+        const remoteConnected = connections.filter((c: any) => c.connected);
+        if (remoteConnected.length > 0) {
+          const results = await Promise.allSettled(
+            remoteConnected.map((conn: any) =>
+              axios.get(`/api/remote/${conn.id}/processes`).then(r => ({ id: conn.id, data: r.data }))
+            )
+          );
+          if (!cancelled) {
+            setServerGroups(prev => prev.map(g => {
+              const r = results.find(res => res.status === 'fulfilled' && (res.value as any).id === g.serverId);
+              if (!r || r.status !== 'fulfilled') return { ...g, loading: false };
+              const processes: SidebarProcess[] = (r.value as any).data.map((p: any) => ({
+                id: p.pm_id, name: p.name, status: p.pm2_env?.status ?? p.status ?? 'unknown',
+              }));
+              return { ...g, processes, loading: false };
+            }));
+          }
+        }
+      } catch {
+        // fail silently — tree is non-critical
+      } finally {
+        if (!cancelled) setTreeLoading(false);
+      }
+    };
+
+    load();
+    return () => { cancelled = true; };
+  }, []);
+
+  const toggleServer = (id: string) => {
+    setExpandedServers(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const selectProcess = (serverId: string, proc: SidebarProcess) => {
+    handleItemClick();
+    if (serverId === 'local') {
+      navigate(`/logs/${proc.id}`);
+    } else {
+      navigate(`/logs/remote/${serverId}/${proc.id}`);
+    }
+  };
+
+  const statusDot = (status: string) => {
+    if (status === 'online') return 'bg-emerald-500';
+    if (status === 'stopping' || status === 'launching') return 'bg-amber-400';
+    return 'bg-neutral-500';
   };
 
   // @group Navigation : Menu items configuration
   const menuItems = [
     { label: 'Processes',            path: '/processes',          icon: ChartBarIcon },
-    { label: 'Monitoring',           path: '/monit',              icon: CpuChipIcon },
+    { label: 'Logs',                 path: '/logs',               icon: ChartPieIcon },
     { label: 'Remote Servers',       path: '/remote',             icon: CloudIcon },
+    { label: 'Metrics',               path: '/metrics',            icon: CpuChipIcon },
     { label: 'Deploy App',           path: '/deploy',             icon: PlusIcon },
     { label: 'PM2 Modules',          path: '/modules',            icon: PuzzlePieceIcon },
     { label: 'Ecosystem Config',     path: '/ecosystem',          icon: DocumentTextIcon },
     { label: 'Cluster',             path: '/cluster',            icon: ServerStackIcon },
     { label: 'Cron Jobs',            path: '/cron-jobs',          icon: ClockIcon },
     { label: 'Load Balancing',       path: '/load-balancing-guide', icon: ScaleIcon },
-    { label: 'Log Streaming',        path: '/logs',               icon: ChartPieIcon },
   ];
 
   // @group Render : Sidebar layout with sections
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-neutral-900">
+    <div className="h-full flex flex-col bg-white dark:bg-neutral-900 overflow-hidden">
+
       {/* ── Process Management ── */}
-      <nav className="flex-1 px-2 py-2 overflow-y-auto">
-        <p className="px-1.5 mb-1 text-xs font-semibold text-neutral-400 dark:text-neutral-600 uppercase tracking-widest">
-          Management
-        </p>
+      <nav className="px-1.5 py-2 overflow-x-hidden shrink-0">
+        {!collapsed && (
+          <p className="px-1.5 mb-1 text-xs font-semibold text-neutral-400 dark:text-neutral-600 uppercase tracking-widest whitespace-nowrap">
+            Management
+          </p>
+        )}
 
         <div className="space-y-0.5">
           {menuItems.map((item) => {
@@ -66,9 +173,11 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ toggleAbout, onItemClick, onW
                 key={item.path}
                 to={item.path}
                 onClick={handleItemClick}
+                title={collapsed ? item.label : undefined}
                 className={`
-                  flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-medium
+                  flex items-center gap-2 rounded-md text-xs font-medium
                   transition-colors duration-100
+                  ${collapsed ? 'px-0 py-1.5 justify-center w-full' : 'px-2 py-1.5'}
                   ${
                     active
                       ? "bg-primary-600 text-white"
@@ -79,79 +188,97 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ toggleAbout, onItemClick, onW
                 <Icon
                   className={`h-3.5 w-3.5 shrink-0 ${active ? "text-white" : "text-neutral-500 dark:text-neutral-500"}`}
                 />
-                <span className="truncate">{item.label}</span>
+                {!collapsed && <span className="truncate">{item.label}</span>}
               </Link>
             );
           })}
         </div>
       </nav>
 
-      {/* ── Bottom: What's New, About & Settings ── */}
-      <div className="px-2 pb-2 pt-2 border-t border-neutral-100 dark:border-neutral-800 space-y-0.5">
-        {/* What's New — animated version badge, opens popup */}
-        <button
-          onClick={() => {
-            onWhatsNew?.();
-            handleItemClick();
-          }}
-          className="w-full relative flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-medium
-                     text-neutral-600 dark:text-neutral-400
-                     hover:bg-neutral-100 dark:hover:bg-neutral-800
-                     hover:text-neutral-900 dark:hover:text-neutral-100
-                     transition-colors duration-100"
-        >
-          <SparklesIcon className="h-3.5 w-3.5 shrink-0 text-violet-500" />
-          <span className="truncate">What's New</span>
-          {/* Animated version pill */}
-          <span
-            className="ml-auto shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none
-                           bg-violet-500/15 text-violet-500 border border-violet-400/60 animate-pulse"
-          >
-            v1.6.0
-          </span>
-        </button>
+      {/* ── Process Tree ── */}
+      {!collapsed && (
+        <div className="flex-1 min-h-0 flex flex-col border-t border-neutral-100 dark:border-neutral-800">
+          <p className="px-3 pt-2 pb-1 text-xs font-semibold text-neutral-400 dark:text-neutral-600 uppercase tracking-widest shrink-0">
+            Processes
+          </p>
+          <div className="flex-1 overflow-y-auto">
+            {treeLoading && serverGroups.length === 0 ? (
+              <div className="flex items-center justify-center py-4">
+                <svg className="h-3.5 w-3.5 animate-spin text-primary-500" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                </svg>
+              </div>
+            ) : (
+              serverGroups.map(group => {
+                const expanded = expandedServers.has(group.serverId);
+                return (
+                  <div key={group.serverId}>
+                    {/* Server header row */}
+                    <button
+                      onClick={() => toggleServer(group.serverId)}
+                      className="w-full flex items-center gap-1.5 px-2 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/60 transition-colors"
+                    >
+                      {expanded
+                        ? <ChevronDownIcon className="h-3 w-3 text-neutral-400 shrink-0" />
+                        : <ChevronRightIcon className="h-3 w-3 text-neutral-400 shrink-0" />
+                      }
+                      {group.isRemote
+                        ? <CloudIcon className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                        : <ServerIcon className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                      }
+                      <span className="flex-1 text-xs font-medium text-neutral-700 dark:text-neutral-300 truncate">
+                        {group.serverName}
+                      </span>
+                      {group.isRemote && (
+                        <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${group.connected ? 'bg-emerald-500' : 'bg-neutral-400'}`} />
+                      )}
+                    </button>
 
-        <button
-          onClick={() => {
-            toggleAbout();
-            handleItemClick();
-          }}
-          className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-medium
-                     text-neutral-600 dark:text-neutral-400
-                     hover:bg-neutral-100 dark:hover:bg-neutral-800
-                     hover:text-neutral-900 dark:hover:text-neutral-100
-                     transition-colors duration-100"
-        >
-          <InformationCircleIcon className="h-3.5 w-3.5 shrink-0 text-neutral-500 dark:text-neutral-500" />
-          <span>About</span>
-        </button>
+                    {/* Process list */}
+                    {expanded && (
+                      <div className="pb-0.5">
+                        {!group.connected ? (
+                          <p className="pl-8 pr-2 py-1 text-xs text-neutral-400 italic">Not connected</p>
+                        ) : group.loading ? (
+                          <p className="pl-8 pr-2 py-1 text-xs text-neutral-400 animate-pulse">Loading...</p>
+                        ) : group.processes.length === 0 ? (
+                          <p className="pl-8 pr-2 py-1 text-xs text-neutral-400 italic">No processes</p>
+                        ) : (
+                          group.processes.map(proc => {
+                            const remoteMatch = currentPath.startsWith('/logs/remote/');
+                            const localMatch  = !remoteMatch && currentPath.startsWith('/logs/');
+                            const active =
+                              (group.serverId === 'local' && localMatch && currentPath === `/logs/${proc.id}`) ||
+                              (group.serverId !== 'local' && remoteMatch && currentPath === `/logs/remote/${group.serverId}/${proc.id}`);
 
-        <Link
-          to="/settings"
-          onClick={handleItemClick}
-          className={`
-            flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-medium
-            transition-colors duration-100
-            ${
-              isActive("/settings")
-                ? "bg-primary-600 text-white"
-                : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-100"
-            }
-          `}
-        >
-          <Cog6ToothIcon
-            className={`h-3.5 w-3.5 shrink-0 ${isActive("/settings") ? "text-white" : "text-neutral-500 dark:text-neutral-500"}`}
-          />
-          <span>Settings</span>
-        </Link>
-      </div>
+                            return (
+                              <button
+                                key={proc.id}
+                                onClick={() => selectProcess(group.serverId, proc)}
+                                className={`w-full flex items-center gap-1.5 pl-7 pr-2 py-1.5 text-left transition-colors
+                                            ${active
+                                              ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                                              : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/60 text-neutral-600 dark:text-neutral-400'}`}
+                              >
+                                <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${statusDot(proc.status)}`} />
+                                <CpuChipIcon className="h-3 w-3 shrink-0 opacity-40" />
+                                <span className="text-xs truncate">{proc.name}</span>
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
 
-      {/* ── Version watermark ── */}
-      <div className="px-3 pb-2 pt-1">
-        <p className="text-[10px] text-neutral-300 dark:text-neutral-700 text-center select-none">
-          EZ PM2 GUI &middot; v1.6.0
-        </p>
-      </div>
+
     </div>
   );
 };

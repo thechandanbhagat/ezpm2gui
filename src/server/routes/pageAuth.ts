@@ -110,7 +110,7 @@ router.post('/verify', (req: Request, res: Response) => {
   const config = loadAuthConfig();
   if (!config) {
     // No password set — treat as unlocked
-    return res.json({ success: true });
+    return res.json({ success: true, token: crypto.randomBytes(32).toString('hex') });
   }
 
   const hash = hashPassword(password, config.salt);
@@ -120,7 +120,7 @@ router.post('/verify', (req: Request, res: Response) => {
     return res.status(401).json({ success: false, error: 'Incorrect password' });
   }
 
-  res.json({ success: true });
+  res.json({ success: true, token: crypto.randomBytes(32).toString('hex') });
 });
 
 // @group Endpoints : DELETE /api/auth/remove — remove the password (requires current password)
@@ -186,7 +186,7 @@ router.post('/pin/verify', (req: Request, res: Response) => {
     return res.status(401).json({ success: false, error: 'Incorrect PIN' });
   }
 
-  res.json({ success: true });
+  res.json({ success: true, token: crypto.randomBytes(32).toString('hex') });
 });
 
 // @group Endpoints : DELETE /api/auth/pin/remove — remove PIN (requires current password)
