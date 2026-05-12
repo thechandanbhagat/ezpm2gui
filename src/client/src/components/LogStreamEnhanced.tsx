@@ -1,176 +1,164 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import {
-  Box,
-  Paper,
-  Typography,
-  Button,
-  FormControlLabel,
-  Switch,
-  TextField,
-  IconButton,
-  Divider,
-  CircularProgress,
-  useTheme,
-  Alert,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  SelectChangeEvent
-} from '@mui/material';
-import {
-  Refresh as RefreshIcon,
-  Clear as ClearIcon,
-  Download as DownloadIcon,
-  Search as SearchIcon
-} from '@mui/icons-material';
+  ArrowPathIcon,
+  XMarkIcon,
+  ArrowDownTrayIcon,
+  MagnifyingGlassIcon,
+} from '@heroicons/react/24/outline';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import PageHeader from './PageHeader';
+
+// @group Constants : Backend API URL — must match App.tsx
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3101';
 
 interface LogStreamEnhancedProps {
   processId?: number | string;
   logType?: 'out' | 'err';
 }
 
-const LogStreamEnhanced: React.FC<LogStreamEnhancedProps> = ({ processId: propProcessId, logType: propLogType = 'out' }) => {
-  const params = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const processId = params.id ? Number(params.id) : propProcessId ? Number(propProcessId) : null;
-  const theme = useTheme();
+// @group Utilities : Classify a log line for coloring
+const lineColor = (logType: 'out' | 'err', line: string): string => {
+  if (logType === 'err') return 'text-red-400';
+  const l = line.toLowerCase();
+  if (l.includes('error') || l.includes('err ') || l.includes('exception')) return 'text-red-400';
+  if (l.includes('warn')) return 'text-amber-400';
+  return 'text-neutral-300';
+};
+
+// @group LogStreamEnhanced : Full-page log viewer — process selection lives in the app sidebar
+const LogStreamEnhanced: React.FC<LogStreamEnhancedProps> = ({
+  processId: propProcessId,
+  logType: propLogType = 'out',
+}) => {
+  // Support routes: /logs/:id  and  /logs/remote/:serverId/:processId
+  const params   = useParams<{ id?: string; serverId?: string; processId?: string }>();
+
+  const isRemoteRoute = Boolean(params.serverId);
+  const serverId      = isRemoteRoute ? params.serverId! : 'local';
+  const initPid       = isRemoteRoute
+    ? (params.processId ? Number(params.processId) : null)
+    : (params.id ? Number(params.id) : propProcessId !== undefined ? Number(propProcessId) : null);
+
   const logContainerRef = useRef<HTMLDivElement>(null);
-  
-  const [logs, setLogs] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [followLogs, setFollowLogs] = useState(true);
-  const [filter, setFilter] = useState('');
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [availableProcesses, setAvailableProcesses] = useState<{id: number, name: string}[]>([]);
-  const [selectedProcess, setSelectedProcess] = useState<number | null>(processId);
+  const socketRef       = useRef<any>(null);
+
+  const [logs,            setLogs]            = useState<string[]>([]);
+  const [loading,         setLoading]         = useState(false);
+  const [error,           setError]           = useState('');
+  const [followLogs,      setFollowLogs]      = useState(true);
+  const [filter,          setFilter]          = useState('');
+  const [isStreaming,     setIsStreaming]      = useState(false);
   const [selectedLogType, setSelectedLogType] = useState<'out' | 'err'>(propLogType as 'out' | 'err');
-  
-  const socketRef = useRef<any>(null);
+  const [processName,     setProcessName]     = useState('');
 
-  // Fetch available processes
+  // @group DataFetch : Resolve process name for the header label
   useEffect(() => {
-    const fetchProcesses = async () => {
+    if (initPid === null) return;
+    const fetchName = async () => {
       try {
-        const response = await axios.get('/api/processes');
-        const processes = response.data.map((p: any) => ({ 
-          id: p.pm_id, 
-          name: p.name 
-        }));
-        
-        setAvailableProcesses(processes);
-        
-        if (!processId && processes.length > 0) {
-          setSelectedProcess(processes[0].id);
+        if (serverId === 'local') {
+          const res = await axios.get('/api/processes');
+          const p = res.data.find((x: any) => x.pm_id === initPid);
+          if (p) setProcessName(p.name);
+        } else {
+          const res = await axios.get(`/api/remote/${serverId}/processes`);
+          const p = res.data.find((x: any) => x.pm_id === initPid);
+          if (p) setProcessName(p.name);
         }
-      } catch (err) {
-        setError('Failed to fetch available processes');
-      }
+      } catch { /* name is cosmetic — ignore */ }
     };
-    
-    fetchProcesses();
-  }, [processId]);
+    fetchName();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initPid, serverId]);
 
-  // Setup log streaming socket connection
+  // @group Streaming : Fetch initial logs + open socket when process/type changes
   useEffect(() => {
-    if (!selectedProcess) return;
-    
+    if (initPid === null) return;
+
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
+    setIsStreaming(false);
+    setLogs([]);
+
     const fetchLogs = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`/api/logs/${selectedProcess}/${selectedLogType}`);
-        setLogs(response.data.logs || []);
+        setError('');
+        let logsData: string[] = [];
+
+        if (serverId === 'local') {
+          const res = await axios.get(`/api/logs/${initPid}/${selectedLogType}`);
+          logsData = res.data.logs || [];
+        } else {
+          const res = await axios.get(`/api/remote/${serverId}/logs/${initPid}`);
+          logsData = selectedLogType === 'out' ? (res.data.stdout || []) : (res.data.stderr || []);
+        }
+
+        setLogs(logsData);
         setLoading(false);
       } catch (err: any) {
         setError(err.response?.data?.error || 'Failed to fetch logs');
         setLoading(false);
       }
     };
-    
     fetchLogs();
-    
-    // Set up socket connection for real-time logs
-    const socket = io();
-    socketRef.current = socket;
-    
-    socket.on('connect', () => {
-      console.log('Socket connected');
-      socket.emit('subscribe-logs', { 
-        processId: selectedProcess, 
-        logType: selectedLogType 
-      });
-      setIsStreaming(true);
-    });
-    
-    socket.on('log-line', (data) => {
-      if (data.processId === selectedProcess && data.logType === selectedLogType) {
-        setLogs(prev => [...prev, data.line]);
-      }
-    });
-    
-    return () => {
-      if (socket) {
-        socket.emit('unsubscribe-logs', { 
-          processId: selectedProcess, 
-          logType: selectedLogType 
-        });
-        socket.disconnect();
-      }
-    };
-  }, [selectedProcess, selectedLogType]);
 
-  // Auto-scroll when logs change
+    // Live streaming only for local processes
+    if (serverId === 'local') {
+      const socket = io(API_URL, { transports: ['websocket', 'polling'], reconnection: true });
+      socketRef.current = socket;
+
+      socket.on('connect', () => {
+        socket.emit('subscribe-logs', { processId: initPid, logType: selectedLogType });
+        setIsStreaming(true);
+      });
+
+      socket.on('log-line', (data) => {
+        if (data.processId === initPid && data.logType === selectedLogType) {
+          setLogs(prev => [...prev, data.line]);
+        }
+      });
+
+      return () => {
+        socket.emit('unsubscribe-logs', { processId: initPid, logType: selectedLogType });
+        socket.disconnect();
+      };
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initPid, serverId, selectedLogType]);
+
+  // @group AutoScroll
   useEffect(() => {
     if (followLogs && logContainerRef.current) {
       logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
     }
   }, [logs, followLogs]);
 
-  const handleProcessChange = (event: SelectChangeEvent) => {
-    const newProcessId = Number(event.target.value);
-    setSelectedProcess(newProcessId);
-    navigate(`/logs/${newProcessId}`);
-  };
-
-  const handleLogTypeChange = (event: SelectChangeEvent) => {
-    setSelectedLogType(event.target.value as 'out' | 'err');
-  };
-
   const toggleStreaming = () => {
-    if (!selectedProcess) return;
-    
-    if (isStreaming) {
-      // Stop streaming
-      if (socketRef.current) {
-        socketRef.current.emit('unsubscribe-logs', { 
-          processId: selectedProcess, 
-          logType: selectedLogType 
-        });
-      }
-    } else {
-      // Start streaming
-      if (socketRef.current) {
-        socketRef.current.emit('subscribe-logs', { 
-          processId: selectedProcess, 
-          logType: selectedLogType 
-        });
-      }
-    }
-    setIsStreaming(!isStreaming);
+    if (initPid === null || serverId !== 'local') return;
+    const ev = isStreaming ? 'unsubscribe-logs' : 'subscribe-logs';
+    socketRef.current?.emit(ev, { processId: initPid, logType: selectedLogType });
+    setIsStreaming(p => !p);
   };
 
   const refreshLogs = async () => {
-    if (!selectedProcess) return;
-    
+    if (initPid === null) return;
     try {
       setLoading(true);
-      const response = await axios.get(`/api/logs/${selectedProcess}/${selectedLogType}`);
-      setLogs(response.data.logs || []);
+      setError('');
+      let logsData: string[] = [];
+      if (serverId === 'local') {
+        const res = await axios.get(`/api/logs/${initPid}/${selectedLogType}`);
+        logsData = res.data.logs || [];
+      } else {
+        const res = await axios.get(`/api/remote/${serverId}/logs/${initPid}`);
+        logsData = selectedLogType === 'out' ? (res.data.stdout || []) : (res.data.stderr || []);
+      }
+      setLogs(logsData);
       setLoading(false);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to fetch logs');
@@ -178,182 +166,160 @@ const LogStreamEnhanced: React.FC<LogStreamEnhancedProps> = ({ processId: propPr
     }
   };
 
-  const clearLogs = () => {
-    setLogs([]);
-  };
-
   const downloadLogs = () => {
-    if (!selectedProcess) return;
-    
-    const content = logs.join('\n');
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    
-    const processName = availableProcesses.find(p => p.id === selectedProcess)?.name || selectedProcess;
-    const filename = `${processName}-${selectedLogType}.log`;
-    
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    if (initPid === null) return;
+    const blob = new Blob([logs.join('\n')], { type: 'text/plain;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = `${processName || initPid}-${selectedLogType}.log`;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
   };
 
   const filteredLogs = filter
-    ? logs.filter(log => log.toLowerCase().includes(filter.toLowerCase()))
+    ? logs.filter(l => l.toLowerCase().includes(filter.toLowerCase()))
     : logs;
 
+  // @group Render
   return (
-    <Box>
+    <div>
       <PageHeader
         title="Log Streaming"
-        subtitle="Live stdout and stderr output for any running process"
+        subtitle={
+          processName
+            ? `${isRemoteRoute ? `Remote · ${serverId}` : 'Local'} — ${processName}`
+            : 'Select a process from the sidebar'
+        }
         actions={
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-            <FormControl sx={{ minWidth: 150 }} size="small">
-              <InputLabel>Process</InputLabel>
-              <Select
-                value={selectedProcess?.toString() || ''}
-                onChange={handleProcessChange}
-                label="Process"
-                disabled={availableProcesses.length === 0}
-              >
-                {availableProcesses.map(process => (
-                  <MenuItem key={process.id} value={process.id}>
-                    {process.name} (ID: {process.id})
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            
-            <FormControl sx={{ minWidth: 120 }} size="small">
-              <InputLabel>Log Type</InputLabel>
-              <Select
-                value={selectedLogType}
-                onChange={handleLogTypeChange}
-                label="Log Type"
-              >
-                <MenuItem value="out">Standard</MenuItem>
-                <MenuItem value="err">Error</MenuItem>
-              </Select>
-            </FormControl>
-            
-            <Button
-              variant="outlined"
-              size="small"
-              color={isStreaming ? 'error' : 'primary'}
-              onClick={toggleStreaming}
-              disabled={!selectedProcess}
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={selectedLogType}
+              onChange={e => setSelectedLogType(e.target.value as 'out' | 'err')}
+              className="h-7 px-2 pr-7 text-xs rounded border
+                         bg-white dark:bg-neutral-800
+                         border-neutral-200 dark:border-neutral-700
+                         text-neutral-900 dark:text-neutral-100
+                         focus:outline-none focus:ring-1 focus:ring-primary-500"
             >
-              {isStreaming ? 'Stop' : 'Start'} Stream
-            </Button>
-          </Box>
+              <option value="out">Standard out</option>
+              <option value="err">Standard err</option>
+            </select>
+
+            {serverId === 'local' && (
+              <button
+                onClick={toggleStreaming}
+                disabled={initPid === null}
+                className={`h-7 px-3 text-xs font-medium rounded border transition-colors
+                            disabled:opacity-50
+                            ${isStreaming
+                              ? 'border-red-500 text-red-500 hover:bg-red-500/10'
+                              : 'border-primary-500 text-primary-500 hover:bg-primary-500/10'}`}
+              >
+                {isStreaming ? 'Stop Stream' : 'Live Stream'}
+              </button>
+            )}
+          </div>
         }
       />
-      <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
-        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: 'center', mb: 1.5, gap: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
-            <SearchIcon sx={{ color: 'action.active', mr: 1 }} />
-            <TextField
-              fullWidth
-              size="small"
-              placeholder="Filter logs..."
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-            />
-          </Box>
-          
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={followLogs}
-                  onChange={(e) => setFollowLogs(e.target.checked)}
-                  color="primary"
-                />
-              }
-              label="Auto-scroll"
-            />
-            
-            <IconButton onClick={refreshLogs} size="small">
-              <RefreshIcon />
-            </IconButton>
-            <IconButton onClick={clearLogs} size="small">
-              <ClearIcon />
-            </IconButton>
-            <IconButton onClick={downloadLogs} size="small" disabled={!selectedProcess || logs.length === 0}>
-              <DownloadIcon />
-            </IconButton>
-          </Box>
-        </Box>
-        
-        <Divider />
-        
+
+      {/* Toolbar */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-3">
+        <div className="relative flex-1">
+          <MagnifyingGlassIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Filter logs..."
+            value={filter}
+            onChange={e => setFilter(e.target.value)}
+            className="w-full h-8 pl-8 pr-3 text-xs rounded border
+                       bg-white dark:bg-neutral-800
+                       border-neutral-200 dark:border-neutral-700
+                       text-neutral-900 dark:text-neutral-100
+                       placeholder-neutral-400 dark:placeholder-neutral-500
+                       focus:outline-none focus:ring-1 focus:ring-primary-500"
+          />
+        </div>
+
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            onClick={() => setFollowLogs(p => !p)}
+            className={`h-8 px-2.5 text-xs font-medium rounded border transition-colors
+                        ${followLogs
+                          ? 'bg-primary-600 border-primary-600 text-white'
+                          : 'border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'}`}
+          >
+            Auto-scroll
+          </button>
+
+          {isStreaming && (
+            <span className="flex items-center gap-1 px-2 text-xs text-emerald-500">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              live
+            </span>
+          )}
+
+          <button onClick={refreshLogs} title="Refresh"
+            className="h-8 w-8 flex items-center justify-center rounded border
+                       border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400
+                       hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
+            <ArrowPathIcon className="h-3.5 w-3.5" />
+          </button>
+
+          <button onClick={() => setLogs([])} title="Clear"
+            className="h-8 w-8 flex items-center justify-center rounded border
+                       border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400
+                       hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
+            <XMarkIcon className="h-3.5 w-3.5" />
+          </button>
+
+          <button onClick={downloadLogs} disabled={initPid === null || logs.length === 0} title="Download"
+            className="h-8 w-8 flex items-center justify-center rounded border
+                       border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400
+                       hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors
+                       disabled:opacity-40 disabled:cursor-not-allowed">
+            <ArrowDownTrayIcon className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Log viewport */}
+      <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 overflow-hidden">
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-            <CircularProgress />
-          </Box>
+          <div className="flex items-center justify-center h-64">
+            <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
+              <svg className="h-4 w-4 animate-spin text-primary-500" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+              </svg>
+              Loading logs...
+            </div>
+          </div>
         ) : error ? (
-          <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>
-        ) : !selectedProcess ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}>
-            <Typography variant="body1" color="text.secondary">
-              Please select a process to view logs
-            </Typography>
-          </Box>
+          <div className="flex items-center gap-2 p-4 text-xs text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/10">
+            <span className="font-medium">Error:</span> {error}
+          </div>
+        ) : initPid === null ? (
+          <div className="flex items-center justify-center h-64 text-xs text-neutral-400 dark:text-neutral-500">
+            Select a process from the sidebar to view logs
+          </div>
         ) : (
-          <Box
+          <div
             ref={logContainerRef}
-            sx={{
-              mt: 2,
-              height: '400px',
-              overflowY: 'auto',
-              backgroundColor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#f5f5f5',
-              p: 2,
-              borderRadius: 1,
-              fontFamily: 'monospace',
-              fontSize: '0.875rem',
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-all'
-            }}
+            className="h-[calc(100vh-16rem)] overflow-y-auto bg-neutral-950 p-3 font-mono text-xs leading-relaxed"
           >
             {filteredLogs.length === 0 ? (
-              <Typography variant="body2" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
-                No logs available
-              </Typography>
+              <span className="text-neutral-600 italic">No logs available</span>
             ) : (
-              filteredLogs.map((log, index) => (
-                <Box 
-                  key={index}
-                  component="div"
-                  sx={{ 
-                    mb: 0.5,
-                    color: selectedLogType === 'err' || log.toLowerCase().includes('error') 
-                      ? 'error.main' 
-                      : log.toLowerCase().includes('warn') 
-                        ? 'warning.main'
-                        : 'text.primary'
-                  }}
-                >
-                  {log}
-                </Box>
+              filteredLogs.map((line, i) => (
+                <div key={i} className={`whitespace-pre-wrap break-all ${lineColor(selectedLogType, line)}`}>
+                  {line}
+                </div>
               ))
             )}
-            
-            {isStreaming && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-                <CircularProgress size={16} sx={{ mr: 1 }} />
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                  Streaming logs...
-                </Typography>
-              </Box>
-            )}
-          </Box>
+          </div>
         )}
-      </Paper>
-    </Box>
+      </div>
+    </div>
   );
 };
 
