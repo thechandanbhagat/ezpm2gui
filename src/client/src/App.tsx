@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import axios from 'axios';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
@@ -6,7 +6,6 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import ProcessDetailPage from './components/ProcessDetailPage';
 import MainDashboard from './components/MainDashboard';
 import ConfirmationDialog from './components/ConfirmationDialog';
-import MonitDashboard from './components/MonitDashboard';
 import DeployApplication from './components/DeployApplication';
 import ModuleManagement from './components/ModuleManagement';
 import EcosystemGenerator from './components/EcosystemGenerator';
@@ -18,10 +17,12 @@ import Settings from './components/Settings';
 import LoadBalancingGuide from './components/LoadBalancingGuide';
 import RemoteConnections from './components/RemoteConnections';
 import CronJobsPage from './components/CronJobsPage';
+import MetricsPage from './components/MetricsPage';
 import ServerSwitcher from './components/ServerSwitcher';
 import PasswordGate from './components/PasswordGate';
 import WhatsNew from './components/WhatsNew';
 import WhatsNewModal, { shouldShowWhatsNew, markWhatsNewSeen } from './components/WhatsNewModal';
+import StatusBar, { Notification } from './components/StatusBar';
 import {
   Dialog,
   DialogContent,
@@ -41,6 +42,9 @@ import {
   StarIcon,
   LockClosedIcon,
   ShieldExclamationIcon,
+  SparklesIcon,
+  InformationCircleIcon,
+  Cog6ToothIcon,
 } from '@heroicons/react/24/outline';
 
 // Initialize socket connection with improved settings
@@ -77,13 +81,25 @@ const App: React.FC = () => {
   });
   
   // UI state
-  const [error, setError] = useState<string>('');
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const notifCounterRef = useRef(0);
+  const [socketConnected, setSocketConnected] = useState<boolean>(socket.connected);
+  const enqueueNotification = useCallback((message: string, type: Notification['type'] = 'error') => {
+    const id = `notif-${++notifCounterRef.current}`;
+    setNotifications(prev => [...prev, { id, message, type }]);
+  }, []);
+  const dismissNotification = useCallback((id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  }, []);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [namespaceFilter, setNamespaceFilter] = useState<string>('all');
   const [showAbout, setShowAbout] = useState<boolean>(false);
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(
+    () => localStorage.getItem('ezpm2_sidebar_collapsed') === '1'
+  );
 
   // @group Updates : Silently check for a newer npm version after initial load
   const [updateAvailable, setUpdateAvailable] = useState<boolean>(false);
@@ -92,9 +108,9 @@ const App: React.FC = () => {
   // null = not yet fetched, false = no password set, true = password set
   const [passwordSet,  setPasswordSet]  = useState<boolean | null>(null);
   const [pinSet,       setPinSet]       = useState<boolean | null>(null);
-  // Persist unlock across page refreshes within the same browser tab/session
+  // Persist unlock across tabs and page refreshes
   const [appUnlocked,  setAppUnlocked]  = useState<boolean>(
-    () => sessionStorage.getItem('ezpm2_unlocked') === '1'
+    () => localStorage.getItem('ezpm2_unlocked') === '1'
   );
   const autoLockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -135,7 +151,6 @@ const App: React.FC = () => {
     let lastDataUpdate = Date.now();
     let connectionErrorTimeout: ReturnType<typeof setTimeout> | null = null;
     let socketConnected = socket.connected;
-    let hasReconnectError = false; // Track if current error is a reconnect error
 
     // Initial data fetch (local processes + remote connections list)
     const fetchInitialData = async (): Promise<void> => {
@@ -156,9 +171,9 @@ const App: React.FC = () => {
 
         // Check if it's a PM2 not installed error
         if (err.response?.data?.pmNotInstalled) {
-          setError(err.response.data.error || 'PM2 is not installed. Please install PM2 globally: npm install -g pm2');
+          enqueueNotification(err.response.data.error || 'PM2 is not installed. Please install PM2 globally: npm install -g pm2');
         } else {
-          setError('Failed to connect to the server. Is PM2 running?');
+          enqueueNotification('Failed to connect to the server. Is PM2 running?');
         }
 
         setLoading(false);
@@ -173,44 +188,27 @@ const App: React.FC = () => {
       if (activeServerIdRef.current !== 'local') return;
       setProcesses(data);
       lastDataUpdate = Date.now();
-
-      // Clear any error if we're receiving data
-      if (hasReconnectError) {
-        setError('');
-        hasReconnectError = false;
-      }
     });
 
     socket.on('metrics', (data: SystemMetricsData) => {
       setMetrics(data);
       lastDataUpdate = Date.now();
-      
-      // Clear any error if we're receiving data
-      if (hasReconnectError) {
-        setError('');
-        hasReconnectError = false;
-      }
     });
 
     // Handle connection errors with debouncing
     socket.on('connect_error', () => {
       console.warn('Socket connect_error event detected');
-      
-      // Only show error if we haven't received data recently (within last 5 seconds)
-      // This prevents false positives during transient network issues
+
       const timeSinceLastUpdate = Date.now() - lastDataUpdate;
-      
+
       if (timeSinceLastUpdate > 5000) {
-        // Debounce: wait 3 seconds before showing error
         if (connectionErrorTimeout) {
           clearTimeout(connectionErrorTimeout);
         }
-        
+
         connectionErrorTimeout = setTimeout(() => {
-          // Double-check if we're still not receiving data
           if (Date.now() - lastDataUpdate > 5000 && !socketConnected) {
-            setError('Connection to server lost. Trying to reconnect...');
-            hasReconnectError = true;
+            enqueueNotification('Connection to server lost. Trying to reconnect...', 'warn');
           }
         }, 3000);
       }
@@ -220,18 +218,12 @@ const App: React.FC = () => {
     socket.on('connect', () => {
       console.log('Socket connected successfully');
       socketConnected = true;
+      setSocketConnected(true);
       lastDataUpdate = Date.now();
-      
-      // Clear any pending error timeout
+
       if (connectionErrorTimeout) {
         clearTimeout(connectionErrorTimeout);
         connectionErrorTimeout = null;
-      }
-      
-      // Clear error message
-      if (hasReconnectError) {
-        setError('');
-        hasReconnectError = false;
       }
     });
 
@@ -239,19 +231,16 @@ const App: React.FC = () => {
     socket.on('disconnect', (reason) => {
       console.log('Socket disconnected:', reason);
       socketConnected = false;
-      
-      // Only show error for unexpected disconnections, not for client-initiated ones
+      setSocketConnected(false);
+
       if (reason === 'io server disconnect' || reason === 'transport close') {
-        // The server disconnected us or transport failed
-        // Wait before showing error to allow auto-reconnect
         if (connectionErrorTimeout) {
           clearTimeout(connectionErrorTimeout);
         }
-        
+
         connectionErrorTimeout = setTimeout(() => {
           if (!socketConnected && Date.now() - lastDataUpdate > 5000) {
-            setError('Connection to server lost. Trying to reconnect...');
-            hasReconnectError = true;
+            enqueueNotification('Connection to server lost. Trying to reconnect...', 'warn');
           }
         }, 5000);
       }
@@ -269,7 +258,7 @@ const App: React.FC = () => {
       socket.off('connect');
       socket.off('disconnect');
     };
-  }, []);
+  }, [enqueueNotification]);
 
   // Filter processes when search, status, or namespace filter changes
   useEffect(() => {
@@ -305,17 +294,16 @@ const App: React.FC = () => {
       try {
         const res = await axios.get<PM2Process[]>(`/api/remote/${activeServerId}/processes`);
         setProcesses(res.data);
-        setError('');
       } catch (err: any) {
         console.error('Error fetching remote processes:', err);
-        setError(`Failed to fetch processes from remote server: ${err.response?.data?.error || err.message}`);
+        enqueueNotification(`Failed to fetch processes from remote server: ${err.response?.data?.error || err.message}`);
       }
     };
 
     fetchRemoteProcesses();
     const interval = setInterval(fetchRemoteProcesses, 3000);
     return () => clearInterval(interval);
-  }, [activeServerId]);
+  }, [activeServerId, enqueueNotification]);
 
   // @group ServerSwitcher : Refresh remote connections list periodically so status dots stay current
   useEffect(() => {
@@ -369,12 +357,12 @@ const App: React.FC = () => {
       .catch(() => { setPasswordSet(false); setPinSet(false); });
   }, []);
 
-  // @group Auth : Sync sessionStorage when unlock state changes
+  // @group Auth : Sync localStorage when unlock state changes
   useEffect(() => {
     if (appUnlocked) {
-      sessionStorage.setItem('ezpm2_unlocked', '1');
+      localStorage.setItem('ezpm2_unlocked', '1');
     } else {
-      sessionStorage.removeItem('ezpm2_unlocked');
+      localStorage.removeItem('ezpm2_unlocked');
     }
   }, [appUnlocked]);
 
@@ -464,7 +452,7 @@ const App: React.FC = () => {
       }
     } catch (err) {
       console.error(`Error performing ${action}:`, err);
-      setError(`Failed to ${action} process. ${err instanceof Error ? err.message : 'Unknown error'}`);
+      enqueueNotification(`Failed to ${action} process. ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };
   
@@ -492,12 +480,19 @@ const App: React.FC = () => {
     setMenuOpen(!menuOpen);
   };
 
+  const toggleSidebar = (): void => {
+    setSidebarCollapsed(prev => {
+      const next = !prev;
+      localStorage.setItem('ezpm2_sidebar_collapsed', next ? '1' : '0');
+      return next;
+    });
+  };
+
   // @group ServerSwitcher : Switch active server — auto-connect remote, reset processes view
   const handleServerSwitch = async (serverId: string): Promise<void> => {
     if (serverId === activeServerId) return;
 
     setProcesses([]);
-    setError('');
     activeServerIdRef.current = serverId;
     setActiveServerId(serverId);
 
@@ -511,7 +506,7 @@ const App: React.FC = () => {
           const res = await axios.get<RemoteConnection[]>('/api/remote/connections');
           setRemoteConnections(res.data);
         } catch (err: any) {
-          setError(`Failed to connect to ${conn.name || conn.host}: ${err.response?.data?.error || err.message}`);
+          enqueueNotification(`Failed to connect to ${conn.name || conn.host}: ${err.response?.data?.error || err.message}`);
         }
       }
     } else {
@@ -664,11 +659,20 @@ const App: React.FC = () => {
               ? 'bg-neutral-900 border-neutral-800'
               : 'bg-white border-neutral-200'
           }`}>
-            <div className="flex items-center justify-between w-full px-3">
-              {/* Mobile hamburger */}
+            <div className="flex items-center w-full px-3 gap-2">
+              {/* Mobile hamburger / Desktop sidebar collapse toggle */}
               <button
                 onClick={toggleMenu}
                 className={`sm:hidden p-1 rounded ${darkMode ? 'text-neutral-400 hover:text-white' : 'text-neutral-500 hover:text-neutral-900'}`}
+              >
+                <Bars3Icon className="h-4 w-4" />
+              </button>
+              <button
+                onClick={toggleSidebar}
+                title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                className={`hidden sm:flex items-center justify-center p-1 rounded transition-colors ${
+                  darkMode ? 'text-neutral-400 hover:text-white hover:bg-neutral-800' : 'text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100'
+                }`}
               >
                 <Bars3Icon className="h-4 w-4" />
               </button>
@@ -676,7 +680,7 @@ const App: React.FC = () => {
               {/* Logo */}
               <Link
                 to="/"
-                className="text-sm font-bold tracking-tight no-underline flex-grow sm:flex-grow-0"
+                className="text-sm font-bold tracking-tight no-underline"
               >
                 <span className="text-gradient">EZ PM2 GUI</span>
               </Link>
@@ -696,6 +700,31 @@ const App: React.FC = () => {
                   <span>No password set — go to Settings / Security to enable</span>
                 </Link>
               )}
+
+              {/* Spacer */}
+              <div className="flex-1" />
+
+              {/* @group ServerSwitcher : Active remote server indicator in navbar */}
+              {activeServerId !== 'local' && (() => {
+                const conn = remoteConnections.find(c => c.id === activeServerId);
+                return (
+                  <div className="hidden sm:flex items-center gap-1.5 text-xs font-medium">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-pulse shrink-0" />
+                    <span className={darkMode ? 'text-primary-300' : 'text-primary-700'}>
+                      <strong>{conn?.name || 'Remote Server'}</strong>
+                      {conn && <span className="opacity-60 font-normal"> · {conn.username}@{conn.host}</span>}
+                    </span>
+                    <button
+                      onClick={() => handleServerSwitch('local')}
+                      className={`ml-1 text-xs underline opacity-70 hover:opacity-100 transition-opacity ${
+                        darkMode ? 'text-primary-400' : 'text-primary-600'
+                      }`}
+                    >
+                      Switch to Local
+                    </button>
+                  </div>
+                );
+              })()}
 
               {/* Right side */}
               <div className="flex items-center gap-1.5">
@@ -780,6 +809,42 @@ const App: React.FC = () => {
                   onSwitch={handleServerSwitch}
                 />
 
+                {/* Divider */}
+                <span className={`h-4 w-px mx-0.5 ${darkMode ? 'bg-neutral-700' : 'bg-neutral-200'}`} />
+
+                {/* What's New */}
+                <button
+                  onClick={() => setShowWhatsNew(true)}
+                  title="What's New"
+                  className={`p-1 rounded transition-colors ${
+                    darkMode ? 'text-violet-400 hover:text-violet-300' : 'text-violet-500 hover:text-violet-700'
+                  }`}
+                >
+                  <SparklesIcon className="h-4 w-4" />
+                </button>
+
+                {/* About */}
+                <button
+                  onClick={toggleAbout}
+                  title="About"
+                  className={`p-1 rounded transition-colors ${
+                    darkMode ? 'text-neutral-400 hover:text-white' : 'text-neutral-500 hover:text-neutral-900'
+                  }`}
+                >
+                  <InformationCircleIcon className="h-4 w-4" />
+                </button>
+
+                {/* Settings */}
+                <Link
+                  to="/settings"
+                  title="Settings"
+                  className={`p-1 rounded transition-colors ${
+                    darkMode ? 'text-neutral-400 hover:text-white' : 'text-neutral-500 hover:text-neutral-900'
+                  }`}
+                >
+                  <Cog6ToothIcon className="h-4 w-4" />
+                </Link>
+
                 {/* Dark-mode toggle */}
                 <button
                   onClick={toggleDarkMode}
@@ -804,56 +869,24 @@ const App: React.FC = () => {
                 darkMode ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-200'
               }`}>
                 <div className="pt-9 h-full overflow-y-auto">
-                  <SidebarMenu toggleAbout={toggleAbout} onItemClick={toggleMenu} onWhatsNew={() => setShowWhatsNew(true)} />
+                  <SidebarMenu onItemClick={toggleMenu} />
                 </div>
               </div>
             </div>
           )}
 
-          {/* ── Desktop Sidebar (200px) ── */}
-          <div className={`hidden sm:flex flex-col fixed left-0 top-9 h-[calc(100vh-2.25rem)] w-[200px] border-r overflow-y-auto ${
-            darkMode ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-200'
-          }`}>
-            <SidebarMenu toggleAbout={toggleAbout} onWhatsNew={() => setShowWhatsNew(true)} />
+          {/* ── Desktop Sidebar ── */}
+          <div className={`hidden sm:flex flex-col fixed left-0 top-9 z-[40] h-[calc(100vh-2.25rem-22px)] border-r overflow-y-auto transition-[width] duration-200 ${
+            sidebarCollapsed ? 'w-[44px]' : 'w-[200px]'
+          } ${darkMode ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-200'}`}>
+            <SidebarMenu collapsed={sidebarCollapsed} />
           </div>
 
           {/* ── Main Content ── */}
-          <main className={`flex-1 sm:ml-[200px] pt-9 min-h-screen ${
-            darkMode ? 'bg-neutral-950' : 'bg-neutral-100'
-          }`}>
-            <div className="px-3 py-3 pb-10">
-
-              {/* @group ServerSwitcher : Active remote server banner */}
-              {activeServerId !== 'local' && (() => {
-                const conn = remoteConnections.find(c => c.id === activeServerId);
-                return (
-                  <div className={`flex items-center gap-2 text-xs font-medium rounded-md px-3 py-2 mb-3 ${
-                    darkMode
-                      ? 'bg-primary-900/30 border border-primary-700/50 text-primary-300'
-                      : 'bg-primary-50 border border-primary-200 text-primary-700'
-                  }`}>
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-pulse shrink-0" />
-                    <span>
-                      Viewing <strong>{conn?.name || 'Remote Server'}</strong>
-                      {conn && <span className="opacity-60 font-normal"> · {conn.username}@{conn.host}</span>}
-                    </span>
-                    <button
-                      onClick={() => handleServerSwitch('local')}
-                      className="ml-auto underline opacity-70 hover:opacity-100 transition-opacity"
-                    >
-                      Switch to Local
-                    </button>
-                  </div>
-                );
-              })()}
-
-              {/* Error banner */}
-              {error && (
-                <div className="flex items-center gap-2 text-xs font-medium text-danger-700 dark:text-danger-400 bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800/50 rounded-md px-3 py-2 mb-3">
-                  <div className="w-1.5 h-1.5 bg-danger-500 rounded-full animate-pulse shrink-0" />
-                  {error}
-                </div>
-              )}
+          <main className={`flex-1 pt-9 min-h-screen transition-[margin] duration-200 ${
+            sidebarCollapsed ? 'sm:ml-[44px]' : 'sm:ml-[200px]'
+          } ${darkMode ? 'bg-neutral-950' : 'bg-neutral-100'}`}>
+            <div className="px-3 py-3 pb-8">
 
               <Routes>
                 <Route path="/" element={
@@ -889,21 +922,9 @@ const App: React.FC = () => {
                     connectionId={activeServerId !== 'local' ? activeServerId : undefined}
                   />
                 } />
-                <Route path="/monit" element={<MonitDashboard processes={processes} onRefresh={() => {
-                  const fetchProcesses = async () => {
-                    try {
-                      const response = await axios.get<PM2Process[]>('/api/processes');
-                      setProcesses(response.data);
-                    } catch (err) {
-                      console.error('Error refreshing processes:', err);
-                      setError('Failed to refresh process data');
-                    }
-                  };
-                  fetchProcesses();
-                }} />} />
                 <Route path="/remote" element={<RemoteConnections />} />
                 <Route path="/deploy" element={<DeployApplication />} />
-                <Route path="/modules" element={<ModuleManagement />} />
+                <Route path="/modules" element={<ModuleManagement onNotify={enqueueNotification} />} />
                 <Route path="/ecosystem" element={<EcosystemGenerator />} />
                 <Route path="/configure/:id" element={<ProcessConfiguration procId={0} />} />
                 <Route path="/cluster" element={<ClusterManagement processes={processes} onRefresh={() => {
@@ -913,13 +934,15 @@ const App: React.FC = () => {
                       setProcesses(response.data);
                     } catch (err) {
                       console.error('Error refreshing processes:', err);
-                      setError('Failed to refresh process data');
+                      enqueueNotification('Failed to refresh process data');
                     }
                   };
                   fetchProcesses();
                 }} />} />                <Route path="/logs" element={<LogStreamEnhanced />} />
+                <Route path="/logs/remote/:serverId/:processId" element={<LogStreamEnhanced />} />
                 <Route path="/logs/:id" element={<LogStreamEnhanced />} />
                 <Route path="/cron-jobs" element={<CronJobsPage />} />
+                <Route path="/metrics" element={<MetricsPage processes={processes} metrics={metrics} />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/load-balancing-guide" element={<LoadBalancingGuide />} />
                 <Route path="/whats-new" element={<WhatsNew />} />
@@ -927,6 +950,18 @@ const App: React.FC = () => {
             </div>{/* /px-3 py-3 */}
           </main>
         </div>
+
+        {/* @group StatusBar : Persistent bottom bar with notification queue */}
+        <StatusBar
+          notifications={notifications}
+          onDismiss={dismissNotification}
+          status={{
+            connected: socketConnected,
+            processCount: processes.length,
+            onlineCount: processes.filter(p => p.pm2_env.status === 'online').length,
+            activeServer: activeServerId,
+          }}
+        />
 
         <ConfirmationDialog
           isOpen={confirmationDialog.isOpen}
@@ -955,7 +990,7 @@ const App: React.FC = () => {
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 600, fontSize: '0.9375rem', lineHeight: 1.3 }}>EZ PM2 GUI</div>
-              <div style={{ fontSize: '0.75rem', opacity: 0.5, fontWeight: 400 }}>v1.6.0 · Chandan Bhagat</div>
+              <div style={{ fontSize: '0.75rem', opacity: 0.5, fontWeight: 400 }}>v1.7.0 · Chandan Bhagat</div>
             </div>
             <IconButton size="small" onClick={toggleAbout} sx={{ ml: 'auto' }}>
               <CloseIcon fontSize="small" />
