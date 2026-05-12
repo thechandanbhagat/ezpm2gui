@@ -3,17 +3,17 @@ import { Link } from 'react-router-dom';
 import {
   XMarkIcon,
   SparklesIcon,
-  KeyIcon,
-  ShieldCheckIcon,
-  LockClosedIcon,
-  LockOpenIcon,
+  ChartBarIcon,
+  SignalIcon,
   ClockIcon,
+  CircleStackIcon,
+  CpuChipIcon,
   ArrowRightIcon,
 } from '@heroicons/react/24/outline';
 
 // @group Constants
-const VERSION = '1.6.0';
-const SESSION_KEY = `ezpm2_whats_new_seen_v${VERSION}`;
+const VERSION = '1.7.0';
+const STORAGE_KEY = `ezpm2_whats_new_seen_v${VERSION}`;
 
 // @group Types
 interface HighlightItem {
@@ -33,49 +33,49 @@ interface WhatsNewModalProps {
 // @group Constants : Feature highlights for the popup
 const HIGHLIGHTS: HighlightItem[] = [
   {
-    icon: KeyIcon,
+    icon: SignalIcon,
+    color: 'text-indigo-500',
+    bg: 'bg-indigo-500/10',
+    title: 'Live Metrics Page',
+    description: 'Per-process rolling 1-hour CPU and memory sparklines, updated every 3s. Find it under Metrics in the sidebar.',
+  },
+  {
+    icon: ChartBarIcon,
+    color: 'text-cyan-500',
+    bg: 'bg-cyan-500/10',
+    title: 'Metrics History (SQLite)',
+    description: 'Remote process metrics recorded every 30s to a local SQLite DB. View CPU and memory charts across 30 min to 7 days.',
+  },
+  {
+    icon: CpuChipIcon,
+    color: 'text-emerald-500',
+    bg: 'bg-emerald-500/10',
+    title: 'Inline Sparklines',
+    description: 'Every row in the Metrics table now shows a 1-hour CPU and memory micro-graph — no extra click required.',
+  },
+  {
+    icon: CircleStackIcon,
     color: 'text-violet-500',
     bg: 'bg-violet-500/10',
-    title: 'PIN Lock Screen',
-    description: '4-digit keypad with auto-submit on the 4th digit. Keyboard supported.',
-  },
-  {
-    icon: ShieldCheckIcon,
-    color: 'text-blue-500',
-    bg: 'bg-blue-500/10',
-    title: 'Password Protection',
-    description: 'Require a password before the app is accessible. Set it in Settings.',
-  },
-  {
-    icon: LockClosedIcon,
-    color: 'text-primary-500',
-    bg: 'bg-primary-500/10',
-    title: 'Manual Lock Button',
-    description: 'Lock the app instantly from the top navbar at any time.',
-  },
-  {
-    icon: LockOpenIcon,
-    color: 'text-green-500',
-    bg: 'bg-green-500/10',
-    title: 'Session Persistence',
-    description: 'Stay unlocked through page refreshes within the same browser tab.',
+    title: 'Background Metrics Poller',
+    description: 'Server-side poller samples connected remote servers every 30s regardless of which page you are on.',
   },
   {
     icon: ClockIcon,
     color: 'text-orange-500',
     bg: 'bg-orange-500/10',
-    title: 'Auto-Lock on Inactivity',
-    description: 'Configurable idle timeout — set in Settings > Security.',
+    title: '30-Day Retention',
+    description: 'Historical metrics auto-purge after 30 days to keep the database lean. Downsampling kicks in beyond 500 points.',
   },
 ];
 
-// @group Helpers : Check & record whether this version popup was seen this session
+// @group Helpers : Check & record whether this version popup was seen
 export function shouldShowWhatsNew(): boolean {
-  return sessionStorage.getItem(SESSION_KEY) !== '1';
+  return localStorage.getItem(STORAGE_KEY) !== '1';
 }
 
 export function markWhatsNewSeen(): void {
-  sessionStorage.setItem(SESSION_KEY, '1');
+  localStorage.setItem(STORAGE_KEY, '1');
 }
 
 // @group Component : Compact "What's New" popup shown once per session

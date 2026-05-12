@@ -14,6 +14,14 @@ A modern web-based graphical user interface for the PM2 process manager, built w
 
 ![Process Monitor](ezpm2gui/screenshots/02-monitoring.png)
 
+**Metrics (Live)** — rolling 1-hour sparklines per process, updated every 3 seconds:
+
+![Metrics Live](ezpm2gui/screenshots/12-metrics-live.png)
+
+**Metrics (History)** — SQLite-backed CPU and memory charts with selectable time range:
+
+![Metrics History](ezpm2gui/screenshots/13-metrics-history.png)
+
 **Deploy App** — start new PM2 processes from a structured form:
 
 ![Deploy App](ezpm2gui/screenshots/04-deploy-app.png)
@@ -33,6 +41,7 @@ A modern web-based graphical user interface for the PM2 process manager, built w
 - **Real-time process monitoring** - Keep track of all your PM2 processes in real-time
 - **Process management** - Start, stop, restart, and delete processes with one click
 - **System metrics dashboard** - Monitor CPU, memory usage, and uptime
+- **Metrics page with live sparklines** - Per-process rolling 1-hour CPU and memory micro-graphs updated every 3s; switch to History tab for SQLite-backed long-term charts
 - **Enhanced log streaming** - View and filter logs from multiple processes simultaneously
 - **WebSocket for live updates** - Get instant updates without refreshing
 - **Process CPU and memory charts** - Visualize performance metrics over time

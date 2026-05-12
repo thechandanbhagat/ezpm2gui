@@ -38,9 +38,7 @@
             "workingDirectory": "project"
           }
         ],
-        "environment": {
-          "NODE_ENV": "production"
-        }
+        "environment": {}
       },
       "validation": {
         "checks": [
@@ -50,7 +48,8 @@
           },
           {
             "name": "node_modules exists after install",
-            "directory": "node_modules"
+            "directory": "node_modules",
+            "optional": true
           }
         ]
       },

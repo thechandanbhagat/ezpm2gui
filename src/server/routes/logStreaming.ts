@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import pm2 from 'pm2';
 import fs from 'fs';
-import { spawn } from 'child_process';
 import { remoteConnectionManager } from '../utils/remote-connection';
 
 const router:Router = Router();
@@ -13,55 +12,59 @@ const activeRemoteStreams: Record<string, any> = {};
 // Get active stream (or create a new one)
 const getLogStream = (io: any, processId: string, logType: string) => {
   const streamKey = `${processId}-${logType}`;
-  
+
   // If stream already exists, return it
   if (activeStreams[streamKey]) {
-    return activeStreams[streamKey];
+    return Promise.resolve(activeStreams[streamKey]);
   }
-  
+
   return new Promise((resolve, reject) => {
     pm2.describe(processId, (err, processDesc: any) => {
       if (err || !processDesc || processDesc.length === 0) {
         reject(new Error('Process not found'));
         return;
       }
-      
+
       const logPath = processDesc[0]?.pm2_env?.[`pm_${logType}_log_path`];
-      
+
       if (!logPath || !fs.existsSync(logPath)) {
         reject(new Error(`Log file not found: ${logPath}`));
         return;
       }
-      
-      // Create a tail process to stream the log file
-      const tail = spawn('tail', ['-f', logPath]);
-      
-      // Setup event handlers
-      tail.stdout.on('data', (data) => {
-        const lines = data.toString().split('\n').filter((line: string) => line.trim() !== '');
 
-        lines.forEach((line: string) => {
-          // Emit only to clients subscribed to this specific log stream
-          io.to(streamKey).emit('log-line', {
-            processId,
-            logType,
-            line
+      // Cross-platform tail using fs.watch — no Unix `tail` binary needed
+      let position = fs.statSync(logPath).size; // start at EOF, don't replay history
+
+      const watcher = fs.watch(logPath, (eventType) => {
+        if (eventType !== 'change') return;
+        try {
+          const stat = fs.statSync(logPath);
+          // Handle log rotation / truncation
+          if (stat.size < position) position = 0;
+          if (stat.size === position) return;
+
+          const length = stat.size - position;
+          const buffer = Buffer.alloc(length);
+          const fd = fs.openSync(logPath, 'r');
+          fs.readSync(fd, buffer, 0, length, position);
+          fs.closeSync(fd);
+          position = stat.size;
+
+          const lines = buffer.toString('utf8').split('\n').filter((l) => l.trim() !== '');
+          lines.forEach((line) => {
+            io.to(streamKey).emit('log-line', { processId, logType, line });
           });
-        });
+        } catch (e) {
+          console.error('Error reading log file:', e);
+        }
       });
-      
-      tail.stderr.on('data', (data) => {
-        console.error(`Tail error: ${data}`);
-      });
-      
-      tail.on('close', (code) => {
-        console.log(`Tail process exited with code ${code}`);
-        delete activeStreams[streamKey];
-      });
-      
-      // Store the tail process
-      activeStreams[streamKey] = tail;
-        resolve(tail);
+
+      watcher.on('error', (e) => console.error(`Watcher error for ${streamKey}:`, e));
+
+      // Expose a kill() so existing cleanup code works unchanged
+      const streamObj = { kill: () => { watcher.close(); delete activeStreams[streamKey]; } };
+      activeStreams[streamKey] = streamObj;
+      resolve(streamObj);
     });
   });
 };

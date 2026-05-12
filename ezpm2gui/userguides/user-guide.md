@@ -1,6 +1,6 @@
 ---
 title: EZ PM2 GUI — User Guide
-version: 1.6.0
+version: 1.7.0
 ---
 
 # EZ PM2 GUI — User Guide
@@ -193,4 +193,4 @@ Across every page the top bar gives you:
 
 ---
 
-*Generated for ezpm2gui v1.6.0.*
+*Generated for ezpm2gui v1.7.0.*

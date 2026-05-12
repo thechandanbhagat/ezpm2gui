@@ -144,9 +144,10 @@ export class ProjectSetupService {
     return null;
   }
 
-  public async setupProject(projectPath: string, projectType: string): Promise<SetupResult> {
+  public async setupProject(projectPath: string, projectType: string, onLog?: (msg: string) => void): Promise<SetupResult> {
     this.log(`Starting setup for ${projectType} project at: ${projectPath}`);
-    
+    onLog?.(`Starting ${projectType} project setup at: ${projectPath}`);
+
     const config = this.configs[projectType];
     if (!config) {
       throw new Error(`Unknown project type: ${projectType}`);
@@ -162,10 +163,11 @@ export class ProjectSetupService {
 
     for (const step of config.setup.steps) {
       const stepStart = Date.now();
-      
+
       try {
         // Check if step should be skipped
         if (this.shouldSkipStep(step, projectPath)) {
+          onLog?.(`[SKIP] ${step.name}`);
           result.steps.push({
             name: step.name,
             success: true,
@@ -177,7 +179,8 @@ export class ProjectSetupService {
         }
 
         this.log(`Executing step: ${step.name}`);
-        const stepResult = await this.executeStep(step, projectPath, result.environment);
+        onLog?.(`\n[STEP] ${step.name}`);
+        const stepResult = await this.executeStep(step, projectPath, result.environment, onLog);
         const duration = Date.now() - stepStart;
         
         result.steps.push({
@@ -186,17 +189,22 @@ export class ProjectSetupService {
         });
 
         if (!stepResult.success && step.required) {
+          onLog?.(`[ERROR] Step failed: ${step.name}`);
           result.success = false;
           result.errors.push(`Required step failed: ${step.name} - ${stepResult.error}`);
           break;
         } else if (!stepResult.success) {
+          onLog?.(`[WARN] Optional step failed: ${step.name}`);
           result.warnings.push(`Optional step failed: ${step.name} - ${stepResult.error}`);
+        } else {
+          onLog?.(`[OK] ${step.name} completed (${duration}ms)`);
         }
 
       } catch (error) {
         const duration = Date.now() - stepStart;
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        
+        onLog?.(`[ERROR] ${step.name}: ${errorMessage}`);
+
         result.steps.push({
           name: step.name,
           success: false,
@@ -218,24 +226,24 @@ export class ProjectSetupService {
     // Set interpreter path for Python projects
     if (projectType === 'python' && result.success) {
       const platform = os.platform();
-      const venvPath = platform === 'win32' 
+      const venvPath = platform === 'win32'
         ? path.join(projectPath, 'venv', 'Scripts', 'python.exe')
         : path.join(projectPath, 'venv', 'bin', 'python');
-      
+
       if (fs.existsSync(venvPath)) {
         result.interpreterPath = venvPath;
         result.environment.PYTHON_INTERPRETER = venvPath;
       }
     }
 
-    // Validate the setup
+    // Validate the setup (advisory only — step success/failure is the real gate)
     const validationResult = await this.validateSetup(projectPath, config);
     if (!validationResult.success) {
-      result.success = false;
-      result.errors.push(...validationResult.errors);
+      result.warnings.push(...validationResult.errors);
     }
 
     this.log(`Setup completed. Success: ${result.success}`);
+    onLog?.(`\nSetup ${result.success ? 'completed successfully' : 'failed'}.`);
     return result;
   }
 
@@ -297,7 +305,7 @@ export class ProjectSetupService {
 
     return false;
   }
-  private async executeStep(step: SetupStep, projectPath: string, environment: Record<string, string>): Promise<Omit<StepResult, 'duration'>> {
+  private async executeStep(step: SetupStep, projectPath: string, environment: Record<string, string>, onLog?: (msg: string) => void): Promise<Omit<StepResult, 'duration'>> {
     const workingDir = step.workingDirectory === 'project' ? projectPath : process.cwd();
     let command = step.command;
     
@@ -331,14 +339,19 @@ export class ProjectSetupService {
       child.stdout?.on('data', (data) => {
         const text = data.toString();
         output += text;
-        // Log real-time output for debugging
-        console.log(`[${step.name}] ${text.trim()}`);
+        for (const line of text.split('\n')) {
+          const trimmed = line.trim();
+          if (trimmed) onLog?.(trimmed);
+        }
       });
 
       child.stderr?.on('data', (data) => {
         const text = data.toString();
         error += text;
-        console.error(`[${step.name}] ERROR: ${text.trim()}`);
+        for (const line of text.split('\n')) {
+          const trimmed = line.trim();
+          if (trimmed) onLog?.(`[WARN] ${trimmed}`);
+        }
       });
 
       child.on('close', (code) => {

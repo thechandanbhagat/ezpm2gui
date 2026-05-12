@@ -1,5 +1,8 @@
 import { Router } from 'express';
 import { exec } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
 import pm2 from 'pm2';
 import { executePM2Command } from '../utils/pm2-connection';
 
@@ -124,6 +127,63 @@ router.delete('/:moduleName', async (req, res) => {
       error: `Failed to uninstall module: ${moduleName}`,
       details: error.message
     });
+  }
+});
+
+// @group Utilities : Resolve ~/.pm2/module_conf.json path
+const moduleConfPath = () => path.join(os.homedir(), '.pm2', 'module_conf.json');
+
+// @group APIEndpoints : Get config for a specific installed module
+router.get('/:moduleName/config', (req, res) => {
+  const { moduleName } = req.params;
+  if (!/^[@a-zA-Z0-9/_\-.]+$/.test(moduleName)) {
+    return res.status(400).json({ error: 'Invalid module name' });
+  }
+
+  const confFile = moduleConfPath();
+  if (!fs.existsSync(confFile)) {
+    return res.json({ config: {} });
+  }
+
+  try {
+    const raw = JSON.parse(fs.readFileSync(confFile, 'utf8'));
+    // PM2 stores module config under the module name key
+    const config: Record<string, string> = raw[moduleName] ?? {};
+    res.json({ config });
+  } catch {
+    res.status(500).json({ error: 'Failed to read module configuration' });
+  }
+});
+
+// @group APIEndpoints : Set one or more config keys for an installed module
+router.put('/:moduleName/config', async (req, res) => {
+  const { moduleName } = req.params;
+  const { config } = req.body as { config: Record<string, string> };
+
+  if (!/^[@a-zA-Z0-9/_\-.]+$/.test(moduleName)) {
+    return res.status(400).json({ error: 'Invalid module name' });
+  }
+  if (!config || typeof config !== 'object') {
+    return res.status(400).json({ error: 'config object is required' });
+  }
+
+  // Validate all keys — no shell metacharacters
+  for (const key of Object.keys(config)) {
+    if (!/^[a-zA-Z0-9_\-.]+$/.test(key)) {
+      return res.status(400).json({ error: `Invalid config key: ${key}` });
+    }
+  }
+
+  try {
+    // Run pm2 set for each key sequentially
+    for (const [key, value] of Object.entries(config)) {
+      // Wrap value in quotes to handle spaces; strip any embedded quotes first
+      const safeValue = String(value).replace(/"/g, '');
+      await runPM2CLI(`set ${moduleName}:${key} "${safeValue}"`);
+    }
+    res.json({ success: true, message: `Configuration updated for ${moduleName}` });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to update configuration', details: error.message });
   }
 });
 

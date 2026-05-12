@@ -25,6 +25,9 @@ import pageAuthRoutes from './routes/pageAuth';
 import { setupLogStreaming } from './routes/logStreaming';
 import { executePM2Command, disconnectFromPM2 } from './utils/pm2-connection';
 import { remoteConnectionManager } from './utils/remote-connection';
+import { metricsHistory } from './utils/metrics-history';
+import remoteMetricsRoutes from './routes/remoteMetrics';
+import { remoteMetricsPoller } from './utils/remote-metrics-poller';
 
 /**
  * Create and configure the express server
@@ -70,6 +73,10 @@ export function createServer() {
   app.use('/api/cron-jobs', cronJobsRoutes);
   app.use('/api/update', updatesRoutes);
   app.use('/api/auth', pageAuthRoutes);
+  app.use('/api/remote-metrics', remoteMetricsRoutes);
+
+  // Start remote metrics poller (30-second interval, polls all connected servers)
+  remoteMetricsPoller.start();
   
   // Setup log streaming with Socket.IO
   setupLogStreaming(io);  // PM2 API endpoints
@@ -142,6 +149,26 @@ export function createServer() {
     };
     
     res.json(metrics);
+  });
+
+  // @group MetricsHistory : Return full history for all processes
+  app.get('/api/metrics/history', (_req, res) => {
+    res.json(metricsHistory.getAll());
+  });
+
+  // @group MetricsHistory : Return history for a single process by pm_id
+  app.get('/api/metrics/history/:processId', (req, res) => {
+    const pm_id = parseInt(req.params.processId, 10);
+    if (isNaN(pm_id)) {
+      res.status(400).json({ error: 'Invalid processId' });
+      return;
+    }
+    const entry = metricsHistory.getOne(pm_id);
+    if (!entry) {
+      res.status(404).json({ error: 'No history found for this process' });
+      return;
+    }
+    res.json(entry);
   });
 
   // @group LogHistory : Resolve log path from PM2 process descriptor
@@ -360,6 +387,19 @@ export function createServer() {
     }
   });
   
+  // @group MetricsHistory : Server-level polling — records PM2 process metrics into the history store
+  // This runs once regardless of how many clients are connected so the ring buffer fills consistently.
+  const historyPollInterval = setInterval(async () => {
+    try {
+      const processList = await executePM2Command<any[]>((callback) => {
+        pm2.list(callback);
+      });
+      metricsHistory.record(processList);
+    } catch {
+      // silent — best-effort recording; don't crash the server
+    }
+  }, 3000);
+
   // WebSocket for real-time updates
   io.on('connection', (socket) => {
     console.log('Client connected');
@@ -412,17 +452,20 @@ export function createServer() {
     }
   });
 
+  // Clean up history poll on server close
+  server.on('close', () => clearInterval(historyPollInterval));
+
   // Return the server instance
   return server;
 }
 
 // Only start the server if this file is run directly
 if (require.main === module) {
-  const PORT = process.env.PORT || 3101;
-  const HOST = process.env.HOST || 'localhost';
-  
+  const PORT = parseInt(process.env.PORT || '3101', 10);
+  const HOST = process.env.HOST || '::';
+
   const server = createServer();
-  server.listen(PORT, () => {
+  server.listen(PORT, HOST as string, () => {
     console.log(`Server running on http://${HOST}:${PORT}`);
   });
 
