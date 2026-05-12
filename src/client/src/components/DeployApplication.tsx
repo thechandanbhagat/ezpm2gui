@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Box,
   Paper,
@@ -78,6 +78,19 @@ const APP_CONFIGS: Record<AppType, AppTypeConfig> = {
   },
 };
 
+// @group Render : Section card helper
+const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+  <Paper variant="outlined" sx={{ mb: 2 }}>
+    <Box sx={{ px: 2, py: 1, borderBottom: 1, borderColor: 'divider', bgcolor: 'action.hover' }}>
+      <Typography variant="subtitle2" color="text.secondary"
+        sx={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.6875rem' }}>
+        {title}
+      </Typography>
+    </Box>
+    <Box sx={{ p: 2 }}>{children}</Box>
+  </Paper>
+);
+
 // @group DeployApplication : Form to start a new PM2-managed process
 const DeployApplication: React.FC = () => {
   const navigate = useNavigate();
@@ -92,6 +105,8 @@ const DeployApplication: React.FC = () => {
   const [portError,  setPortError]  = useState('');
   const [envVars,    setEnvVars]    = useState<EnvVariable[]>([]);
   const [newEnv,     setNewEnv]     = useState<EnvVariable>({ key: '', value: '' });
+  const [logs,       setLogs]       = useState<string[]>([]);
+  const logEndRef = useRef<HTMLDivElement>(null);
 
   const [form, setForm] = useState({
     name: '',
@@ -106,6 +121,11 @@ const DeployApplication: React.FC = () => {
     port: '',
     interpreter: '',
   });
+
+  // @group Effects : Auto-scroll log panel
+  useEffect(() => {
+    logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [logs]);
 
   // @group Handlers : Generic field change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -165,7 +185,7 @@ const DeployApplication: React.FC = () => {
   const updateEnvVar = (i: number, field: 'key' | 'value', val: string) =>
     setEnvVars(prev => prev.map((e, idx) => idx === i ? { ...e, [field]: val } : e));
 
-  // @group Handlers : Submit deployment
+  // @group Handlers : Submit deployment via SSE stream
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (portError) return;
@@ -177,34 +197,66 @@ const DeployApplication: React.FC = () => {
     }
 
     setLoading(true);
+    setLogs([]);
+
     try {
-      await axios.post('/api/deploy', { ...form, env: envObject, appType, autoSetup });
-      setSuccess('Application deployed successfully');
-      setTimeout(() => navigate('/processes'), 1800);
+      const response = await fetch('/api/deploy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, env: envObject, appType, autoSetup }),
+      });
+
+      // If server returned a non-SSE error (400 validation), handle it
+      if (!response.ok && response.headers.get('content-type')?.includes('application/json')) {
+        const body = await response.json();
+        setError(body.error || 'Deployment failed');
+        setLoading(false);
+        return;
+      }
+
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split('\n\n');
+        buffer = parts.pop() ?? '';
+
+        for (const part of parts) {
+          const dataLine = part.split('\n').find(l => l.startsWith('data: '));
+          if (!dataLine) continue;
+          try {
+            const event = JSON.parse(dataLine.slice(6));
+            if (event.type === 'log') {
+              setLogs(prev => [...prev, event.message as string]);
+            } else if (event.type === 'done') {
+              if (event.success) {
+                setSuccess('Application deployed successfully');
+                setTimeout(() => navigate('/processes'), 2000);
+              } else {
+                const msg = (event.error as string) || 'Deployment failed';
+                setError(msg.includes('port') && msg.includes('use')
+                  ? `Port ${form.port} is already in use`
+                  : msg);
+              }
+            }
+          } catch {
+            // malformed event — skip
+          }
+        }
+      }
     } catch (err: any) {
-      const msg = err.response?.data?.error || 'Failed to deploy application';
-      setError(msg.includes('port') && msg.includes('use')
-        ? `Port ${form.port} is already in use`
-        : msg);
+      setError(err.message || 'Failed to deploy application');
     } finally {
       setLoading(false);
     }
   };
 
   const cfg = APP_CONFIGS[appType];
-
-  // @group Render : Section card helper
-  const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-    <Paper variant="outlined" sx={{ mb: 2 }}>
-      <Box sx={{ px: 2, py: 1, borderBottom: 1, borderColor: 'divider', bgcolor: 'action.hover' }}>
-        <Typography variant="subtitle2" color="text.secondary"
-          sx={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.6875rem' }}>
-          {title}
-        </Typography>
-      </Box>
-      <Box sx={{ p: 2 }}>{children}</Box>
-    </Paper>
-  );
 
   // @group Render : Main form
   return (
@@ -444,6 +496,50 @@ const DeployApplication: React.FC = () => {
           </Typography>
         )}
       </Section>
+
+      {/* ── Deployment Log ── */}
+      {logs.length > 0 && (
+        <Paper variant="outlined" sx={{ mb: 2 }}>
+          <Box sx={{ px: 2, py: 1, borderBottom: 1, borderColor: 'divider', bgcolor: 'action.hover', display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="subtitle2" color="text.secondary"
+              sx={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.6875rem', flex: 1 }}>
+              Deployment Log
+            </Typography>
+            {loading && <CircularProgress size={12} />}
+          </Box>
+          <Box
+            sx={{
+              p: 1.5,
+              maxHeight: 280,
+              overflowY: 'auto',
+              bgcolor: (theme) => theme.palette.mode === 'dark' ? '#0d1117' : '#1e1e1e',
+              fontFamily: 'monospace',
+              fontSize: '0.75rem',
+              lineHeight: 1.6,
+            }}
+          >
+            {logs.map((line, i) => {
+              const isError = line.startsWith('[ERROR]');
+              const isWarn  = line.startsWith('[WARN]');
+              const isOk    = line.startsWith('[OK]');
+              const isStep  = line.startsWith('[STEP]');
+              const isSkip  = line.startsWith('[SKIP]');
+              const color = isError ? '#f97171'
+                : isWarn  ? '#fbbf24'
+                : isOk    ? '#4ade80'
+                : isStep  ? '#60a5fa'
+                : isSkip  ? '#9ca3af'
+                : '#d4d4d4';
+              return (
+                <Box key={i} component="div" sx={{ color, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                  {line}
+                </Box>
+              );
+            })}
+            <div ref={logEndRef} />
+          </Box>
+        </Paper>
+      )}
 
       {/* @group Toast : Feedback snackbars */}
       <Snackbar open={!!error} autoHideDuration={5000} onClose={() => setError('')}
