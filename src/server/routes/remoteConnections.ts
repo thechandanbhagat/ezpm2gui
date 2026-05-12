@@ -863,15 +863,19 @@ router.get('/:connectionId/log-file/download', async (req, res) => {
  */
 router.get('/connections', async (req, res) => {  try {
     const connections = remoteConnectionManager.getAllConnections();
-    const connectionsList = Array.from(connections.entries()).map(([id, conn]) => ({
-      id,
-      name: conn.name || `${conn.username}@${conn.host}`,
-      host: conn.host,
-      port: conn.port,
-      username: conn.username,
-      connected: conn.isConnected(),
-      isPM2Installed: conn.isPM2Installed
-    }));
+    const connectionsList = Array.from(connections.entries()).map(([id, conn]) => {
+      const connected = conn.isConnected();
+      return {
+        id,
+        name: conn.name || `${conn.username}@${conn.host}`,
+        host: conn.host,
+        port: conn.port,
+        username: conn.username,
+        connected,
+        isPM2Installed: conn.isPM2Installed,
+        status: connected ? 'connected' : 'disconnected',
+      };
+    });
 
     res.json(connectionsList);
   } catch (error) {
