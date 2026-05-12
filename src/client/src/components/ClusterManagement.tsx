@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
-  Box, Paper, Typography, Button, Grid, TextField, FormControl,
-  InputLabel, Select, SelectChangeEvent, MenuItem, CircularProgress,
-  Alert, Snackbar, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow
-} from '@mui/material';
-import { Refresh as RefreshIcon } from '@mui/icons-material';
+  ArrowPathIcon,
+  ServerStackIcon,
+  CpuChipIcon,
+  ArrowsPointingOutIcon,
+  BoltIcon,
+} from '@heroicons/react/24/outline';
 import { PM2Process } from '../types/pm2';
 import PageHeader from './PageHeader';
 
@@ -52,8 +52,6 @@ const ClusterManagement: React.FC<ClusterManagementProps> = ({ processes, onRefr
   };
 
   // @group Handlers : Cluster action handlers
-  const handleProcessChange = (e: SelectChangeEvent) => setSelectedProcess(e.target.value);
-
   const handleScaleProcess = async () => {
     if (!selectedProcess || instancesInput < 0) return;
     try {
@@ -89,128 +87,187 @@ const ClusterManagement: React.FC<ClusterManagementProps> = ({ processes, onRefr
     finally { setLoading(false); }
   };
 
+  const proc = clusterProcesses[0];
+
   // @group Render : Cluster management layout
   return (
-    <Box>
+    <div>
       <PageHeader
         title="Cluster Management"
         subtitle="Scale processes and manage execution modes"
       />
 
+      {/* Toast notifications */}
+      {error && (
+        <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 px-3 py-2 text-xs text-red-700 dark:text-red-400">
+          <span className="flex-1">{error}</span>
+          <button onClick={() => setError('')} className="text-red-400 hover:text-red-600">✕</button>
+        </div>
+      )}
+      {success && (
+        <div className="mb-4 flex items-center gap-2 rounded-lg border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2 text-xs text-emerald-700 dark:text-emerald-400">
+          <span className="flex-1">{success}</span>
+          <button onClick={() => setSuccess('')} className="text-emerald-400 hover:text-emerald-600">✕</button>
+        </div>
+      )}
+
       {/* Process selector */}
-      <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>Select Process</Typography>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth>
-              <InputLabel>Process</InputLabel>
-              <Select value={selectedProcess} onChange={handleProcessChange} label="Process">
-                {processes.map(p => (
-                  <MenuItem key={p.pm_id} value={p.pm_id}>{p.name} (ID: {p.pm_id})</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
-      </Paper>
+      <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4 mb-4">
+        <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-3">Select Process</p>
+        <select
+          value={selectedProcess}
+          onChange={e => setSelectedProcess(e.target.value)}
+          className="w-full sm:w-72 h-8 px-3 text-xs rounded border
+                     bg-white dark:bg-neutral-800
+                     border-neutral-200 dark:border-neutral-700
+                     text-neutral-900 dark:text-neutral-100
+                     focus:outline-none focus:ring-1 focus:ring-primary-500"
+        >
+          <option value="">— choose a process —</option>
+          {processes.map(p => (
+            <option key={p.pm_id} value={p.pm_id}>{p.name} (ID: {p.pm_id})</option>
+          ))}
+        </select>
+      </div>
 
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-          <CircularProgress size={24} />
-        </Box>
-      ) : selectedProcess && clusterProcesses.length > 0 ? (
-        <>
-          {/* Current cluster info */}
-          <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>Current Status</Typography>
-            <TableContainer>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>ID</TableCell>
-                    <TableCell>Name</TableCell>
-                    <TableCell>Instances</TableCell>
-                    <TableCell>Exec Mode</TableCell>
-                    <TableCell>Mode</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {clusterProcesses.map(p => (
-                    <TableRow key={p.pm_id}>
-                      <TableCell>{p.pm_id}</TableCell>
-                      <TableCell>{p.name}</TableCell>
-                      <TableCell>{p.instances}</TableCell>
-                      <TableCell>{p.exec_mode}</TableCell>
-                      <TableCell>{p.isCluster ? 'Cluster' : 'Fork'}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Paper>
-
-          {/* Scale */}
-          <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>Scale Instances</Typography>
-            <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12} sm={4}>
-                <TextField
-                  fullWidth type="number" label="Instances"
-                  value={instancesInput}
-                  onChange={e => setInstancesInput(Number(e.target.value))}
-                  inputProps={{ min: 0 }}
-                />
-              </Grid>
-              <Grid item>
-                <Button variant="contained" startIcon={<RefreshIcon />} onClick={handleScaleProcess}>
-                  Scale
-                </Button>
-              </Grid>
-            </Grid>
-          </Paper>
-
-          {/* Exec mode */}
-          <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>Execution Mode</Typography>
-            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-              <Button variant="outlined" onClick={() => handleChangeExecMode('fork')}
-                disabled={!clusterProcesses[0]?.isCluster}>
-                Switch to Fork
-              </Button>
-              <Button variant="outlined" onClick={() => handleChangeExecMode('cluster')}
-                disabled={clusterProcesses[0]?.isCluster}>
-                Switch to Cluster
-              </Button>
-            </Box>
-            <Typography variant="body2" color="text.secondary">
-              Use <strong>cluster mode</strong> with multiple instances to distribute requests across all CPU cores.
-            </Typography>
-          </Paper>
-
-          {/* Zero-downtime reload */}
-          <Paper variant="outlined" sx={{ p: 2 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>Zero-Downtime Reload</Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-              Reload instances one by one — no service interruption during code updates.
-            </Typography>
-            <Button variant="contained" color="secondary" onClick={handleReloadProcess}>
-              Graceful Reload
-            </Button>
-          </Paper>
-        </>
+        <div className="flex justify-center py-10">
+          <ArrowPathIcon className="h-5 w-5 animate-spin text-neutral-400" />
+        </div>
       ) : !selectedProcess ? (
-        <Paper variant="outlined" sx={{ p: 3, textAlign: 'center' }}>
-          <Typography variant="body2" color="text.secondary">Select a process above to view cluster options</Typography>
-        </Paper>
-      ) : null}
+        <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-8 text-center">
+          <ServerStackIcon className="mx-auto h-8 w-8 text-neutral-300 dark:text-neutral-600 mb-2" />
+          <p className="text-xs text-neutral-400 dark:text-neutral-500">Select a process above to view cluster options</p>
+        </div>
+      ) : proc ? (
+        <div className="grid grid-cols-1 gap-4">
 
-      <Snackbar open={!!error} autoHideDuration={5000} onClose={() => setError('')}>
-        <Alert severity="error">{error}</Alert>
-      </Snackbar>
-      <Snackbar open={!!success} autoHideDuration={4000} onClose={() => setSuccess('')}>
-        <Alert severity="success">{success}</Alert>
-      </Snackbar>
-    </Box>
+          {/* Current Status */}
+          <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-neutral-100 dark:border-neutral-800">
+              <CpuChipIcon className="h-3.5 w-3.5 text-neutral-400" />
+              <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Current Status</p>
+            </div>
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="bg-neutral-50 dark:bg-neutral-800/60 border-b border-neutral-100 dark:border-neutral-800">
+                  {['ID', 'Name', 'Instances', 'Exec Mode', 'Mode'].map(h => (
+                    <th key={h} className="px-4 py-2 text-left text-[11px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {clusterProcesses.map(p => (
+                  <tr key={p.pm_id} className="text-neutral-700 dark:text-neutral-300">
+                    <td className="px-4 py-2.5">{p.pm_id}</td>
+                    <td className="px-4 py-2.5 font-medium">{p.name}</td>
+                    <td className="px-4 py-2.5">{p.instances}</td>
+                    <td className="px-4 py-2.5 font-mono">{p.exec_mode}</td>
+                    <td className="px-4 py-2.5">
+                      <span className={`inline-flex px-1.5 py-0.5 rounded border text-[11px] font-medium ${
+                        p.isCluster
+                          ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400 border-primary-400/30'
+                          : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 border-neutral-300 dark:border-neutral-700'
+                      }`}>
+                        {p.isCluster ? 'Cluster' : 'Fork'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Scale Instances */}
+          <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <ArrowsPointingOutIcon className="h-3.5 w-3.5 text-neutral-400" />
+              <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Scale Instances</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <input
+                type="number"
+                min={0}
+                value={instancesInput}
+                onChange={e => setInstancesInput(Number(e.target.value))}
+                className="w-24 h-8 px-3 text-xs rounded border
+                           bg-white dark:bg-neutral-800
+                           border-neutral-200 dark:border-neutral-700
+                           text-neutral-900 dark:text-neutral-100
+                           focus:outline-none focus:ring-1 focus:ring-primary-500"
+              />
+              <button
+                onClick={handleScaleProcess}
+                disabled={loading}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded
+                           bg-primary-600 hover:bg-primary-700 text-white transition-colors
+                           disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ArrowsPointingOutIcon className="h-3.5 w-3.5" />
+                Scale
+              </button>
+            </div>
+          </div>
+
+          {/* Execution Mode */}
+          <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <ServerStackIcon className="h-3.5 w-3.5 text-neutral-400" />
+              <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Execution Mode</p>
+            </div>
+            <div className="flex items-center gap-2 mb-3">
+              <button
+                onClick={() => handleChangeExecMode('fork')}
+                disabled={!proc.isCluster}
+                className="px-3 py-1.5 text-xs font-medium rounded border transition-colors
+                           border-neutral-200 dark:border-neutral-700
+                           text-neutral-700 dark:text-neutral-300
+                           hover:bg-neutral-50 dark:hover:bg-neutral-800
+                           disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Switch to Fork
+              </button>
+              <button
+                onClick={() => handleChangeExecMode('cluster')}
+                disabled={proc.isCluster}
+                className="px-3 py-1.5 text-xs font-medium rounded border transition-colors
+                           border-neutral-200 dark:border-neutral-700
+                           text-neutral-700 dark:text-neutral-300
+                           hover:bg-neutral-50 dark:hover:bg-neutral-800
+                           disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Switch to Cluster
+              </button>
+            </div>
+            <p className="text-xs text-neutral-400 dark:text-neutral-500">
+              Use <span className="font-medium text-neutral-600 dark:text-neutral-300">cluster mode</span> with multiple instances to distribute requests across all CPU cores.
+            </p>
+          </div>
+
+          {/* Zero-Downtime Reload */}
+          <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
+            <div className="flex items-center gap-2 mb-1.5">
+              <BoltIcon className="h-3.5 w-3.5 text-amber-400" />
+              <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Zero-Downtime Reload</p>
+            </div>
+            <p className="text-xs text-neutral-400 dark:text-neutral-500 mb-3">
+              Reload instances one by one — no service interruption during code updates.
+            </p>
+            <button
+              onClick={handleReloadProcess}
+              disabled={loading}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded
+                         bg-amber-500 hover:bg-amber-600 text-white transition-colors
+                         disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <BoltIcon className="h-3.5 w-3.5" />
+              Graceful Reload
+            </button>
+          </div>
+
+        </div>
+      ) : null}
+    </div>
   );
 };
 
