@@ -180,7 +180,7 @@ ezpm2gui.start({
 Once started, open your browser and navigate to:
 
 ```
-http://localhost:3001
+http://localhost:3101
 ```
 
 ## Requirements
@@ -192,8 +192,23 @@ http://localhost:3001
 
 EZ PM2 GUI uses environment variables for configuration:
 
-- `PORT`: The port to run the server on (default: 3001)
-- `HOST`: The host to bind to (default: localhost)
+- `PORT`: The port to run the server on (default: `3101`)
+- `HOST`: The host to bind to (default: `localhost`)
+
+You can set these in a `.env` file at the project root (create it if it doesn't exist):
+
+```env
+# .env
+PORT=3102
+HOST=localhost
+```
+
+For the React client to connect to the correct port during a production build, also set:
+
+```env
+# src/client/.env
+REACT_APP_API_URL=http://localhost:3102
+```
 
 ## Load Balancing with PM2
 
