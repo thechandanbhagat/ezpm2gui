@@ -61,6 +61,8 @@ interface LogFilter {
   logLevels: ('error' | 'warn' | 'info' | 'debug' | 'unknown')[];
   searchTerm: string;
   timeRange: '1h' | '6h' | '24h' | 'all';
+  timestampFrom: string;
+  timestampTo: string;
 }
 
 interface ProcessLogStats {
@@ -93,7 +95,9 @@ const EnhancedLogManagement: React.FC = () => {
     logTypes: ['out', 'err'],
     logLevels: ['error', 'warn', 'info', 'debug', 'unknown'],
     searchTerm: '',
-    timeRange: '1h'
+    timeRange: '1h',
+    timestampFrom: '',
+    timestampTo: '',
   });
 
   // Parse log level from content
@@ -256,6 +260,16 @@ const EnhancedLogManagement: React.FC = () => {
       );
     }
 
+    // Filter by explicit timestamp range
+    if (filters.timestampFrom) {
+      const from = new Date(filters.timestampFrom);
+      filtered = filtered.filter(log => log.timestamp >= from);
+    }
+    if (filters.timestampTo) {
+      const to = new Date(filters.timestampTo);
+      filtered = filtered.filter(log => log.timestamp <= to);
+    }
+
     setFilteredLogs(filtered);
   }, [logs, filters]);
 
@@ -380,6 +394,22 @@ const EnhancedLogManagement: React.FC = () => {
     }
   };
 
+  // Highlight search term matches with yellow background
+  const highlightText = (text: string, term: string): React.ReactNode => {
+    if (!term) return text;
+    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const parts = text.split(new RegExp(`(${escaped})`, 'gi'));
+    return (
+      <>
+        {parts.map((part, i) =>
+          part.toLowerCase() === term.toLowerCase()
+            ? <span key={i} style={{ backgroundColor: '#fef08a', color: '#1a1a1a', borderRadius: 2, padding: '0 1px' }}>{part}</span>
+            : part
+        )}
+      </>
+    );
+  };
+
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -490,6 +520,37 @@ const EnhancedLogManagement: React.FC = () => {
                   label="Auto-scroll"
                 />
               </Grid>
+
+              {/* Timestamp range filters */}
+              <Grid item xs={12} md={3}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="From"
+                  type="datetime-local"
+                  value={filters.timestampFrom}
+                  onChange={(e) => setFilters(prev => ({ ...prev, timestampFrom: e.target.value, timeRange: 'all' }))}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="To"
+                  type="datetime-local"
+                  value={filters.timestampTo}
+                  onChange={(e) => setFilters(prev => ({ ...prev, timestampTo: e.target.value, timeRange: 'all' }))}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              {(filters.timestampFrom || filters.timestampTo) && (
+                <Grid item xs={12} md={2} sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Button size="small" variant="outlined" onClick={() => setFilters(prev => ({ ...prev, timestampFrom: '', timestampTo: '', timeRange: '1h' }))}>
+                    Clear Dates
+                  </Button>
+                </Grid>
+              )}
             </Grid>
 
             <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
@@ -620,7 +681,7 @@ const EnhancedLogManagement: React.FC = () => {
                           color: log.type === 'err' ? 'error.main' : 'text.primary'
                         }}
                       >
-                        {log.content}
+                        {filters.searchTerm ? highlightText(log.content, filters.searchTerm) : log.content}
                       </Typography>
                     </Box>
                   ))
