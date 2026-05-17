@@ -14,6 +14,8 @@ import {
   ChevronDownIcon,
   ChevronRightIcon,
   CpuChipIcon,
+  PlayIcon,
+  StopIcon,
 } from '@heroicons/react/24/outline';
 import axios from 'axios';
 
@@ -56,6 +58,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ onItemClick, collapsed = fals
   const [serverGroups,    setServerGroups]    = useState<SidebarServerGroup[]>([]);
   const [expandedServers, setExpandedServers] = useState<Set<string>>(new Set(['local']));
   const [treeLoading,     setTreeLoading]     = useState(false);
+  const [actionLoading,   setActionLoading]   = useState<{ [key: string]: boolean }>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -121,6 +124,31 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ onItemClick, collapsed = fals
       if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
+  };
+
+  const handleProcessAction = async (e: React.MouseEvent, serverId: string, proc: SidebarProcess, action: 'start' | 'stop') => {
+    e.stopPropagation();
+    const key = `${serverId}-${proc.id}`;
+    setActionLoading(prev => ({ ...prev, [key]: true }));
+    try {
+      if (serverId === 'local') {
+        await axios.post(`/api/process/${proc.id}/${action}`);
+      } else {
+        await axios.post(`/api/remote/${serverId}/processes/${proc.name}/${action}`);
+      }
+      setServerGroups(prev => prev.map(g =>
+        g.serverId !== serverId ? g : {
+          ...g,
+          processes: g.processes.map(p =>
+            p.id === proc.id ? { ...p, status: action === 'start' ? 'online' : 'stopped' } : p
+          )
+        }
+      ));
+    } catch (err) {
+      console.error(`Failed to ${action} process:`, err);
+    } finally {
+      setActionLoading(prev => ({ ...prev, [key]: false }));
+    }
   };
 
   const selectProcess = (serverId: string, proc: SidebarProcess) => {
@@ -251,20 +279,55 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ onItemClick, collapsed = fals
                             const active =
                               (group.serverId === 'local' && localMatch && currentPath === `/logs/${proc.id}`) ||
                               (group.serverId !== 'local' && remoteMatch && currentPath === `/logs/remote/${group.serverId}/${proc.id}`);
+                            const actionKey = `${group.serverId}-${proc.id}`;
 
                             return (
-                              <button
+                              <div
                                 key={proc.id}
-                                onClick={() => selectProcess(group.serverId, proc)}
-                                className={`w-full flex items-center gap-1.5 pl-7 pr-2 py-1.5 text-left transition-colors
+                                className={`group/proc w-full flex items-center gap-1.5 pl-7 pr-1.5 py-1 transition-colors
                                             ${active
-                                              ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                                              : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/60 text-neutral-600 dark:text-neutral-400'}`}
+                                              ? 'bg-primary-50 dark:bg-primary-900/20'
+                                              : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/60'}`}
                               >
-                                <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${statusDot(proc.status)}`} />
-                                <CpuChipIcon className="h-3 w-3 shrink-0 opacity-40" />
-                                <span className="text-xs truncate">{proc.name}</span>
-                              </button>
+                                {/* Nav area */}
+                                <button
+                                  onClick={() => selectProcess(group.serverId, proc)}
+                                  className={`flex-1 flex items-center gap-1.5 text-left min-w-0
+                                              ${active
+                                                ? 'text-primary-700 dark:text-primary-300'
+                                                : 'text-neutral-600 dark:text-neutral-400'}`}
+                                >
+                                  <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${statusDot(proc.status)}`} />
+                                  <CpuChipIcon className="h-3 w-3 shrink-0 opacity-40" />
+                                  <span className="text-xs truncate">{proc.name}</span>
+                                </button>
+
+                                {/* Start / Stop button — visible on row hover */}
+                                <div className="shrink-0 opacity-0 group-hover/proc:opacity-100 transition-opacity">
+                                  {actionLoading[actionKey] ? (
+                                    <svg className="h-3 w-3 animate-spin text-neutral-400" viewBox="0 0 24 24" fill="none">
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                                    </svg>
+                                  ) : proc.status === 'online' ? (
+                                    <button
+                                      onClick={(e) => handleProcessAction(e, group.serverId, proc, 'stop')}
+                                      title="Stop"
+                                      className="h-4 w-4 rounded flex items-center justify-center bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-800/50 text-red-600 dark:text-red-400"
+                                    >
+                                      <StopIcon className="h-2.5 w-2.5" />
+                                    </button>
+                                  ) : (
+                                    <button
+                                      onClick={(e) => handleProcessAction(e, group.serverId, proc, 'start')}
+                                      title="Start"
+                                      className="h-4 w-4 rounded flex items-center justify-center bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hover:bg-green-800/50 text-green-600 dark:text-green-400"
+                                    >
+                                      <PlayIcon className="h-2.5 w-2.5" />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
                             );
                           })
                         )}
