@@ -117,12 +117,13 @@ const App: React.FC = () => {
   // @group WhatsNew : Show popup once per session
   const [showWhatsNew, setShowWhatsNew] = useState<boolean>(false);
   
-  // Theme state — default dark, respect system preference
-  const [darkMode, setDarkMode] = useState<boolean>(
-    typeof window !== 'undefined'
-      ? window.matchMedia('(prefers-color-scheme: dark)').matches
-      : true
-  );
+  // Theme state — read from localStorage first, fall back to system preference
+  const [darkMode, setDarkMode] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    const saved = localStorage.getItem('ezpm2gui-theme');
+    if (saved !== null) return saved === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
 
   // @group Theme : Sync Tailwind 'dark' class on <html> so dark: variants work globally
   useEffect(() => {
@@ -134,8 +135,12 @@ const App: React.FC = () => {
   }, [darkMode]);
 
   // @group ServerSwitcher : Active server state and remote connections list
-  const [activeServerId, setActiveServerId] = useState<string>('local');
-  const activeServerIdRef = useRef<string>('local');
+  const [activeServerId, setActiveServerId] = useState<string>(
+    () => localStorage.getItem('ezpm2gui-active-server') || 'local'
+  );
+  const activeServerIdRef = useRef<string>(
+    localStorage.getItem('ezpm2gui-active-server') || 'local'
+  );
   const [remoteConnections, setRemoteConnections] = useState<RemoteConnection[]>([]);
 
   // Confirmation dialog state
@@ -473,7 +478,9 @@ const App: React.FC = () => {
   }, []);
   
   const toggleDarkMode = (): void => {
-    setDarkMode(!darkMode);
+    const next = !darkMode;
+    localStorage.setItem('ezpm2gui-theme', next ? 'dark' : 'light');
+    setDarkMode(next);
   };
   
   const toggleMenu = (): void => {
@@ -495,6 +502,7 @@ const App: React.FC = () => {
     setProcesses([]);
     activeServerIdRef.current = serverId;
     setActiveServerId(serverId);
+    localStorage.setItem('ezpm2gui-active-server', serverId);
 
     if (serverId !== 'local') {
       // Auto-connect if not already connected
@@ -606,7 +614,28 @@ const App: React.FC = () => {
       MuiTextField:   { defaultProps: { size: 'small' } },
       MuiSelect:      { defaultProps: { size: 'small' } },
       MuiFormControl: { defaultProps: { size: 'small' } },
-      MuiInputLabel:  { defaultProps: { size: 'small' } },
+      MuiInputLabel:  {
+        defaultProps: { size: 'small' },
+        // Fix: Tailwind Preflight resets fieldset/legend, breaking MUI's border notch.
+        // Adding a background on the shrunk label visually covers the border line.
+        styleOverrides: {
+          outlined: ({ theme }: { theme: any }) => ({
+            '&.MuiInputLabel-shrink': {
+              backgroundColor: theme.palette.background.paper,
+              paddingLeft: '4px',
+              paddingRight: '4px',
+              borderRadius: '2px',
+            },
+          }),
+        },
+      },
+      // Fix: Tailwind base layer applies a blue outline on focus to all elements,
+      // which shows as a double-border on MUI inputs. Remove it from the input root div.
+      MuiOutlinedInput: {
+        styleOverrides: {
+          root: { '&:focus': { outline: 'none' } },
+        },
+      },
       // Chips — small by default
       MuiChip: { defaultProps: { size: 'small' } },
       // Cards — consistent border radius, outlined by default
