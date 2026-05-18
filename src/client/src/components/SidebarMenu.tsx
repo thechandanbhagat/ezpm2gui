@@ -6,7 +6,6 @@ import {
   PuzzlePieceIcon,
   DocumentTextIcon,
   ServerStackIcon,
-  ChartPieIcon,
   ScaleIcon,
   CloudIcon,
   ClockIcon,
@@ -15,7 +14,7 @@ import {
   ChevronRightIcon,
   CpuChipIcon,
   PlayIcon,
-  StopIcon,
+  ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 import axios from 'axios';
 
@@ -126,7 +125,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ onItemClick, collapsed = fals
     });
   };
 
-  const handleProcessAction = async (e: React.MouseEvent, serverId: string, proc: SidebarProcess, action: 'start' | 'stop') => {
+  const handleProcessAction = async (e: React.MouseEvent, serverId: string, proc: SidebarProcess, action: 'start' | 'stop' | 'restart') => {
     e.stopPropagation();
     const key = `${serverId}-${proc.id}`;
     setActionLoading(prev => ({ ...prev, [key]: true }));
@@ -140,7 +139,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ onItemClick, collapsed = fals
         g.serverId !== serverId ? g : {
           ...g,
           processes: g.processes.map(p =>
-            p.id === proc.id ? { ...p, status: action === 'start' ? 'online' : 'stopped' } : p
+            p.id === proc.id ? { ...p, status: action === 'start' || action === 'restart' ? 'online' : 'stopped' } : p
           )
         }
       ));
@@ -169,7 +168,6 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ onItemClick, collapsed = fals
   // @group Navigation : Menu items configuration
   const menuItems = [
     { label: 'Processes',            path: '/processes',          icon: ChartBarIcon },
-    { label: 'Logs',                 path: '/logs',               icon: ChartPieIcon },
     { label: 'Remote Servers',       path: '/remote',             icon: CloudIcon },
     { label: 'Metrics',               path: '/metrics',            icon: CpuChipIcon },
     { label: 'Deploy App',           path: '/deploy',             icon: PlusIcon },
@@ -302,8 +300,8 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ onItemClick, collapsed = fals
                                   <span className="text-xs truncate">{proc.name}</span>
                                 </button>
 
-                                {/* Start / Stop button — visible on row hover */}
-                                <div className="shrink-0 opacity-0 group-hover/proc:opacity-100 transition-opacity">
+                                {/* Restart / Start + Logs buttons — visible on row hover */}
+                                <div className="shrink-0 opacity-0 group-hover/proc:opacity-100 transition-opacity flex items-center gap-0.5">
                                   {actionLoading[actionKey] ? (
                                     <svg className="h-3 w-3 animate-spin text-neutral-400" viewBox="0 0 24 24" fill="none">
                                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -311,11 +309,11 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ onItemClick, collapsed = fals
                                     </svg>
                                   ) : proc.status === 'online' ? (
                                     <button
-                                      onClick={(e) => handleProcessAction(e, group.serverId, proc, 'stop')}
-                                      title="Stop"
-                                      className="h-4 w-4 rounded flex items-center justify-center bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-800/50 text-red-600 dark:text-red-400"
+                                      onClick={(e) => handleProcessAction(e, group.serverId, proc, 'restart')}
+                                      title="Restart"
+                                      className="h-4 w-4 rounded flex items-center justify-center bg-amber-100 dark:bg-amber-900/30 hover:bg-amber-200 dark:hover:bg-amber-800/50 text-amber-600 dark:text-amber-400"
                                     >
-                                      <StopIcon className="h-2.5 w-2.5" />
+                                      <ArrowPathIcon className="h-2.5 w-2.5" />
                                     </button>
                                   ) : (
                                     <button
@@ -326,6 +324,13 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ onItemClick, collapsed = fals
                                       <PlayIcon className="h-2.5 w-2.5" />
                                     </button>
                                   )}
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); selectProcess(group.serverId, proc); }}
+                                    title="View Logs"
+                                    className="h-4 w-4 rounded flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-500 dark:text-neutral-400"
+                                  >
+                                    <DocumentTextIcon className="h-2.5 w-2.5" />
+                                  </button>
                                 </div>
                               </div>
                             );
