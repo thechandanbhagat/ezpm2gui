@@ -61,6 +61,83 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Client-side hybrid encryption helpers
+// Uses the server's RSA public key to wrap a one-time AES-256-GCM key,
+// then encrypts the plaintext with that AES key.  Nothing sensitive ever
+// travels as plain text through the HTTP body.
+// ---------------------------------------------------------------------------
+
+interface EncryptedPayload {
+  encryptedKey: string; // RSA-OAEP wrapped AES key, base64
+  iv: string;           // 12-byte AES-GCM IV, base64
+  data: string;         // AES-GCM ciphertext + auth tag, base64
+}
+
+const toBase64 = (buf: ArrayBuffer): string =>
+  btoa(String.fromCharCode(...new Uint8Array(buf)));
+
+async function fetchServerPublicKey(): Promise<CryptoKey> {
+  const res = await fetch('/api/remote/public-key');
+  if (!res.ok) throw new Error('Could not fetch server public key');
+  const { publicKey } = await res.json();
+  // Strip PEM headers/newlines → DER bytes
+  const pemBody = (publicKey as string)
+    .replace('-----BEGIN PUBLIC KEY-----', '')
+    .replace('-----END PUBLIC KEY-----', '')
+    .replace(/\s/g, '');
+  const der = Uint8Array.from(atob(pemBody), c => c.charCodeAt(0));
+  return window.crypto.subtle.importKey(
+    'spki',
+    der.buffer,
+    { name: 'RSA-OAEP', hash: 'SHA-256' },
+    false,
+    ['encrypt']
+  );
+}
+
+async function hybridEncrypt(publicKey: CryptoKey, plaintext: string): Promise<EncryptedPayload> {
+  // Generate a random AES-256-GCM key
+  const aesKey = await window.crypto.subtle.generateKey(
+    { name: 'AES-GCM', length: 256 },
+    true,
+    ['encrypt']
+  );
+  const rawAes = await window.crypto.subtle.exportKey('raw', aesKey);
+
+  // Wrap the AES key with RSA-OAEP using the server's public key
+  const encryptedKey = await window.crypto.subtle.encrypt(
+    { name: 'RSA-OAEP' },
+    publicKey,
+    rawAes
+  );
+
+  // Encrypt the plaintext with AES-GCM (WebCrypto appends 16-byte auth tag)
+  const iv = window.crypto.getRandomValues(new Uint8Array(12));
+  const encryptedData = await window.crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    aesKey,
+    new TextEncoder().encode(plaintext)
+  );
+
+  return {
+    encryptedKey: toBase64(encryptedKey),
+    iv: toBase64(iv.buffer),
+    data: toBase64(encryptedData),
+  };
+}
+
+async function encryptFormFields(form: {
+  password: string;
+  privateKey: string;
+}): Promise<{ password: EncryptedPayload | undefined; privateKey: EncryptedPayload | undefined }> {
+  const publicKey = await fetchServerPublicKey();
+  return {
+    password: form.password ? await hybridEncrypt(publicKey, form.password) : undefined,
+    privateKey: form.privateKey ? await hybridEncrypt(publicKey, form.privateKey) : undefined,
+  };
+}
+
 const RemoteConnections: React.FC = () => {
   const [connections, setConnections] = useState<RemoteConnection[]>([]);
   const [openDialog, setOpenDialog] = useState(false);
@@ -350,12 +427,18 @@ const RemoteConnections: React.FC = () => {
 
   const addConnection = async () => {
     try {
+      const encrypted = await encryptFormFields(connectionForm);
+      const payload = {
+        ...connectionForm,
+        password: encrypted.password,
+        privateKey: encrypted.privateKey,
+      };
       const response = await fetch('/api/remote/connections', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(connectionForm)
+        body: JSON.stringify(payload)
       });
 
       if (response.ok) {
@@ -398,12 +481,18 @@ const RemoteConnections: React.FC = () => {
     if (!editingConnection) return;
 
     try {
+      const encrypted = await encryptFormFields(connectionForm);
+      const payload = {
+        ...connectionForm,
+        password: encrypted.password,
+        privateKey: encrypted.privateKey,
+      };
       const response = await fetch(`/api/remote/connections/${editingConnection.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(connectionForm)
+        body: JSON.stringify(payload)
       });
 
       if (response.ok) {
