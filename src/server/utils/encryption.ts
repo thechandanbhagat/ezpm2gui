@@ -2,8 +2,6 @@
  * Utility for encrypting and decrypting sensitive data
  */
 import crypto from 'crypto';
-import fs from 'fs';
-import path from 'path';
 
 // Simple encryption implementation with fixed key/iv for development
 // In production, this should be replaced with proper key management
@@ -55,4 +53,78 @@ export function decrypt(encryptedText: string): string {
     console.error('Decryption error:', error);
     return '';
   }
+}
+
+// ---------------------------------------------------------------------------
+// RSA-OAEP key pair for in-transit encryption
+// A fresh key pair is generated once per server process and kept in memory.
+// The public key is shared with clients so they can encrypt sensitive fields
+// before sending them over the network. The private key never leaves the server.
+// ---------------------------------------------------------------------------
+
+let _rsaPrivateKey: crypto.KeyObject | null = null;
+let _rsaPublicKeyPem: string | null = null;
+
+function getOrCreateRSAKeyPair(): { publicKeyPem: string; privateKey: crypto.KeyObject } {
+  if (!_rsaPrivateKey || !_rsaPublicKeyPem) {
+    const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', {
+      modulusLength: 2048,
+    });
+    _rsaPrivateKey = privateKey;
+    _rsaPublicKeyPem = publicKey.export({ type: 'spki', format: 'pem' }) as string;
+  }
+  return { publicKeyPem: _rsaPublicKeyPem, privateKey: _rsaPrivateKey };
+}
+
+/**
+ * Returns the server's RSA public key in PEM (SPKI) format.
+ * Expose this via a GET endpoint so clients can encrypt before sending.
+ */
+export function getRSAPublicKey(): string {
+  return getOrCreateRSAKeyPair().publicKeyPem;
+}
+
+/**
+ * Hybrid-encrypted payload sent by the client.
+ * - encryptedKey : RSA-OAEP encrypted 256-bit AES key (base64)
+ * - iv           : 12-byte AES-GCM IV (base64)
+ * - data         : AES-256-GCM ciphertext + 16-byte auth-tag (base64)
+ */
+export interface EncryptedPayload {
+  encryptedKey: string;
+  iv: string;
+  data: string;
+}
+
+/**
+ * Decrypts a hybrid-encrypted payload produced by the client.
+ * 1. Unwraps the AES key with RSA-OAEP (SHA-256)
+ * 2. Decrypts the data with AES-256-GCM
+ */
+export function decryptTransitPayload(payload: EncryptedPayload): string {
+  const { privateKey } = getOrCreateRSAKeyPair();
+
+  // Step 1 — decrypt the AES-256 key with RSA-OAEP / SHA-256
+  const encryptedAesKey = Buffer.from(payload.encryptedKey, 'base64');
+  const aesKey = crypto.privateDecrypt(
+    {
+      key: privateKey,
+      padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+      oaepHash: 'sha256',
+    },
+    encryptedAesKey
+  );
+
+  // Step 2 — decrypt data with AES-256-GCM
+  // WebCrypto appends the 16-byte auth tag at the end of the ciphertext buffer
+  const iv = Buffer.from(payload.iv, 'base64');
+  const encryptedBuf = Buffer.from(payload.data, 'base64');
+  const authTag = encryptedBuf.slice(encryptedBuf.length - 16);
+  const ciphertext = encryptedBuf.slice(0, encryptedBuf.length - 16);
+
+  const decipher = crypto.createDecipheriv('aes-256-gcm', aesKey, iv);
+  decipher.setAuthTag(authTag);
+  let decrypted = decipher.update(ciphertext, undefined, 'utf8');
+  decrypted += decipher.final('utf8');
+  return decrypted;
 }
