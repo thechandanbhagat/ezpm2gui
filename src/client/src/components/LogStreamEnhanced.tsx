@@ -94,8 +94,8 @@ const LogStreamEnhanced: React.FC<LogStreamEnhancedProps> = ({
           const res = await axios.get(`/api/logs/${initPid}/${selectedLogType}`);
           logsData = res.data.logs || [];
         } else {
-          const res = await axios.get(`/api/remote/${serverId}/logs/${initPid}`);
-          logsData = selectedLogType === 'out' ? (res.data.stdout || []) : (res.data.stderr || []);
+          const res = await axios.get(`/api/remote/${serverId}/logs/${initPid}/${selectedLogType}`);
+          logsData = res.data.logs || [];
         }
 
         setLogs(logsData);
@@ -107,7 +107,7 @@ const LogStreamEnhanced: React.FC<LogStreamEnhancedProps> = ({
     };
     fetchLogs();
 
-    // Live streaming only for local processes
+    // Live streaming for local; polling for remote
     if (serverId === 'local') {
       const socket = io(API_URL, { transports: ['websocket', 'polling'], reconnection: true });
       socketRef.current = socket;
@@ -126,6 +126,26 @@ const LogStreamEnhanced: React.FC<LogStreamEnhancedProps> = ({
       return () => {
         socket.emit('unsubscribe-logs', { processId: initPid, logType: selectedLogType });
         socket.disconnect();
+      };
+    } else {
+      // Poll remote logs every 5 s so restarts/new log lines are picked up automatically
+      setIsStreaming(true);
+      const intervalId = setInterval(async () => {
+        try {
+          const res = await axios.get(`/api/remote/${serverId}/logs/${initPid}/${selectedLogType}`);
+          const fresh: string[] = res.data.logs || [];
+          setLogs(prev => {
+            // Only update if there are actually new lines to avoid needless re-renders
+            if (fresh.length !== prev.length || (fresh.length > 0 && fresh[fresh.length - 1] !== prev[prev.length - 1])) {
+              return fresh;
+            }
+            return prev;
+          });
+        } catch { /* ignore poll errors — user can hit refresh manually */ }
+      }, 5000);
+      return () => {
+        clearInterval(intervalId);
+        setIsStreaming(false);
       };
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -155,8 +175,8 @@ const LogStreamEnhanced: React.FC<LogStreamEnhancedProps> = ({
         const res = await axios.get(`/api/logs/${initPid}/${selectedLogType}`);
         logsData = res.data.logs || [];
       } else {
-        const res = await axios.get(`/api/remote/${serverId}/logs/${initPid}`);
-        logsData = selectedLogType === 'out' ? (res.data.stdout || []) : (res.data.stderr || []);
+        const res = await axios.get(`/api/remote/${serverId}/logs/${initPid}/${selectedLogType}`);
+        logsData = res.data.logs || [];
       }
       setLogs(logsData);
       setLoading(false);
@@ -180,6 +200,22 @@ const LogStreamEnhanced: React.FC<LogStreamEnhancedProps> = ({
     ? logs.filter(l => l.toLowerCase().includes(filter.toLowerCase()))
     : logs;
 
+  // Highlight matched search term within a line
+  const highlightLine = (line: string): React.ReactNode => {
+    if (!filter) return line;
+    const escaped = filter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const parts = line.split(new RegExp(`(${escaped})`, 'gi'));
+    return (
+      <>
+        {parts.map((part, idx) =>
+          part.toLowerCase() === filter.toLowerCase()
+            ? <mark key={idx} style={{ backgroundColor: '#fef08a', color: '#1a1a1a', borderRadius: 2, padding: '0 1px' }}>{part}</mark>
+            : part
+        )}
+      </>
+    );
+  };
+
   // @group Render
   return (
     <div>
@@ -195,7 +231,7 @@ const LogStreamEnhanced: React.FC<LogStreamEnhancedProps> = ({
             <select
               value={selectedLogType}
               onChange={e => setSelectedLogType(e.target.value as 'out' | 'err')}
-              className="h-7 px-2 pr-7 text-xs rounded border
+              className="h-8 px-2 pr-7 text-xs rounded border
                          bg-white dark:bg-neutral-800
                          border-neutral-200 dark:border-neutral-700
                          text-neutral-900 dark:text-neutral-100
@@ -310,11 +346,19 @@ const LogStreamEnhanced: React.FC<LogStreamEnhancedProps> = ({
             {filteredLogs.length === 0 ? (
               <span className="text-neutral-600 italic">No logs available</span>
             ) : (
-              filteredLogs.map((line, i) => (
-                <div key={i} className={`whitespace-pre-wrap break-all ${lineColor(selectedLogType, line)}`}>
-                  {line}
-                </div>
-              ))
+              logs.map((line, i) => {
+                const matches = !filter || line.toLowerCase().includes(filter.toLowerCase());
+                return (
+                  <div
+                    key={i}
+                    className={`whitespace-pre-wrap break-all ${lineColor(selectedLogType, line)} ${
+                      filter && !matches ? 'opacity-20' : ''
+                    }`}
+                  >
+                    {highlightLine(line)}
+                  </div>
+                );
+              })
             )}
           </div>
         )}

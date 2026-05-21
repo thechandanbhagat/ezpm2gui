@@ -1,14 +1,14 @@
 @echo off
 echo Installing client dependencies...
 cd src\client
-call npm install
+call npm install --legacy-peer-deps
 
 echo Building client...
 call npm run build
 
 echo Installing server dependencies...
 cd ..\..
-call npm install
+call npm install --legacy-peer-deps
 
 echo Building server...
 call npm run build
