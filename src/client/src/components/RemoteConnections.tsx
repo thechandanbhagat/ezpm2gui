@@ -644,12 +644,29 @@ const RemoteConnections: React.FC = () => {
                               <TableCell><Typography variant="body2">{process.memory}</Typography></TableCell>
                               <TableCell><Typography variant="body2">{process.uptime}</Typography></TableCell>
                               <TableCell>
-                                <IconButton size="small" onClick={() => handleProcessAction(connection.id, process.name, 'start')} disabled={process.status === 'online'}>
-                                  <PlayIcon fontSize="small" />
-                                </IconButton>
-                                <IconButton size="small" onClick={() => handleProcessAction(connection.id, process.name, 'stop')} disabled={process.status === 'stopped'}>
-                                  <StopIcon fontSize="small" />
-                                </IconButton>
+                                {process.status === 'online' ? (
+                                  <Button
+                                    size="small"
+                                    variant="outlined"
+                                    color="error"
+                                    startIcon={<StopIcon fontSize="small" />}
+                                    onClick={() => handleProcessAction(connection.id, process.name, 'stop')}
+                                    sx={{ mr: 0.5 }}
+                                  >
+                                    Stop
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    size="small"
+                                    variant="outlined"
+                                    color="success"
+                                    startIcon={<PlayIcon fontSize="small" />}
+                                    onClick={() => handleProcessAction(connection.id, process.name, 'start')}
+                                    sx={{ mr: 0.5 }}
+                                  >
+                                    Start
+                                  </Button>
+                                )}
                                 <IconButton size="small" onClick={() => handleProcessAction(connection.id, process.name, 'restart')}>
                                   <RefreshIcon fontSize="small" />
                                 </IconButton>

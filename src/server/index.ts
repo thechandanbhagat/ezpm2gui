@@ -462,7 +462,7 @@ export function createServer() {
 // Only start the server if this file is run directly
 if (require.main === module) {
   const PORT = parseInt(process.env.PORT || '3101', 10);
-  const HOST = process.env.HOST || '::';
+  const HOST = process.env.HOST || 'localhost';
 
   const server = createServer();
   server.listen(PORT, HOST as string, () => {
