@@ -99,6 +99,7 @@ const LogStreamEnhanced: React.FC<LogStreamEnhancedProps> = ({
 
   // @group Utilities : Strip ANSI escape codes so the regex reliably matches timestamps
   // even when log lines are prefixed with terminal colour codes.
+  // eslint-disable-next-line no-control-regex
   const stripAnsi = (str: string) => str.replace(/\x1B\[[0-9;]*[mGKHFABCDsuJK]/g, '');
 
   // @group Utilities : Try to extract a Date from the start of a log line
