@@ -46,7 +46,9 @@ jobs:
 
       # @group Publish : Push package to npm registry
       - name: Publish to npm
-        run: npm publish --access public
+        run: |
+          npm config set //registry.npmjs.org/:_authToken "${NODE_AUTH_TOKEN}"
+          npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
