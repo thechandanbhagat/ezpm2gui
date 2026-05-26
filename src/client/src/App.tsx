@@ -629,11 +629,21 @@ const App: React.FC = () => {
           }),
         },
       },
-      // Fix: Tailwind base layer applies a blue outline on focus to all elements,
-      // which shows as a double-border on MUI inputs. Remove it from the input root div.
+      // Fix: Tailwind base layer and browsers apply outline/box-shadow on
+      // :focus / :focus-visible / :focus-within to every element.
+      // For MUI OutlinedInput the visual border is drawn by a child <fieldset>,
+      // so any outline on the wrapper div or <input> shows as an extra blue ring.
       MuiOutlinedInput: {
         styleOverrides: {
-          root: { '&:focus': { outline: 'none' } },
+          root: {
+            '&:focus':         { outline: 'none', boxShadow: 'none' },
+            '&:focus-visible': { outline: 'none', boxShadow: 'none' },
+            '&:focus-within':  { outline: 'none', boxShadow: 'none' },
+            '& input:focus':          { outline: 'none', boxShadow: 'none' },
+            '& input:focus-visible':  { outline: 'none', boxShadow: 'none' },
+            '& textarea:focus':       { outline: 'none', boxShadow: 'none' },
+            '& textarea:focus-visible': { outline: 'none', boxShadow: 'none' },
+          },
         },
       },
       // Chips — small by default
