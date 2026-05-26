@@ -40,19 +40,24 @@ A modern web-based graphical user interface for the PM2 process manager, built w
 
 - **Real-time process monitoring** - Keep track of all your PM2 processes in real-time
 - **Process management** - Start, stop, restart, and delete processes with one click
+- **Sidebar quick-actions** *(v1.9.0)* - Per-process restart, start/stop, and logs buttons revealed on hover in the sidebar
 - **System metrics dashboard** - Monitor CPU, memory usage, and uptime
 - **Metrics page with live sparklines** - Per-process rolling 1-hour CPU and memory micro-graphs updated every 3s; switch to History tab for SQLite-backed long-term charts
 - **Enhanced log streaming** - View and filter logs from multiple processes simultaneously
+- **Log search highlighting** *(v1.9.0)* - Search terms are visually highlighted in the log viewer
+- **Log timestamp range filter** *(v1.9.0)* - Filter log output by start/end timestamp with snapshot mode
+- **Remote log polling** *(v1.9.0)* - Logs from remote servers fetched and displayed in real-time
 - **WebSocket for live updates** - Get instant updates without refreshing
 - **Process CPU and memory charts** - Visualize performance metrics over time
 - **Filter processes by status or name** - Quickly find the processes you need
-- **Dark/light mode** - Fully supported across all pages with Tailwind CSS
+- **Dark/light mode** - Fully supported across all pages with Tailwind CSS; preference persisted across sessions
 - **Cluster management** - Easily scale your Node.js applications
 - **Application deployment** - Deploy new applications directly from the UI
 - **Ecosystem configuration** - Create and manage your PM2 ecosystem files
 - **PM2 modules support** - Manage and configure PM2 modules
 - **Cron Jobs** - Schedule and manage automated tasks with visual cron expression builder
 - **Remote Server Management** - Connect and manage PM2 on remote servers via SSH
+- **End-to-end encrypted credentials** *(v1.9.0)* - Remote server passwords encrypted in-browser with RSA-OAEP + AES-256-GCM before transmission
 - **Advanced Monitoring Dashboard** - Real-time performance charts with health scoring
 - **Tailwind CSS UI** - Sleek, compact, and responsive design with consistent dark/light theming
 - **Fully typed with TypeScript** - Robust and maintainable codebase
@@ -66,9 +71,9 @@ Monitor all your PM2 processes in real-time with detailed information on CPU usa
 Connect to and manage PM2 processes on remote servers via secure SSH connections:
 - Add multiple remote server connections with SSH credentials
 - View and manage processes on remote servers
-- Stream logs from remote processes in real-time
+- Stream logs from remote processes in real-time with polling
 - Execute PM2 commands on remote machines
-- Encrypted credential storage for security
+- **End-to-end credential encryption** — passwords are encrypted client-side (RSA-OAEP + AES-256-GCM hybrid scheme) before transmission; the server never sees plaintext passwords in transit
 
 ### Cron Jobs
 Schedule and automate tasks using PM2's cron restart feature:
@@ -102,10 +107,13 @@ Easily scale your Node.js applications with the cluster management interface. Ad
 ### Log Streaming
 View and filter logs from multiple processes simultaneously with the enhanced log streaming interface. Features include:
 - Real-time log updates via WebSocket
+- **Search with visual highlighting** — matched terms are highlighted inline
+- **Timestamp range filter** — narrow logs to a start/end time window with snapshot mode (polling pauses while filter is active)
 - Filtering by process, log level, or content
 - Pausing and resuming log streams
 - Download logs for offline analysis
 - Floating log panel for remote process logs
+- Remote server log polling
 
 ### Ecosystem Configuration
 Generate and manage PM2 ecosystem configuration files directly from the UI. This makes it easy to set up complex application deployments and share configurations across your team.
