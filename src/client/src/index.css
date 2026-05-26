@@ -22,6 +22,27 @@
   .dark body {
     @apply bg-neutral-950 text-neutral-100;
   }
+
+  /* ── Remove browser/Tailwind focus rings from MUI Outlined inputs ──
+     Tailwind Preflight and some browsers apply an outline or box-shadow
+     on :focus / :focus-visible to every element. For MUI OutlinedInput the
+     border is drawn by a child <fieldset>, so an outline on the wrapper div
+     or on the <input> appears as a second unwanted blue ring.
+     We suppress all three sources here so MUI's own border is the only border. */
+  .MuiOutlinedInput-root:focus,
+  .MuiOutlinedInput-root:focus-visible,
+  .MuiOutlinedInput-root:focus-within {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  .MuiOutlinedInput-root input:focus,
+  .MuiOutlinedInput-root input:focus-visible,
+  .MuiOutlinedInput-root textarea:focus,
+  .MuiOutlinedInput-root textarea:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+  }
 }
 
 /* ─── Components ─────────────────────────────────────────── */
