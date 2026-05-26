@@ -1,5 +1,6 @@
 import express, { Router } from 'express';
 import { remoteConnectionManager, RemoteConnectionConfig } from '../utils/remote-connection';
+import { getRSAPublicKey, decryptTransitPayload, EncryptedPayload } from '../utils/encryption';
 
 const router: Router = express.Router();
 
@@ -20,6 +21,28 @@ const safeLogLines = (raw: string | undefined): number => {
   if (!Number.isFinite(n) || n < 0) return 200;
   return Math.min(n, MAX_LOG_LINES);
 };
+
+/**
+ * Decrypts a field that may be either a plain string (legacy/internal)
+ * or an EncryptedPayload object produced by the client-side hybrid encryptor.
+ */
+function decryptField(value: string | EncryptedPayload | undefined): string | undefined {
+  if (!value) return undefined;
+  if (typeof value === 'string') return value;
+  try {
+    return decryptTransitPayload(value);
+  } catch {
+    throw new Error('Failed to decrypt field — possible tampering or key mismatch');
+  }
+}
+
+/**
+ * Expose RSA public key so the client can encrypt sensitive fields before sending.
+ * GET /api/remote/public-key
+ */
+router.get('/public-key', (_req, res) => {
+  res.json({ publicKey: getRSAPublicKey() });
+});
 
 /**
  * Connect to an existing remote server
@@ -893,23 +916,27 @@ router.get('/connections', async (req, res) => {  try {
  */
 router.post('/connections', (req, res) => {
   try {
-    const connectionConfig: RemoteConnectionConfig = req.body;
-    
-    if (!connectionConfig.name || !connectionConfig.host || !connectionConfig.username) {
+    const body = req.body;
+
+    if (!body.name || !body.host || !body.username) {
       return res.status(400).json({
         success: false,
         error: 'Missing required connection parameters: name, host, or username'
       });
     }
-    
-    // Ensure port is set
-    if (!connectionConfig.port) {
-      connectionConfig.port = 22;
-    }
-    
+
+    // Decrypt sensitive fields that may have been encrypted by the client
+    const connectionConfig: RemoteConnectionConfig = {
+      ...body,
+      port: body.port || 22,
+      password: decryptField(body.password),
+      privateKey: decryptField(body.privateKey),
+      passphrase: decryptField(body.passphrase),
+    };
+
     // Create the connection
     const connectionId = remoteConnectionManager.createConnection(connectionConfig);
-    
+
     res.status(201).json({
       success: true,
       connectionId,
@@ -930,20 +957,24 @@ router.post('/connections', (req, res) => {
 router.put('/connections/:connectionId', async (req, res) => {
   try {
     const { connectionId } = req.params;
-    const connectionConfig: RemoteConnectionConfig = req.body;
-    
-    if (!connectionConfig.name || !connectionConfig.host || !connectionConfig.username) {
+    const body = req.body;
+
+    if (!body.name || !body.host || !body.username) {
       return res.status(400).json({
         success: false,
         error: 'Missing required connection parameters: name, host, or username'
       });
     }
-    
-    // Ensure port is set
-    if (!connectionConfig.port) {
-      connectionConfig.port = 22;
-    }
-    
+
+    // Decrypt sensitive fields that may have been encrypted by the client
+    const connectionConfig: RemoteConnectionConfig = {
+      ...body,
+      port: body.port || 22,
+      password: decryptField(body.password),
+      privateKey: decryptField(body.privateKey),
+      passphrase: decryptField(body.passphrase),
+    };
+
     // Update the connection
     const success = await remoteConnectionManager.updateConnection(connectionId, connectionConfig);
     
