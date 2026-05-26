@@ -145,7 +145,7 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
   // @group LiveState
   const [selectedLiveProc, setSelectedLiveProc] = useState<string>('');
   const liveBufferRef = useRef<Map<string, LivePoint[]>>(new Map());
-  const [liveRender, setLiveRender] = useState(0); // bump to force re-render on buffer update
+  const [, setLiveRender] = useState(0); // bump to force re-render on buffer update
 
   // @group HistoryState
   const [connections,       setConnections]       = useState<ConnectionInfo[]>([]);
