@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { PM2Process, SystemMetricsData } from '../types/pm2';
 import SystemMetrics from './SystemMetrics';
 import ProcessList from './ProcessList';
@@ -64,6 +65,7 @@ const MainDashboard: React.FC<MainDashboardProps> = ({
   onNamespaceFilterChange,
   onProcessAction,
 }) => {
+  const { t } = useTranslation();
 
   // @group Derived : Process counts per status
   const online  = processes.filter(p => p.pm2_env?.status === 'online').length;
@@ -81,9 +83,9 @@ const MainDashboard: React.FC<MainDashboardProps> = ({
       {/* ── Page header ── */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-base font-semibold text-neutral-900 dark:text-neutral-100">Process Dashboard</h1>
+          <h1 className="text-base font-semibold text-neutral-900 dark:text-neutral-100">{t('mainDashboard.title')}</h1>
           <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">
-            Monitor and manage your PM2 processes in real-time
+            {t('mainDashboard.subtitle')}
           </p>
         </div>
       </div>
@@ -96,7 +98,7 @@ const MainDashboard: React.FC<MainDashboardProps> = ({
           icon={CheckCircleIcon}
           iconColor="text-green-500"
           iconBg="bg-green-500/10"
-          label="Online"
+          label={t('common.online')}
           value={online}
           total={processes.length}
         />
@@ -104,21 +106,21 @@ const MainDashboard: React.FC<MainDashboardProps> = ({
           icon={XCircleIcon}
           iconColor="text-red-500"
           iconBg="bg-red-500/10"
-          label="Stopped"
+          label={t('common.stopped')}
           value={stopped}
         />
         <ProcessStatCard
           icon={ExclamationCircleIcon}
           iconColor="text-yellow-500"
           iconBg="bg-yellow-500/10"
-          label="Errored"
+          label={t('common.errored')}
           value={errored}
         />
         <ProcessStatCard
           icon={Squares2X2Icon}
           iconColor="text-primary-500"
           iconBg="bg-primary-500/10"
-          label="Total"
+          label={t('common.total')}
           value={processes.length}
         />
 
@@ -135,7 +137,7 @@ const MainDashboard: React.FC<MainDashboardProps> = ({
             <MagnifyingGlassIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400 dark:text-neutral-500 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search processes by name or ID..."
+              placeholder={t('mainDashboard.searchPlaceholder')}
               value={searchTerm}
               onChange={onSearchChange}
               className="w-full pl-8 pr-3 py-1.5 border border-neutral-300 dark:border-neutral-700 rounded-md text-xs
@@ -158,7 +160,7 @@ const MainDashboard: React.FC<MainDashboardProps> = ({
                            focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500
                            cursor-pointer transition-colors"
               >
-                <option value="all">All Namespaces</option>
+                <option value="all">{t('mainDashboard.allNamespaces')}</option>
                 {namespaces.map(ns => (
                   <option key={ns} value={ns}>{ns}</option>
                 ))}
@@ -177,10 +179,10 @@ const MainDashboard: React.FC<MainDashboardProps> = ({
                          focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500
                          cursor-pointer transition-colors"
             >
-              <option value="all">All Processes</option>
-              <option value="online">Online Only</option>
-              <option value="stopped">Stopped Only</option>
-              <option value="errored">Errored Only</option>
+              <option value="all">{t('mainDashboard.allProcesses')}</option>
+              <option value="online">{t('mainDashboard.onlineOnly')}</option>
+              <option value="stopped">{t('mainDashboard.stoppedOnly')}</option>
+              <option value="errored">{t('mainDashboard.erroredOnly')}</option>
             </select>
           </div>
         </div>

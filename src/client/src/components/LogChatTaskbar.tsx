@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Box, Typography, IconButton, Tooltip } from '@mui/material';
 import {
   Close as CloseIcon,
@@ -39,6 +40,7 @@ const LogChatTaskbar: React.FC<LogChatTaskbarProps> = ({
   rightOffset = 20,
   zIndex = 1000
 }) => {
+  const { t } = useTranslation();
   const [isMinimized, setIsMinimized] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [displayLogs, setDisplayLogs] = useState<LogEntry[]>([]);
@@ -152,22 +154,22 @@ const LogChatTaskbar: React.FC<LogChatTaskbarProps> = ({
 
         {/* Right: action buttons */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, flexShrink: 0 }} onClick={e => e.stopPropagation()}>
-          <Tooltip title={isPaused ? 'Resume' : 'Pause'}>
+          <Tooltip title={isPaused ? t('logPanel.resume') : t('logPanel.pause')}>
             <IconButton size="small" onClick={() => setIsPaused(p => !p)} sx={{ color: '#999', '&:hover': { color: '#e5e5e5' } }}>
               {isPaused ? <PlayIcon sx={{ fontSize: 14 }} /> : <PauseIcon sx={{ fontSize: 14 }} />}
             </IconButton>
           </Tooltip>
-          <Tooltip title="Clear">
+          <Tooltip title={t('logPanel.clear')}>
             <IconButton size="small" onClick={() => { onClear(); setDisplayLogs([]); }} sx={{ color: '#999', '&:hover': { color: '#e5e5e5' } }}>
               <ClearIcon sx={{ fontSize: 14 }} />
             </IconButton>
           </Tooltip>
-          <Tooltip title={isMinimized ? 'Expand' : 'Collapse'}>
+          <Tooltip title={isMinimized ? t('logPanel.expand') : t('logPanel.collapse')}>
             <IconButton size="small" onClick={() => setIsMinimized(m => !m)} sx={{ color: '#999', '&:hover': { color: '#e5e5e5' } }}>
               {isMinimized ? <MaximizeIcon sx={{ fontSize: 13 }} /> : <MinimizeIcon sx={{ fontSize: 14 }} />}
             </IconButton>
           </Tooltip>
-          <Tooltip title="Close">
+          <Tooltip title={t('logPanel.close')}>
             <IconButton size="small" onClick={onClose} sx={{ color: '#999', '&:hover': { color: '#ef4444' } }}>
               <CloseIcon sx={{ fontSize: 14 }} />
             </IconButton>
@@ -193,7 +195,7 @@ const LogChatTaskbar: React.FC<LogChatTaskbarProps> = ({
           {displayLogs.length === 0 ? (
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
               <Typography sx={{ color: '#444', fontSize: '0.75rem', fontFamily: 'monospace' }}>
-                {isPaused ? '⏸ paused' : '● waiting for logs…'}
+                {isPaused ? t('logPanel.paused') : t('logPanel.waiting')}
               </Typography>
             </Box>
           ) : (

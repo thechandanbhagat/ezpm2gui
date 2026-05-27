@@ -21,6 +21,7 @@ import {
 } from '@mui/material';
 import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
+import { useTranslation } from 'react-i18next';
 import CronExpressionBuilder from './CronExpressionBuilder';
 import ScriptEditor from './ScriptEditor';
 import { CronJobConfig, CronValidationResult } from '../types/cron';
@@ -39,6 +40,7 @@ const CronJobDialog: React.FC<CronJobDialogProps> = ({
   editJob,
 }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
   const [saving, setSaving] = useState(false);
   const [validation, setValidation] = useState<CronValidationResult>({ valid: true });
 
@@ -181,21 +183,21 @@ const CronJobDialog: React.FC<CronJobDialogProps> = ({
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
-        {editJob ? 'Edit Cron Job' : 'Create New Cron Job'}
+        {editJob ? t('cronJobs.editJob') : t('cronJobs.createJob')}
       </DialogTitle>
       <DialogContent dividers sx={{ minHeight: '500px' }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           {/* Basic Info */}
           <Box>
             <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
-              Basic Information
+              {t('cronJobs.basicInfo')}
             </Typography>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={8}>
                 <TextField
                   fullWidth
                   required
-                  label="Job Name"
+                  label={t('cronJobs.jobName')}
                   value={formData.name}
                   onChange={handleChange('name')}
                   placeholder="My Scheduled Task"
@@ -230,16 +232,16 @@ const CronJobDialog: React.FC<CronJobDialogProps> = ({
           {/* Script Configuration */}
           <Box>
             <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
-              Script Configuration
+              {t('cronJobs.scriptConfig')}
             </Typography>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={4}>
                 <FormControl fullWidth required>
-                  <InputLabel>Script Type</InputLabel>
+                  <InputLabel>{t('cronJobs.scriptType')}</InputLabel>
                   <Select
                     value={formData.scriptType}
                     onChange={handleChange('scriptType')}
-                    label="Script Type"
+                    label={t('cronJobs.scriptType')}
                   >
                     <MenuItem value="node">Node.js</MenuItem>
                     <MenuItem value="python">Python</MenuItem>
@@ -250,14 +252,14 @@ const CronJobDialog: React.FC<CronJobDialogProps> = ({
               </Grid>
               <Grid item xs={12} sm={8}>
                 <FormControl fullWidth required>
-                  <InputLabel>Script Mode</InputLabel>
+                  <InputLabel>{t('cronJobs.scriptMode')}</InputLabel>
                   <Select
                     value={formData.scriptMode}
                     onChange={handleChange('scriptMode')}
-                    label="Script Mode"
+                    label={t('cronJobs.scriptMode')}
                   >
-                    <MenuItem value="inline">Write Script Inline</MenuItem>
-                    <MenuItem value="file">Use Script File</MenuItem>
+                    <MenuItem value="inline">{t('cronJobs.writeInline')}</MenuItem>
+                    <MenuItem value="file">{t('cronJobs.useFile')}</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -268,7 +270,7 @@ const CronJobDialog: React.FC<CronJobDialogProps> = ({
                     <TextField
                       fullWidth
                       required
-                      label="Script Path"
+                      label={t('cronJobs.scriptPath')}
                       value={formData.scriptPath}
                       onChange={handleChange('scriptPath')}
                       placeholder="/path/to/script.js"
@@ -278,7 +280,7 @@ const CronJobDialog: React.FC<CronJobDialogProps> = ({
                   <Grid item xs={12}>
                     <TextField
                       fullWidth
-                      label="Working Directory"
+                      label={t('cronJobs.workingDir')}
                       value={formData.cwd}
                       onChange={handleChange('cwd')}
                       placeholder="/path/to/working/directory"
@@ -310,13 +312,13 @@ const CronJobDialog: React.FC<CronJobDialogProps> = ({
           {/* Arguments */}
           <Box>
             <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
-              Script Arguments (Optional)
+              {t('cronJobs.scriptArgs')}
             </Typography>
             <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
               <TextField
                 size="small"
                 fullWidth
-                placeholder="Add argument"
+                placeholder={t('cronJobs.addArgument')}
                 value={newArg}
                 onChange={(e) => setNewArg(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && addArg()}
@@ -340,19 +342,19 @@ const CronJobDialog: React.FC<CronJobDialogProps> = ({
           {/* Environment Variables */}
           <Box>
             <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
-              Environment Variables (Optional)
+              {t('cronJobs.envVars')}
             </Typography>
             <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
               <TextField
                 size="small"
-                placeholder="Key"
+                placeholder={t('common.key')}
                 value={newEnvKey}
                 onChange={(e) => setNewEnvKey(e.target.value)}
                 sx={{ flex: 1 }}
               />
               <TextField
                 size="small"
-                placeholder="Value"
+                placeholder={t('common.value')}
                 value={newEnvValue}
                 onChange={(e) => setNewEnvValue(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && addEnv()}
@@ -392,14 +394,14 @@ const CronJobDialog: React.FC<CronJobDialogProps> = ({
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={saving}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button
           onClick={handleSubmit}
           variant="contained"
           disabled={saving || !validation.valid}
         >
-          {saving ? 'Saving...' : editJob ? 'Update' : 'Create'}
+          {saving ? t('cronJobs.saving') : editJob ? t('cronJobs.update') : t('cronJobs.create')}
         </Button>
       </DialogActions>
     </Dialog>

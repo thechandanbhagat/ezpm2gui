@@ -16,9 +16,11 @@ import CronJobDialog from './CronJobDialog';
 import ConfirmationDialog from './ConfirmationDialog';
 import PageHeader from './PageHeader';
 import { CronJobConfig, CronJobStatus } from '../types/cron';
+import { useTranslation } from 'react-i18next';
 
 // @group CronJobsPage : Cron job management page
 const CronJobsPage: React.FC = () => {
+  const { t } = useTranslation();
   const [jobs, setJobs] = useState<CronJobStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -102,8 +104,8 @@ const CronJobsPage: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title="Cron Jobs"
-        subtitle="Schedule and manage automated tasks using PM2's cron feature"
+        title={t('cronJobs.title')}
+        subtitle={t('cronJobs.subtitle')}
         actions={
           <>
             <button
@@ -116,7 +118,7 @@ const CronJobsPage: React.FC = () => {
                          disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <ArrowPathIcon className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
+              {t('common.refresh')}
             </button>
             <button
               onClick={handleCreate}
@@ -124,7 +126,7 @@ const CronJobsPage: React.FC = () => {
                          bg-primary-600 hover:bg-primary-700 text-white transition-colors"
             >
               <PlusIcon className="h-3.5 w-3.5" />
-              Create Job
+              {t('cronJobs.createJob')}
             </button>
           </>
         }
@@ -133,12 +135,12 @@ const CronJobsPage: React.FC = () => {
       {/* Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
         {[
-          { label: 'Total',     value: jobs.length,                                               color: 'text-primary-600 dark:text-primary-400' },
-          { label: 'Enabled',   value: jobs.filter(j => j.config.enabled).length,                color: 'text-emerald-600 dark:text-emerald-400' },
-          { label: 'Running',   value: jobs.filter(j => j.isRunning).length,                     color: 'text-sky-600 dark:text-sky-400' },
-          { label: 'Scheduled', value: jobs.filter(j => j.config.enabled && !j.isRunning).length, color: 'text-amber-600 dark:text-amber-400' },
-        ].map(({ label, value, color }) => (
-          <div key={label} className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-4 py-3">
+          { id: 'total',     label: t('cronJobs.total'),     value: jobs.length,                                               color: 'text-primary-600 dark:text-primary-400' },
+          { id: 'enabled',   label: t('cronJobs.enabled'),   value: jobs.filter(j => j.config.enabled).length,                color: 'text-emerald-600 dark:text-emerald-400' },
+          { id: 'running',   label: t('cronJobs.running'),   value: jobs.filter(j => j.isRunning).length,                     color: 'text-sky-600 dark:text-sky-400' },
+          { id: 'scheduled', label: t('cronJobs.scheduled'), value: jobs.filter(j => j.config.enabled && !j.isRunning).length, color: 'text-amber-600 dark:text-amber-400' },
+        ].map(({ id, label, value, color }) => (
+          <div key={id} className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-4 py-3">
             <p className={`text-xl font-bold leading-none ${color}`}>{value}</p>
             <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">{label}</p>
           </div>
@@ -149,7 +151,7 @@ const CronJobsPage: React.FC = () => {
       {jobs.length === 0 ? (
         <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-10 text-center">
           <ClockIcon className="mx-auto h-8 w-8 text-neutral-300 dark:text-neutral-600 mb-3" />
-          <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">No cron jobs yet</p>
+          <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">{t('cronJobs.noJobs')}</p>
           <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1 mb-4">
             Create your first scheduled task to automate your workflows
           </p>
@@ -167,9 +169,17 @@ const CronJobsPage: React.FC = () => {
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/60">
-                {['Name', 'Type', 'Schedule', 'Next Run', 'Status', 'Enabled', ''].map(h => (
-                  <th key={h} className="px-3 py-2.5 text-left text-[11px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider whitespace-nowrap">
-                    {h}
+                {[
+                  { id: 'name',    label: t('common.name') },
+                  { id: 'type',    label: t('cronJobs.type') },
+                  { id: 'sched',   label: t('cronJobs.cronSchedule') },
+                  { id: 'next',    label: t('cronJobs.nextRun') },
+                  { id: 'status',  label: t('common.status') },
+                  { id: 'enabled', label: t('cronJobs.enabled') },
+                  { id: 'actions', label: '' },
+                ].map(({ id, label }) => (
+                  <th key={id} className="px-3 py-2.5 text-left text-[11px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider whitespace-nowrap">
+                    {label}
                   </th>
                 ))}
               </tr>
@@ -207,15 +217,15 @@ const CronJobsPage: React.FC = () => {
                   <td className="px-3 py-2.5">
                     {job.isRunning ? (
                       <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[11px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-400/30">
-                        <CheckCircleIcon className="h-3 w-3" /> Running
+                        <CheckCircleIcon className="h-3 w-3" /> {t('common.running')}
                       </span>
                     ) : job.config.enabled ? (
                       <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[11px] font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 border-neutral-300 dark:border-neutral-700">
-                        Scheduled
+                        {t('common.scheduled')}
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[11px] font-medium bg-red-500/10 text-red-600 dark:text-red-400 border-red-400/30">
-                        <XCircleIcon className="h-3 w-3" /> Disabled
+                        <XCircleIcon className="h-3 w-3" /> {t('cronJobs.disabled')}
                       </span>
                     )}
                   </td>
@@ -256,14 +266,14 @@ const CronJobsPage: React.FC = () => {
                       )}
                       <button
                         onClick={() => handleEdit(job.config)}
-                        title="Edit"
+                        title={t('common.edit')}
                         className="p-1 rounded text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-primary-600 transition-colors"
                       >
                         <PencilIcon className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => { setJobToDelete(job.config.id); setDeleteConfirmOpen(true); }}
-                        title="Delete"
+                        title={t('common.delete')}
                         className="p-1 rounded text-neutral-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 transition-colors"
                       >
                         <TrashIcon className="h-4 w-4" />
@@ -286,8 +296,8 @@ const CronJobsPage: React.FC = () => {
       />
       <ConfirmationDialog
         isOpen={deleteConfirmOpen}
-        title="Delete Cron Job"
-        message="Are you sure you want to delete this cron job? This action cannot be undone."
+        title={t('cronJobs.deleteCronJobTitle')}
+        message={t('cronJobs.deleteCronJobMessage')}
         onConfirm={handleDelete}
         onCancel={() => { setDeleteConfirmOpen(false); setJobToDelete(null); }}
         type="danger"

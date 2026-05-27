@@ -9,6 +9,7 @@ import {
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import PageHeader from './PageHeader';
+import { useTranslation } from 'react-i18next';
 
 // @group Constants : Backend API URL — must match App.tsx
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3101';
@@ -32,6 +33,7 @@ const LogStreamEnhanced: React.FC<LogStreamEnhancedProps> = ({
   processId: propProcessId,
   logType: propLogType = 'out',
 }) => {
+  const { t } = useTranslation();
   // Support routes: /logs/:id  and  /logs/remote/:serverId/:processId
   const params   = useParams<{ id?: string; serverId?: string; processId?: string }>();
 
@@ -326,8 +328,8 @@ const LogStreamEnhanced: React.FC<LogStreamEnhancedProps> = ({
                          text-neutral-900 dark:text-neutral-100
                          focus:outline-none focus:ring-1 focus:ring-primary-500"
             >
-              <option value="out">Standard out</option>
-              <option value="err">Standard err</option>
+              <option value="out">{t('logs.standardOut')}</option>
+              <option value="err">{t('logs.standardErr')}</option>
             </select>
 
             {serverId === 'local' && (
@@ -340,7 +342,7 @@ const LogStreamEnhanced: React.FC<LogStreamEnhancedProps> = ({
                               ? 'border-red-500 text-red-500 hover:bg-red-500/10'
                               : 'border-primary-500 text-primary-500 hover:bg-primary-500/10'}`}
               >
-                {isStreaming ? 'Stop Stream' : 'Live Stream'}
+                {isStreaming ? t('logs.stopStream') : t('logs.liveStream')}
               </button>
             )}
           </div>
@@ -355,7 +357,7 @@ const LogStreamEnhanced: React.FC<LogStreamEnhancedProps> = ({
             <MagnifyingGlassIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400 pointer-events-none" />
             <input
               type="text"
-              placeholder="Filter logs..."
+              placeholder={t('logs.filterLogs')}
               value={filter}
               onChange={e => setFilter(e.target.value)}
               className="w-full h-8 pl-8 pr-3 text-xs rounded border
@@ -375,7 +377,7 @@ const LogStreamEnhanced: React.FC<LogStreamEnhancedProps> = ({
                             ? 'bg-primary-600 border-primary-600 text-white'
                             : 'border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'}`}
             >
-              Auto-scroll
+              {t('logs.autoScroll')}
             </button>
 
             {isStreaming && (
@@ -392,7 +394,7 @@ const LogStreamEnhanced: React.FC<LogStreamEnhancedProps> = ({
               <ArrowPathIcon className="h-3.5 w-3.5" />
             </button>
 
-            <button onClick={() => setLogs([])} title="Clear"
+            <button onClick={() => setLogs([])} title={t('logs.clearLogs')}
               className="h-8 w-8 flex items-center justify-center rounded border
                          border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400
                          hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
@@ -483,7 +485,7 @@ const LogStreamEnhanced: React.FC<LogStreamEnhancedProps> = ({
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
               </svg>
-              {filterLoading ? 'Applying filter…' : 'Loading logs...'}
+              {filterLoading ? t('logs.applyingFilter') : t('logs.loadingLogs')}
             </div>
           </div>
         ) : error ? (
@@ -492,7 +494,7 @@ const LogStreamEnhanced: React.FC<LogStreamEnhancedProps> = ({
           </div>
         ) : initPid === null ? (
           <div className="flex items-center justify-center h-64 text-xs text-neutral-400 dark:text-neutral-500">
-            Select a process from the sidebar to view logs
+            {t('logs.selectProcessHint')}
           </div>
         ) : (
           <div
@@ -501,7 +503,7 @@ const LogStreamEnhanced: React.FC<LogStreamEnhancedProps> = ({
           >
             {filteredLogs.length === 0 ? (
               <span className="text-neutral-600 italic">
-                {(appliedFrom || appliedTo) ? 'No logs found in the selected date range' : 'No logs available'}
+                {(appliedFrom || appliedTo) ? t('logs.noLogsInRange') : t('logs.noLogsAvailable')}
               </span>
             ) : (
               filteredLogs.map((line, i) => (

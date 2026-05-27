@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { PM2Process } from '../types/pm2';
 import ProcessLogs from './ProcessLogs';
 import MetricsChart from './MetricsChart';

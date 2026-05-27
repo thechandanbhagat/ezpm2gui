@@ -9,6 +9,7 @@ import {
   ArrowTopRightOnSquareIcon,
 } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 // @group Types
 interface ChangeItem {
@@ -94,6 +95,7 @@ const TAG_STYLES: Record<ChangeItem['tag'], string> = {
 
 // @group Component : What's New changelog page
 const WhatsNew: React.FC = () => {
+  const { t } = useTranslation();
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
 
@@ -102,11 +104,11 @@ const WhatsNew: React.FC = () => {
         <div className="flex items-center gap-2 mb-1">
           <SparklesIcon className="h-5 w-5 text-primary-500" />
           <h1 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">
-            What's New
+            {t('whatsNew.title')}
           </h1>
         </div>
         <p className="text-xs text-neutral-500 dark:text-neutral-500">
-          Latest updates and improvements to EZ PM2 GUI
+          {t('whatsNew.pageSubtitle')}
         </p>
       </div>
 
@@ -173,10 +175,10 @@ const WhatsNew: React.FC = () => {
                       bg-neutral-50 dark:bg-neutral-900/50 p-4 flex items-center justify-between">
         <div>
           <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 mb-0.5">
-            Configure Security
+            {t('whatsNew.configureSecurity')}
           </p>
           <p className="text-xs text-neutral-500 dark:text-neutral-500">
-            Set up PIN and password protection from Settings.
+            {t('whatsNew.configureSecurityDesc')}
           </p>
         </div>
         <Link
@@ -185,7 +187,7 @@ const WhatsNew: React.FC = () => {
                      bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium
                      transition-colors duration-150"
         >
-          Open Settings
+          {t('whatsNew.openSettings')}
           <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
         </Link>
       </div>

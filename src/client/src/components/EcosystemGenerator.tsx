@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box, Paper, Typography, Button, TextField, Alert, CircularProgress,
   Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, FormControlLabel, Checkbox
@@ -9,6 +10,7 @@ import PageHeader from './PageHeader';
 
 // @group EcosystemGenerator : Generate PM2 ecosystem.config.js from current processes
 const EcosystemGenerator: React.FC = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [filePath, setFilePath] = useState('');
   const [success, setSuccess] = useState('');
@@ -42,32 +44,32 @@ const EcosystemGenerator: React.FC = () => {
   return (
     <Box>
       <PageHeader
-        title="Ecosystem Generator"
-        subtitle="Generate an ecosystem.config.js from your current PM2 processes"
+        title={t('ecosystem.title')}
+        subtitle={t('ecosystem.subtitle')}
         actions={
           <>
             <Button variant="outlined" startIcon={<PreviewIcon />}
               onClick={() => generateEcosystem(true)} disabled={loading}>
-              Preview
+              {t('common.preview')}
             </Button>
             <Button variant="contained" startIcon={<SaveIcon />}
               onClick={() => generateEcosystem(false)} disabled={loading}>
               {loading ? <CircularProgress size={14} sx={{ mr: 1 }} /> : null}
-              Generate File
+              {t('ecosystem.generateFile')}
             </Button>
           </>
         }
       />
 
       <Paper variant="outlined" sx={{ p: 2 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>Output Options</Typography>
+        <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>{t('ecosystem.outputOptions')}</Typography>
 
         <Box component="form" onSubmit={e => { e.preventDefault(); generateEcosystem(false); }}>
           <TextField
-            fullWidth label="Save Path (optional)"
+            fullWidth label={t('ecosystem.savePath')}
             placeholder="/path/to/ecosystem.config.js"
             value={filePath} onChange={e => setFilePath(e.target.value)}
-            helperText="Leave empty to save in the current working directory"
+            helperText={t('ecosystem.savePathHelper')}
             sx={{ mb: 2 }}
           />
           <FormControlLabel
@@ -75,7 +77,7 @@ const EcosystemGenerator: React.FC = () => {
               <Checkbox checked={includeAllProcesses}
                 onChange={e => setIncludeAllProcesses(e.target.checked)} />
             }
-            label={<Typography variant="body2">Include stopped processes</Typography>}
+            label={<Typography variant="body2">{t('ecosystem.includeStopped')}</Typography>}
           />
         </Box>
 
@@ -100,9 +102,9 @@ const EcosystemGenerator: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setPreviewOpen(false)}>Close</Button>
+          <Button onClick={() => setPreviewOpen(false)}>{t('common.close')}</Button>
           <Button variant="contained" onClick={() => { setPreviewOpen(false); generateEcosystem(false); }}>
-            Save File
+            {t('ecosystem.saveFile')}
           </Button>
         </DialogActions>
       </Dialog>

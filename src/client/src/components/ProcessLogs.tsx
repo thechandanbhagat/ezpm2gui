@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import {
   Box,
@@ -40,6 +41,7 @@ const LINE_OPTIONS = [
 
 // @group ProcessLogs : Log history viewer with lines control and download
 const ProcessLogs: React.FC<ProcessLogsProps> = ({ processId, processName, connectionId }) => {
+  const { t } = useTranslation();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
@@ -148,9 +150,9 @@ const ProcessLogs: React.FC<ProcessLogsProps> = ({ processId, processName, conne
 
         {/* Lines selector */}
         <FormControl size="small" sx={{ minWidth: 130 }}>
-          <InputLabel>Lines to load</InputLabel>
+          <InputLabel>{t('logPanel.linesToLoad')}</InputLabel>
           <Select
-            label="Lines to load"
+            label={t('logPanel.linesToLoad')}
             value={lines}
             onChange={(e: SelectChangeEvent<number>) => setLines(Number(e.target.value))}
           >
@@ -179,15 +181,15 @@ const ProcessLogs: React.FC<ProcessLogsProps> = ({ processId, processName, conne
         <Stack direction="row" spacing={0.5} alignItems="center">
           <FormControlLabel
             control={<Checkbox checked={autoScroll} onChange={() => setAutoScroll(v => !v)} size="small" />}
-            label={<Typography variant="caption">Auto-scroll</Typography>}
+            label={<Typography variant="caption">{t('logs.autoScroll')}</Typography>}
             sx={{ m: 0 }}
           />
           <FormControlLabel
             control={<Checkbox checked={autoRefresh} onChange={() => setAutoRefresh(v => !v)} size="small" />}
-            label={<Typography variant="caption">Auto-refresh</Typography>}
+            label={<Typography variant="caption">{t('logs.autoRefresh')}</Typography>}
             sx={{ m: 0 }}
           />
-          <Tooltip title="Refresh now">
+          <Tooltip title={t('logs.refreshNow')}>
             <span>
               <Button size="small" variant="outlined" onClick={fetchLogs} sx={{ minWidth: 32, px: 0.5 }}>
                 <RefreshIcon fontSize="small" />
@@ -235,11 +237,11 @@ const ProcessLogs: React.FC<ProcessLogsProps> = ({ processId, processName, conne
       {loading && logs.length === 0 ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8 }}>
           <CircularProgress size={24} sx={{ mr: 1.5 }} />
-          <Typography variant="body2">Loading logs…</Typography>
+          <Typography variant="body2">{t('logs.loadingLogs')}</Typography>
         </Box>
       ) : filteredLogs.length === 0 ? (
         <Box sx={{ textAlign: 'center', py: 8, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
-          <Typography variant="body2" color="text.secondary">No log entries for this filter.</Typography>
+          <Typography variant="body2" color="text.secondary">{t('logs.noEntriesFilter')}</Typography>
         </Box>
       ) : (
         <Paper

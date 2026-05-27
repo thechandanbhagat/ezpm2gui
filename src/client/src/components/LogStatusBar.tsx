@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Box, Typography, IconButton, Tooltip } from '@mui/material';
 import {
   Close as CloseIcon,
@@ -51,6 +52,7 @@ const PANEL_H = 320; // px — expanded log area height
 
 // @group LogStatusBar : VS Code-style bottom status bar with slide-up log panel
 const LogStatusBar: React.FC<LogStatusBarProps> = ({ logWindows, onClose, onClear }) => {
+  const { t } = useTranslation();
   const [activeKey, setActiveKey]       = useState<string | null>(null);
   const [isPaused,  setIsPaused]        = useState(false);
   const [frozen,    setFrozen]          = useState<Record<string, LogEntry[]>>({});
@@ -201,22 +203,22 @@ const LogStatusBar: React.FC<LogStatusBarProps> = ({ logWindows, onClose, onClea
             </Box>
 
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <Tooltip title={isPaused ? 'Resume' : 'Pause'}>
+              <Tooltip title={isPaused ? t('logPanel.resume') : t('logPanel.pause')}>
                 <IconButton size="small" onClick={handlePause} sx={{ color: '#666', '&:hover': { color: '#ccc' } }}>
                   {isPaused ? <PlayIcon sx={{ fontSize: 13 }} /> : <PauseIcon sx={{ fontSize: 13 }} />}
                 </IconButton>
               </Tooltip>
-              <Tooltip title="Clear">
+              <Tooltip title={t('logPanel.clear')}>
                 <IconButton size="small" onClick={() => onClear(activeKey)} sx={{ color: '#666', '&:hover': { color: '#ccc' } }}>
                   <ClearIcon sx={{ fontSize: 13 }} />
                 </IconButton>
               </Tooltip>
-              <Tooltip title="Collapse">
+              <Tooltip title={t('logPanel.collapse')}>
                 <IconButton size="small" onClick={() => setActiveKey(null)} sx={{ color: '#666', '&:hover': { color: '#ccc' } }}>
                   <CollapseIcon sx={{ fontSize: 14 }} />
                 </IconButton>
               </Tooltip>
-              <Tooltip title="Close session">
+              <Tooltip title={t('logPanel.closeSession')}>
                 <IconButton size="small" onClick={() => onClose(activeKey)} sx={{ color: '#666', '&:hover': { color: '#ef4444' } }}>
                   <CloseIcon sx={{ fontSize: 13 }} />
                 </IconButton>
@@ -236,7 +238,7 @@ const LogStatusBar: React.FC<LogStatusBarProps> = ({ logWindows, onClose, onClea
             {activeLogs.length === 0 ? (
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
                 <Typography sx={{ color: '#3a3a3a', fontSize: '0.75rem', fontFamily: 'monospace' }}>
-                  {isPaused ? '⏸ paused' : '● waiting for logs…'}
+                  {isPaused ? t('logPanel.paused') : t('logPanel.waiting')}
                 </Typography>
               </Box>
             ) : (

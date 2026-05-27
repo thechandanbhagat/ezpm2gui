@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { SystemMetricsData } from '../types/pm2';
 import {
   ClockIcon,
@@ -54,6 +55,7 @@ const StatCard: React.FC<StatCardProps> = ({ icon: Icon, iconColor, iconBg, labe
 
 // @group SystemMetrics : Horizontal row of system stat cards
 const SystemMetrics: React.FC<SystemMetricsProps> = ({ metrics }) => {
+  const { t } = useTranslation();
   const memPct = Math.round((metrics.memory.used / metrics.memory.total) * 100);
   const memColor = memPct > 80 ? 'bg-red-500' : memPct > 60 ? 'bg-yellow-500' : 'bg-green-500';
 
@@ -63,14 +65,14 @@ const SystemMetrics: React.FC<SystemMetricsProps> = ({ metrics }) => {
         icon={ClockIcon}
         iconColor="text-blue-500"
         iconBg="bg-blue-500/10"
-        label="System Uptime"
+        label={t('systemMetrics.systemUptime')}
         value={formatUptime(metrics.uptime)}
       />
       <StatCard
         icon={CpuChipIcon}
         iconColor="text-violet-500"
         iconBg="bg-violet-500/10"
-        label="Load Avg"
+        label={t('systemMetrics.loadAvg')}
         value={metrics.loadAvg[0].toFixed(2)}
         sub={
           <p className="text-[10px] text-neutral-400 dark:text-neutral-500 leading-none">
@@ -82,7 +84,7 @@ const SystemMetrics: React.FC<SystemMetricsProps> = ({ metrics }) => {
         icon={CircleStackIcon}
         iconColor={memPct > 80 ? 'text-red-500' : memPct > 60 ? 'text-yellow-500' : 'text-green-500'}
         iconBg={memPct > 80 ? 'bg-red-500/10' : memPct > 60 ? 'bg-yellow-500/10' : 'bg-green-500/10'}
-        label="Memory"
+        label={t('systemMetrics.memory')}
         value={`${formatMemory(metrics.memory.used)} / ${formatMemory(metrics.memory.total)}`}
         sub={
           <div className="w-full bg-neutral-200 dark:bg-neutral-700 rounded-full h-1 mt-1">
@@ -94,7 +96,7 @@ const SystemMetrics: React.FC<SystemMetricsProps> = ({ metrics }) => {
         icon={ServerStackIcon}
         iconColor="text-neutral-500"
         iconBg="bg-neutral-100 dark:bg-neutral-800"
-        label="CPU Cores"
+        label={t('systemMetrics.cpuCores')}
         value={String(metrics.cpus)}
       />
     </>

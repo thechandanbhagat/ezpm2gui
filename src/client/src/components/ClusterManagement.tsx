@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import {
   ArrowPathIcon,
@@ -26,6 +27,7 @@ interface ClusterManagementProps {
 
 // @group ClusterManagement : Process cluster scaling and exec-mode management
 const ClusterManagement: React.FC<ClusterManagementProps> = ({ processes, onRefresh }) => {
+  const { t } = useTranslation();
   const [selectedProcess, setSelectedProcess] = useState<string>('');
   const [clusterProcesses, setClusterProcesses] = useState<ClusterProcess[]>([]);
   const [instancesInput, setInstancesInput] = useState<number>(1);
@@ -93,8 +95,8 @@ const ClusterManagement: React.FC<ClusterManagementProps> = ({ processes, onRefr
   return (
     <div>
       <PageHeader
-        title="Cluster Management"
-        subtitle="Scale processes and manage execution modes"
+        title={t('cluster.title')}
+        subtitle={t('cluster.subtitle')}
       />
 
       {/* Toast notifications */}
@@ -113,7 +115,7 @@ const ClusterManagement: React.FC<ClusterManagementProps> = ({ processes, onRefr
 
       {/* Process selector */}
       <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4 mb-4">
-        <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-3">Select Process</p>
+        <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-3">{t('cluster.selectProcess')}</p>
         <select
           value={selectedProcess}
           onChange={e => setSelectedProcess(e.target.value)}
@@ -123,7 +125,7 @@ const ClusterManagement: React.FC<ClusterManagementProps> = ({ processes, onRefr
                      text-neutral-900 dark:text-neutral-100
                      focus:outline-none focus:ring-1 focus:ring-primary-500"
         >
-          <option value="">— choose a process —</option>
+          <option value="">{t('cluster.choosePlaceholder')}</option>
           {processes.map(p => (
             <option key={p.pm_id} value={p.pm_id}>{p.name} (ID: {p.pm_id})</option>
           ))}
@@ -137,7 +139,7 @@ const ClusterManagement: React.FC<ClusterManagementProps> = ({ processes, onRefr
       ) : !selectedProcess ? (
         <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-8 text-center">
           <ServerStackIcon className="mx-auto h-8 w-8 text-neutral-300 dark:text-neutral-600 mb-2" />
-          <p className="text-xs text-neutral-400 dark:text-neutral-500">Select a process above to view cluster options</p>
+          <p className="text-xs text-neutral-400 dark:text-neutral-500">{t('cluster.selectHint')}</p>
         </div>
       ) : proc ? (
         <div className="grid grid-cols-1 gap-4">
@@ -146,12 +148,12 @@ const ClusterManagement: React.FC<ClusterManagementProps> = ({ processes, onRefr
           <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 overflow-hidden">
             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-neutral-100 dark:border-neutral-800">
               <CpuChipIcon className="h-3.5 w-3.5 text-neutral-400" />
-              <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Current Status</p>
+              <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">{t('cluster.currentStatus')}</p>
             </div>
             <table className="w-full text-xs">
               <thead>
                 <tr className="bg-neutral-50 dark:bg-neutral-800/60 border-b border-neutral-100 dark:border-neutral-800">
-                  {['ID', 'Name', 'Instances', 'Exec Mode', 'Mode'].map(h => (
+                  {[t('common.id'), t('common.name'), t('cluster.instances'), t('cluster.execModeHeader'), t('common.mode')].map(h => (
                     <th key={h} className="px-4 py-2 text-left text-[11px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{h}</th>
                   ))}
                 </tr>
@@ -182,7 +184,7 @@ const ClusterManagement: React.FC<ClusterManagementProps> = ({ processes, onRefr
           <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
             <div className="flex items-center gap-2 mb-3">
               <ArrowsPointingOutIcon className="h-3.5 w-3.5 text-neutral-400" />
-              <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Scale Instances</p>
+              <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">{t('cluster.scaleInstances')}</p>
             </div>
             <div className="flex items-center gap-3">
               <input
@@ -204,7 +206,7 @@ const ClusterManagement: React.FC<ClusterManagementProps> = ({ processes, onRefr
                            disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ArrowsPointingOutIcon className="h-3.5 w-3.5" />
-                Scale
+                {t('cluster.scale')}
               </button>
             </div>
           </div>
@@ -213,7 +215,7 @@ const ClusterManagement: React.FC<ClusterManagementProps> = ({ processes, onRefr
           <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
             <div className="flex items-center gap-2 mb-3">
               <ServerStackIcon className="h-3.5 w-3.5 text-neutral-400" />
-              <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Execution Mode</p>
+              <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">{t('cluster.executionMode')}</p>
             </div>
             <div className="flex items-center gap-2 mb-3">
               <button
@@ -225,7 +227,7 @@ const ClusterManagement: React.FC<ClusterManagementProps> = ({ processes, onRefr
                            hover:bg-neutral-50 dark:hover:bg-neutral-800
                            disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                Switch to Fork
+                {t('cluster.switchToFork')}
               </button>
               <button
                 onClick={() => handleChangeExecMode('cluster')}
@@ -236,11 +238,11 @@ const ClusterManagement: React.FC<ClusterManagementProps> = ({ processes, onRefr
                            hover:bg-neutral-50 dark:hover:bg-neutral-800
                            disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                Switch to Cluster
+                {t('cluster.switchToCluster')}
               </button>
             </div>
             <p className="text-xs text-neutral-400 dark:text-neutral-500">
-              Use <span className="font-medium text-neutral-600 dark:text-neutral-300">cluster mode</span> with multiple instances to distribute requests across all CPU cores.
+              {t('cluster.clusterModeDesc')}
             </p>
           </div>
 
@@ -248,10 +250,10 @@ const ClusterManagement: React.FC<ClusterManagementProps> = ({ processes, onRefr
           <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
             <div className="flex items-center gap-2 mb-1.5">
               <BoltIcon className="h-3.5 w-3.5 text-amber-400" />
-              <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Zero-Downtime Reload</p>
+              <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">{t('cluster.zeroDowntimeReload')}</p>
             </div>
             <p className="text-xs text-neutral-400 dark:text-neutral-500 mb-3">
-              Reload instances one by one — no service interruption during code updates.
+              {t('cluster.reloadDesc')}
             </p>
             <button
               onClick={handleReloadProcess}
@@ -261,7 +263,7 @@ const ClusterManagement: React.FC<ClusterManagementProps> = ({ processes, onRefr
                          disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <BoltIcon className="h-3.5 w-3.5" />
-              Graceful Reload
+              {t('cluster.gracefulReload')}
             </button>
           </div>
 

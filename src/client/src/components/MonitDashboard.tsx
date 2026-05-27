@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { PM2Process } from '../types/pm2';
 import { useNavigate } from 'react-router-dom';
 import { IconButton, Tooltip } from '@mui/material';
@@ -13,6 +14,7 @@ interface MonitDashboardProps {
 
 const MonitDashboard: React.FC<MonitDashboardProps> = ({ processes, onRefresh }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [sortField, setSortField] = useState<'id' | 'name' | 'status' | 'cpu' | 'memory' | 'uptime' | 'restarts'>('cpu');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
@@ -75,8 +77,8 @@ const MonitDashboard: React.FC<MonitDashboardProps> = ({ processes, onRefresh })
   return (
     <div className="space-y-4">
       <PageHeader
-        title="Process Monitor"
-        subtitle="Real-time CPU, memory and uptime by process"
+        title={t('monitDashboard.title')}
+        subtitle={t('monitDashboard.subtitle')}
         actions={
           <Tooltip title="Refresh">
             <IconButton size="small" onClick={onRefresh}><RefreshIcon fontSize="small" /></IconButton>
@@ -86,16 +88,16 @@ const MonitDashboard: React.FC<MonitDashboardProps> = ({ processes, onRefresh })
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {statCard('Total', processes.length,
-          `${processes.filter(p => p.pm2_env.status === 'online').length} online`)}
-        {statCard('Online', processes.filter(p => p.pm2_env.status === 'online').length,
-          `${processes.filter(p => p.pm2_env.status !== 'online').length} stopped`)}
-        {statCard('CPU Peak',
+        {statCard(t('monitDashboard.total'), processes.length,
+          `${processes.filter(p => p.pm2_env.status === 'online').length} ${t('monitDashboard.online')}`)}
+        {statCard(t('monitDashboard.online'), processes.filter(p => p.pm2_env.status === 'online').length,
+          `${processes.filter(p => p.pm2_env.status !== 'online').length} ${t('monitDashboard.stopped')}`)}
+        {statCard(t('monitDashboard.cpuPeak'),
           sortedProcesses.length > 0 ? `${Math.max(...sortedProcesses.map(p => p.monit.cpu)).toFixed(1)}%` : '0%',
-          'highest process')}
-        {statCard('Mem Peak',
+          t('monitDashboard.highestProcess'))}
+        {statCard(t('monitDashboard.memPeak'),
           sortedProcesses.length > 0 ? formatMemory(Math.max(...sortedProcesses.map(p => p.monit.memory))) : '0 B',
-          'highest process')}
+          t('monitDashboard.highestProcess'))}
       </div>
 
       {/* Process Table */}
@@ -105,13 +107,13 @@ const MonitDashboard: React.FC<MonitDashboardProps> = ({ processes, onRefresh })
             <thead className="bg-neutral-50 dark:bg-neutral-800/50 border-b border-neutral-200 dark:border-neutral-800">
               <tr>
                 {[
-                  { key: 'id' as const,       label: 'ID' },
-                  { key: 'name' as const,     label: 'Name' },
-                  { key: 'status' as const,   label: 'Status' },
-                  { key: 'cpu' as const,      label: 'CPU' },
-                  { key: 'memory' as const,   label: 'Memory' },
-                  { key: 'uptime' as const,   label: 'Uptime' },
-                  { key: 'restarts' as const, label: 'Restarts' },
+                  { key: 'id' as const,       label: t('common.id') },
+                  { key: 'name' as const,     label: t('common.name') },
+                  { key: 'status' as const,   label: t('common.status') },
+                  { key: 'cpu' as const,      label: t('common.cpu') },
+                  { key: 'memory' as const,   label: t('common.memory') },
+                  { key: 'uptime' as const,   label: t('common.uptime') },
+                  { key: 'restarts' as const, label: t('common.restarts') },
                 ].map(({ key, label }) => (
                   <th
                     key={label}
@@ -134,7 +136,7 @@ const MonitDashboard: React.FC<MonitDashboardProps> = ({ processes, onRefresh })
               {sortedProcesses.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-3 py-8 text-center text-xs text-neutral-400 dark:text-neutral-500">
-                    No processes running
+                    {t('monitDashboard.noProcesses')}
                   </td>
                 </tr>
               ) : sortedProcesses.map((proc) => (

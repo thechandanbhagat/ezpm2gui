@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import {
   Chart as ChartJS,
@@ -140,6 +141,7 @@ interface MetricsPageProps {
 
 // @group MetricsPage : Main component
 const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
+  const { t } = useTranslation();
   const [tab, setTab] = useState<'live' | 'history'>('live');
 
   // @group LiveState
@@ -385,8 +387,8 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
   return (
     <div>
       <PageHeader
-        title="Metrics"
-        subtitle="Real-time and historical process metrics"
+        title={t('metricsPage.title')}
+        subtitle={t('metricsPage.subtitle')}
         actions={
           tab === 'history' ? (
             <button
@@ -396,7 +398,7 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
                 bg-primary-600 hover:bg-primary-700 text-white disabled:opacity-50 transition-colors"
             >
               <ArrowPathIcon className={`h-3.5 w-3.5 ${histLoading ? 'animate-spin' : ''}`} />
-              Refresh
+              {t('common.refresh')}
             </button>
           ) : undefined
         }
@@ -404,8 +406,8 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
 
       {/* ── Tabs ── */}
       <div className="flex gap-0 border-b border-neutral-200 dark:border-neutral-800 mb-4">
-        <TabButton id="live"    label="Live"    icon={SignalIcon} />
-        <TabButton id="history" label="History" icon={ClockIcon} />
+        <TabButton id="live"    label={t('metricsPage.live')}    icon={SignalIcon} />
+        <TabButton id="history" label={t('metricsPage.history')} icon={ClockIcon} />
       </div>
 
       {/* ════════════════════ LIVE TAB ════════════════════ */}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import {
   Box,
@@ -37,6 +38,7 @@ const LogStream: React.FC<LogStreamProps> = ({ processId: propProcessId, logType
   const params = useParams<{ id: string }>();
   const processId = propProcessId || Number(params.id);
   const theme = useTheme();
+  const { t } = useTranslation();
   const logContainerRef = useRef<HTMLDivElement>(null);
   const [logs, setLogs] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -137,7 +139,7 @@ const LogStream: React.FC<LogStreamProps> = ({ processId: propProcessId, logType
       <Paper sx={{ p: 2, mb: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="h6">
-            {logType === 'out' ? 'Standard Output' : 'Error Output'} Logs
+            {t(logType === 'out' ? 'logs.stdout' : 'logs.stderr')}
           </Typography>
           <Box>
             <Button
@@ -147,7 +149,7 @@ const LogStream: React.FC<LogStreamProps> = ({ processId: propProcessId, logType
               onClick={toggleStreaming}
               sx={{ mr: 1 }}
             >
-              {isStreaming ? 'Stop Streaming' : 'Start Streaming'}
+              {isStreaming ? t('logs.stopStreaming') : t('logs.startStreaming')}
             </Button>
             <IconButton onClick={fetchLogs} size="small" sx={{ mr: 1 }}>
               <RefreshIcon />
@@ -167,7 +169,7 @@ const LogStream: React.FC<LogStreamProps> = ({ processId: propProcessId, logType
             <TextField
               fullWidth
               size="small"
-              placeholder="Filter logs..."
+              placeholder={t('logs.searchLogs')}
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
             />
@@ -181,7 +183,7 @@ const LogStream: React.FC<LogStreamProps> = ({ processId: propProcessId, logType
                 color="primary"
               />
             }
-            label="Auto-scroll"
+            label={t('logs.autoScroll')}
           />
         </Box>
         
@@ -211,7 +213,7 @@ const LogStream: React.FC<LogStreamProps> = ({ processId: propProcessId, logType
           >
             {filteredLogs.length === 0 ? (
               <Typography variant="body2" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
-                No logs available
+                {t('logs.noLogsAvailable')}
               </Typography>
             ) : (
               filteredLogs.map((log, index) => (
@@ -234,7 +236,7 @@ const LogStream: React.FC<LogStreamProps> = ({ processId: propProcessId, logType
               <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
                 <CircularProgress size={16} sx={{ mr: 1 }} />
                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                  Streaming logs...
+                  {t('logs.streaming')}
                 </Typography>
               </Box>
             )}

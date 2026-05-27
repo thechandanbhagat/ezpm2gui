@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { LockClosedIcon, BackspaceIcon } from '@heroicons/react/24/outline';
 
 // @group Constants
@@ -14,6 +15,7 @@ interface PasswordGateProps {
 
 // @group Component : Full-screen lock screen — supports PIN keypad and password entry
 const PasswordGate: React.FC<PasswordGateProps> = ({ darkMode, onUnlock, pinSet, passwordSet }) => {
+  const { t } = useTranslation();
   // Default to PIN mode when PIN is configured
   const [mode,     setMode]     = useState<'pin' | 'password'>(pinSet ? 'pin' : 'password');
   const [pin,      setPin]      = useState('');
@@ -43,11 +45,11 @@ const PasswordGate: React.FC<PasswordGateProps> = ({ darkMode, onUnlock, pinSet,
       if (json.success) {
         onUnlock();
       } else {
-        setError(json.error || 'Incorrect PIN');
+        setError(json.error || t('passwordGate.incorrectPin'));
         setPin('');
       }
     } catch {
-      setError('Could not reach the server.');
+      setError(t('passwordGate.serverError'));
       setPin('');
     } finally {
       setLoading(false);
@@ -94,11 +96,11 @@ const PasswordGate: React.FC<PasswordGateProps> = ({ darkMode, onUnlock, pinSet,
       if (json.success) {
         onUnlock();
       } else {
-        setError(json.error || 'Incorrect password');
+        setError(json.error || t('passwordGate.incorrectPassword'));
         setPassword('');
       }
     } catch {
-      setError('Could not reach the server.');
+      setError(t('passwordGate.serverError'));
     } finally {
       setLoading(false);
     }
@@ -123,7 +125,7 @@ const PasswordGate: React.FC<PasswordGateProps> = ({ darkMode, onUnlock, pinSet,
           </div>
           <h1 className={`text-sm font-semibold mb-0.5 ${textPrimary}`}>EZ PM2 GUI</h1>
           <p className={`text-xs ${textMuted}`}>
-            {mode === 'pin' ? 'Enter your PIN to continue' : 'Enter your password to continue'}
+            {mode === 'pin' ? t('passwordGate.enterPin') : t('passwordGate.enterPassword')}
           </p>
         </div>
 
@@ -138,7 +140,7 @@ const PasswordGate: React.FC<PasswordGateProps> = ({ darkMode, onUnlock, pinSet,
                   : darkMode ? 'text-neutral-400 hover:text-neutral-200' : 'text-neutral-500 hover:text-neutral-700'
               }`}
             >
-              PIN
+              {t('passwordGate.pinMode')}
             </button>
             <button
               onClick={() => switchMode('password')}
@@ -148,7 +150,7 @@ const PasswordGate: React.FC<PasswordGateProps> = ({ darkMode, onUnlock, pinSet,
                   : darkMode ? 'text-neutral-400 hover:text-neutral-200' : 'text-neutral-500 hover:text-neutral-700'
               }`}
             >
-              Password
+              {t('passwordGate.passwordMode')}
             </button>
           </div>
         )}
@@ -193,7 +195,7 @@ const PasswordGate: React.FC<PasswordGateProps> = ({ darkMode, onUnlock, pinSet,
                 disabled={loading}
                 className={`py-3.5 rounded-lg text-xs font-medium transition-colors select-none disabled:opacity-40 ${textMuted} ${darkMode ? 'hover:text-neutral-300' : 'hover:text-neutral-600'}`}
               >
-                Clear
+                {t('passwordGate.clear')}
               </button>
               <button
                 onClick={() => addDigit('0')}
@@ -211,7 +213,7 @@ const PasswordGate: React.FC<PasswordGateProps> = ({ darkMode, onUnlock, pinSet,
               </button>
             </div>
 
-            {loading && <p className={`text-xs text-center mt-3 ${textMuted}`}>Verifying…</p>}
+            {loading && <p className={`text-xs text-center mt-3 ${textMuted}`}>{t('passwordGate.verifying')}</p>}
           </div>
         )}
 
@@ -222,7 +224,7 @@ const PasswordGate: React.FC<PasswordGateProps> = ({ darkMode, onUnlock, pinSet,
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              placeholder="Password"
+              placeholder={t('passwordGate.passwordPlaceholder')}
               autoFocus
               className={`w-full px-3 py-2 rounded-lg border text-sm outline-none transition-colors ${
                 darkMode
@@ -236,7 +238,7 @@ const PasswordGate: React.FC<PasswordGateProps> = ({ darkMode, onUnlock, pinSet,
               disabled={loading || !password}
               className="w-full py-2 rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors"
             >
-              {loading ? 'Verifying…' : 'Unlock'}
+              {loading ? t('passwordGate.verifying') : t('passwordGate.unlock')}
             </button>
           </form>
         )}

@@ -14,6 +14,7 @@ import {
 import { Line } from 'react-chartjs-2';
 import { ArrowPathIcon, ChartBarIcon } from '@heroicons/react/24/outline';
 import PageHeader from './PageHeader';
+import { useTranslation } from 'react-i18next';
 
 // @group ChartJS : Register required chart.js components
 ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, TimeScale, Tooltip, Legend, Filler);
@@ -71,7 +72,8 @@ function fmtTs(ts: number, rangeMs: number): string {
 
 // @group RemoteMetricsPage : Main analysis page component
 const RemoteMetricsPage: React.FC = () => {
-  const [connections,    setConnections]    = useState<ConnectionInfo[]>([]);
+  const { t } = useTranslation();
+  const [connections,    setConnections]= useState<ConnectionInfo[]>([]);
   const [selectedConn,   setSelectedConn]   = useState<string>('');
   const [processes,      setProcesses]      = useState<string[]>([]);
   const [selectedProc,   setSelectedProc]   = useState<string>('');
@@ -219,8 +221,8 @@ const RemoteMetricsPage: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title="Remote Metrics"
-        subtitle="CPU and memory history for remote PM2 processes"
+        title={t('remoteMetrics.title')}
+        subtitle={t('remoteMetrics.subtitle')}
         actions={
           <button
             onClick={fetchMetrics}
@@ -229,7 +231,7 @@ const RemoteMetricsPage: React.FC = () => {
               bg-primary-600 hover:bg-primary-700 text-white disabled:opacity-50`}
           >
             <ArrowPathIcon className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
+            {t('common.refresh')}
           </button>
         }
       />
@@ -239,7 +241,7 @@ const RemoteMetricsPage: React.FC = () => {
 
         {/* Connection selector */}
         <div className="flex flex-col gap-0.5">
-          <label className="text-xs text-neutral-500 dark:text-neutral-400">Connection</label>
+          <label className="text-xs text-neutral-500 dark:text-neutral-400">{t('remoteMetrics.connection')}</label>
           <select
             value={selectedConn}
             onChange={e => setSelectedConn(e.target.value)}
@@ -256,7 +258,7 @@ const RemoteMetricsPage: React.FC = () => {
 
         {/* Process selector */}
         <div className="flex flex-col gap-0.5">
-          <label className="text-xs text-neutral-500 dark:text-neutral-400">Process</label>
+          <label className="text-xs text-neutral-500 dark:text-neutral-400">{t('remoteMetrics.process')}</label>
           <select
             value={selectedProc}
             onChange={e => setSelectedProc(e.target.value)}
@@ -274,7 +276,7 @@ const RemoteMetricsPage: React.FC = () => {
 
         {/* Time range pills */}
         <div className="flex flex-col gap-0.5">
-          <label className="text-xs text-neutral-500 dark:text-neutral-400">Range</label>
+          <label className="text-xs text-neutral-500 dark:text-neutral-400">{t('remoteMetrics.range')}</label>
           <div className="flex gap-1">
             {TIME_RANGES.map((r, i) => (
               <button
@@ -294,7 +296,7 @@ const RemoteMetricsPage: React.FC = () => {
 
         {/* Auto-refresh toggle */}
         <div className="flex flex-col gap-0.5 ml-auto">
-          <label className="text-xs text-neutral-500 dark:text-neutral-400">Auto-refresh (30s)</label>
+          <label className="text-xs text-neutral-500 dark:text-neutral-400">{t('remoteMetrics.autoRefresh')}</label>
           <button
             onClick={() => setAutoRefresh(v => !v)}
             className={`self-start text-xs px-3 py-1.5 rounded border transition-colors ${
@@ -303,7 +305,7 @@ const RemoteMetricsPage: React.FC = () => {
                 : 'border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:border-neutral-400'
             }`}
           >
-            {autoRefresh ? 'On' : 'Off'}
+            {autoRefresh ? t('remoteMetrics.on') : t('remoteMetrics.off')}
           </button>
         </div>
       </div>
@@ -313,14 +315,14 @@ const RemoteMetricsPage: React.FC = () => {
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <ChartBarIcon className="h-10 w-10 text-neutral-300 dark:text-neutral-700 mb-3" />
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
-            Select a connection to view recorded metrics
+            {t('remoteMetrics.selectConnection')}
           </p>
           <p className="text-xs text-neutral-400 dark:text-neutral-600 mt-1">
-            Metrics are recorded every 30 seconds while a remote server is connected
+            {t('remoteMetrics.metricsRecorded')}
           </p>
           {connections.length === 0 && (
             <p className="text-xs text-amber-500 mt-3">
-              No data yet — connect a remote server and wait for the first poll cycle
+              {t('remoteMetrics.noData')}
             </p>
           )}
         </div>
@@ -328,7 +330,7 @@ const RemoteMetricsPage: React.FC = () => {
 
       {selectedConn && !selectedProc && (
         <div className="flex items-center justify-center py-12">
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">No processes recorded for this connection yet</p>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">{t('remoteMetrics.noProcesses')}</p>
         </div>
       )}
 
@@ -340,19 +342,19 @@ const RemoteMetricsPage: React.FC = () => {
           <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">CPU Usage</p>
+                <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">{t('remoteMetrics.cpuUsage')}</p>
                 <p className="text-xs text-neutral-400">{metrics.length} data points</p>
               </div>
               <div className="flex items-center gap-4">
-                <StatCard label="Min"  value={cpuStats.min} unit="%" color="text-emerald-500" />
-                <StatCard label="Avg"  value={cpuStats.avg} unit="%" color="text-primary-400" />
-                <StatCard label="Max"  value={cpuStats.max} unit="%" color="text-rose-400" />
+                <StatCard label={t('metricsPage.min')}  value={cpuStats.min} unit="%" color="text-emerald-500" />
+                <StatCard label={t('metricsPage.avg')}  value={cpuStats.avg} unit="%" color="text-primary-400" />
+                <StatCard label={t('metricsPage.max')}  value={cpuStats.max} unit="%" color="text-rose-400" />
               </div>
             </div>
             <div className="h-40">
               {metrics.length > 0
                 ? <Line data={cpuChartData} options={baseChartOptions('%', 100)} />
-                : <div className="h-full flex items-center justify-center text-xs text-neutral-400">No data for selected range</div>
+                : <div className="h-full flex items-center justify-center text-xs text-neutral-400">{t('remoteMetrics.noDataRange')}</div>
               }
             </div>
           </div>
@@ -361,19 +363,19 @@ const RemoteMetricsPage: React.FC = () => {
           <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Memory Usage</p>
+                <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">{t('remoteMetrics.memoryUsage')}</p>
                 <p className="text-xs text-neutral-400">{metrics.length} data points</p>
               </div>
               <div className="flex items-center gap-4">
-                <StatCard label="Min"  value={memStats.min} unit="MB" color="text-emerald-500" />
-                <StatCard label="Avg"  value={memStats.avg} unit="MB" color="text-cyan-400" />
-                <StatCard label="Max"  value={memStats.max} unit="MB" color="text-rose-400" />
+                <StatCard label={t('metricsPage.min')}  value={memStats.min} unit="MB" color="text-emerald-500" />
+                <StatCard label={t('metricsPage.avg')}  value={memStats.avg} unit="MB" color="text-cyan-400" />
+                <StatCard label={t('metricsPage.max')}  value={memStats.max} unit="MB" color="text-rose-400" />
               </div>
             </div>
             <div className="h-40">
               {metrics.length > 0
                 ? <Line data={memChartData} options={baseChartOptions('MB')} />
-                : <div className="h-full flex items-center justify-center text-xs text-neutral-400">No data for selected range</div>
+                : <div className="h-full flex items-center justify-center text-xs text-neutral-400">{t('remoteMetrics.noDataRange')}</div>
               }
             </div>
           </div>
@@ -381,15 +383,15 @@ const RemoteMetricsPage: React.FC = () => {
           {/* ── Raw data table (last 20 rows) ── */}
           <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 overflow-hidden">
             <div className="px-4 py-2.5 border-b border-neutral-100 dark:border-neutral-800">
-              <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Recent Samples (last 20)</p>
+              <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">{t('remoteMetrics.recentSamples')}</p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
                   <tr className="text-left text-neutral-500 dark:text-neutral-400 border-b border-neutral-100 dark:border-neutral-800">
-                    <th className="px-4 py-2 font-medium">Time</th>
-                    <th className="px-4 py-2 font-medium">CPU</th>
-                    <th className="px-4 py-2 font-medium">Memory</th>
+                    <th className="px-4 py-2 font-medium">{t('remoteMetrics.time')}</th>
+                    <th className="px-4 py-2 font-medium">{t('common.cpu')}</th>
+                    <th className="px-4 py-2 font-medium">{t('common.memory')}</th>
                     <th className="px-4 py-2 font-medium">Memory (bytes)</th>
                   </tr>
                 </thead>

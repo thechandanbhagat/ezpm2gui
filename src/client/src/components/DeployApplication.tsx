@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Paper,
@@ -93,6 +94,7 @@ const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title
 
 // @group DeployApplication : Form to start a new PM2-managed process
 const DeployApplication: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   // @group State : Form values
@@ -262,7 +264,7 @@ const DeployApplication: React.FC = () => {
   return (
     <Box component="form" onSubmit={handleSubmit}>
       <PageHeader
-        title="Deploy Application"
+        title={t('deploy.title')}
         subtitle="Start a new process managed by PM2"
         actions={
           <Box sx={{ display: 'flex', gap: 1 }}>

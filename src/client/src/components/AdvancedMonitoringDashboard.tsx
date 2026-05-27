@@ -41,6 +41,7 @@ import {
 } from 'chart.js';
 import { PM2Process, SystemMetricsData } from '../types/pm2';
 import PageHeader from './PageHeader';
+import { useTranslation } from 'react-i18next';
 
 // Register Chart.js components
 ChartJS.register(
@@ -82,6 +83,7 @@ const AdvancedMonitoringDashboard: React.FC<AdvancedMonitoringDashboardProps> = 
   systemMetrics,
   onRefresh
 }) => {
+  const { t } = useTranslation();
   const [historicalMetrics, setHistoricalMetrics] = useState<HistoricalMetrics[]>([]);
   const [alerts, setAlerts] = useState<ProcessAlert[]>([]);
   const [realTimeUpdates, setRealTimeUpdates] = useState(true);
@@ -216,7 +218,7 @@ const AdvancedMonitoringDashboard: React.FC<AdvancedMonitoringDashboardProps> = 
     labels: historicalMetrics.map(m => new Date(m.timestamp).toLocaleTimeString()),
     datasets: [
       {
-        label: 'CPU Usage (%)',
+        label: t('advancedMonitoring.cpuDataset'),
         data: historicalMetrics.map(m => m.cpu),
         borderColor: 'rgb(75, 192, 192)',
         backgroundColor: 'rgba(75, 192, 192, 0.1)',
@@ -224,7 +226,7 @@ const AdvancedMonitoringDashboard: React.FC<AdvancedMonitoringDashboardProps> = 
         tension: 0.4
       },
       {
-        label: 'Memory Usage (GB)',
+        label: t('advancedMonitoring.memDataset'),
         data: historicalMetrics.map(m => m.memory / (1024 * 1024 * 1024)),
         borderColor: 'rgb(255, 99, 132)',
         backgroundColor: 'rgba(255, 99, 132, 0.1)',
@@ -284,13 +286,13 @@ const AdvancedMonitoringDashboard: React.FC<AdvancedMonitoringDashboardProps> = 
   return (
     <Box>
       <PageHeader
-        title="Advanced Monitoring"
-        subtitle="Real-time system and process performance trends"
+        title={t('advancedMonitoring.title')}
+        subtitle={t('advancedMonitoring.subtitle')}
         actions={
           <>
             <FormControlLabel
               control={<Switch checked={realTimeUpdates} onChange={(e) => setRealTimeUpdates(e.target.checked)} color="primary" size="small" />}
-              label={<Typography variant="caption">Live</Typography>}
+              label={<Typography variant="caption">{t('advancedMonitoring.live')}</Typography>}
               sx={{ mr: 0 }}
             />
             <Tooltip title="Refresh">
@@ -308,7 +310,7 @@ const AdvancedMonitoringDashboard: React.FC<AdvancedMonitoringDashboardProps> = 
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                 <CheckCircleIcon color={healthColor} sx={{ mr: 1 }} />
                 <Typography variant="subtitle2" color="text.secondary">
-                  System Health
+                  {t('advancedMonitoring.systemHealth')}
                 </Typography>
               </Box>
               <Typography variant="h5" color={`${healthColor}.main`}>
@@ -327,14 +329,14 @@ const AdvancedMonitoringDashboard: React.FC<AdvancedMonitoringDashboardProps> = 
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                 <DnsIcon color="primary" sx={{ mr: 1 }} />
                 <Typography variant="subtitle2" color="text.secondary">
-                  Active Processes
+                  {t('advancedMonitoring.activeProcesses')}
                 </Typography>
               </Box>
               <Typography variant="h5" color="primary">
                 {processes.filter(p => p.pm2_env.status === 'online').length}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                of {processes.length} total
+                {t('advancedMonitoring.ofTotal', { count: processes.length })}
               </Typography>
             </CardContent>
           </Card>
@@ -346,7 +348,7 @@ const AdvancedMonitoringDashboard: React.FC<AdvancedMonitoringDashboardProps> = 
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                 <MemoryIcon color="primary" sx={{ mr: 1 }} />
                 <Typography variant="subtitle2" color="text.secondary">
-                  Memory Usage
+                  {t('advancedMonitoring.memoryUsage')}
                 </Typography>
               </Box>
               <Typography variant="h5" color="primary">
@@ -365,14 +367,14 @@ const AdvancedMonitoringDashboard: React.FC<AdvancedMonitoringDashboardProps> = 
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                 <SpeedIcon color="primary" sx={{ mr: 1 }} />
                 <Typography variant="subtitle2" color="text.secondary">
-                  CPU Load
+                  {t('advancedMonitoring.cpuLoad')}
                 </Typography>
               </Box>
               <Typography variant="h5" color="primary">
                 {systemMetrics.loadAvg[0].toFixed(1)}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {systemMetrics.cpus} cores available
+                {t('advancedMonitoring.coresAvailable', { count: systemMetrics.cpus })}
               </Typography>
             </CardContent>
           </Card>
@@ -392,7 +394,7 @@ const AdvancedMonitoringDashboard: React.FC<AdvancedMonitoringDashboardProps> = 
         <Grid item xs={12} lg={4}>
           <Paper variant="outlined" sx={{ p: 2, height: 280, overflow: 'auto' }}>
             <Typography variant="h6" gutterBottom>
-              Active Alerts
+              {t('advancedMonitoring.activeAlerts')}
             </Typography>
             <Divider sx={{ mb: 2 }} />
             {alerts.length === 0 ? (
@@ -405,7 +407,7 @@ const AdvancedMonitoringDashboard: React.FC<AdvancedMonitoringDashboardProps> = 
                 color: 'success.main'
               }}>
                 <CheckCircleIcon sx={{ fontSize: 28, mb: 1 }} />
-                <Typography variant="body1">All systems healthy</Typography>
+                <Typography variant="body1">{t('advancedMonitoring.allHealthy')}</Typography>
               </Box>
             ) : (
               <List>
@@ -439,7 +441,7 @@ const AdvancedMonitoringDashboard: React.FC<AdvancedMonitoringDashboardProps> = 
       {/* Process Performance Table */}
       <Paper variant="outlined" sx={{ p: 2, mt: 1.5 }}>
         <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>
-          Process Performance
+          {t('advancedMonitoring.processPerformance')}
         </Typography>
         <Grid container spacing={1.5}>
           {processes.map((process) => (
