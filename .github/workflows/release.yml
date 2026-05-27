@@ -25,7 +25,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          registry-url: 'https://registry.npmjs.org'
           cache: 'npm'
 
       # @group Dependencies : Install root and client deps
@@ -47,10 +46,10 @@ jobs:
       # @group Publish : Push package to npm registry
       - name: Publish to npm
         run: |
-          echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" >> "$NPM_CONFIG_USERCONFIG"
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> .npmrc
           npm publish --access public --ignore-scripts
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       # @group Release : Auto-generate changelog from commits since last tag
       - name: Generate changelog
