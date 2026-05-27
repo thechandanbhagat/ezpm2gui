@@ -9,6 +9,7 @@ interface LanguageSwitcherProps {
 const LANGUAGES = [
   { code: 'en', label: 'English' },
   { code: 'zh', label: '中文' },
+  { code: 'ne', label: 'नेपाली' },
 ];
 
 const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ darkMode }) => {
