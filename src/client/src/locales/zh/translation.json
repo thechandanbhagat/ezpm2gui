@@ -18,6 +18,8 @@
     "switchToLocal": "切换到本地",
     "update": "更新",
     "star": "点星",
+    "starTooltip": "在 GitHub 上为 EZ PM2 GUI 点星",
+    "viewOnGitHub": "在 GitHub 上查看",
     "whatsNew": "新功能",
     "about": "关于",
     "lightMode": "切换到浅色模式",
