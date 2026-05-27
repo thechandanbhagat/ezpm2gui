@@ -812,7 +812,7 @@ const App: React.FC = () => {
                   href="https://github.com/thechandanbhagat/ezpm2gui"
                   target="_blank"
                   rel="noopener noreferrer"
-                  title="Star EZ PM2 GUI on GitHub"
+                  title={t('header.starTooltip')}
                   className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium no-underline border transition-colors ${
                     darkMode
                       ? 'bg-neutral-800 border-neutral-700 text-neutral-300 hover:border-yellow-400/60 hover:text-yellow-400'
@@ -820,7 +820,7 @@ const App: React.FC = () => {
                   }`}
                 >
                   <StarIcon className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Star</span>
+                  <span className="hidden sm:inline">{t('header.star')}</span>
                 </a>
 
                 {/* @group GitHub : Repo link */}
@@ -828,7 +828,7 @@ const App: React.FC = () => {
                   href="https://github.com/thechandanbhagat/ezpm2gui"
                   target="_blank"
                   rel="noopener noreferrer"
-                  title="View on GitHub"
+                  title={t('header.viewOnGitHub')}
                   className={`p-1 rounded transition-colors ${
                     darkMode
                       ? 'text-neutral-400 hover:text-white'
