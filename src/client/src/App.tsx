@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { io } from 'socket.io-client';
 import axios from 'axios';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
@@ -69,6 +70,7 @@ const socket = io(API_URL, {
 });
 
 const App: React.FC = () => {
+  const { t } = useTranslation();
   // State for process data
   const [processes, setProcesses] = useState<PM2Process[]>([]);
   const [filteredProcesses, setFilteredProcesses] = useState<PM2Process[]>([]);
@@ -737,7 +739,7 @@ const App: React.FC = () => {
                   }`}
                 >
                   <ShieldExclamationIcon className="h-3.5 w-3.5" />
-                  <span>No password set — go to Settings / Security to enable</span>
+                  <span>{t('header.noPasswordSet')}</span>
                 </Link>
               )}
 
