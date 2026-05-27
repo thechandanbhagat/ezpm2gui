@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { PM2Process } from '../types/pm2';
 import {
@@ -62,6 +63,7 @@ interface ProcessTableProps {
 }
 
 const ProcessTable: React.FC<ProcessTableProps> = ({ processes, onAction }) => {
+  const { t } = useTranslation();
   const grouped = processes.reduce<Record<string, PM2Process[]>>((acc, p) => {
     const ns = p.pm2_env?.namespace || 'default';
     if (!acc[ns]) acc[ns] = [];
@@ -81,15 +83,15 @@ const ProcessTable: React.FC<ProcessTableProps> = ({ processes, onAction }) => {
         <thead className="bg-neutral-50 dark:bg-neutral-800/50">
           <tr>
             <th className="px-4 py-1.5 text-left text-[9px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider w-8">#</th>
-            <th className="px-4 py-1.5 text-left text-[9px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Name</th>
-            <th className="px-4 py-1.5 text-left text-[9px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider w-24">Status</th>
-            <th className="px-4 py-1.5 text-left text-[9px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider w-16">PID</th>
-            <th className="px-4 py-1.5 text-left text-[9px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider w-32">CPU</th>
-            <th className="px-4 py-1.5 text-left text-[9px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider w-24">Memory</th>
-            <th className="px-4 py-1.5 text-left text-[9px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider w-20">Uptime</th>
-            <th className="px-4 py-1.5 text-left text-[9px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider w-16">Restarts</th>
-            <th className="px-4 py-1.5 text-left text-[9px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider w-16">Mode</th>
-            <th className="px-4 py-1.5 text-right text-[9px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider w-32">Actions</th>
+            <th className="px-4 py-1.5 text-left text-[9px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{t('common.name')}</th>
+            <th className="px-4 py-1.5 text-left text-[9px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider w-24">{t('common.status')}</th>
+            <th className="px-4 py-1.5 text-left text-[9px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider w-16">{t('common.pid')}</th>
+            <th className="px-4 py-1.5 text-left text-[9px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider w-32">{t('common.cpu')}</th>
+            <th className="px-4 py-1.5 text-left text-[9px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider w-24">{t('common.memory')}</th>
+            <th className="px-4 py-1.5 text-left text-[9px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider w-20">{t('common.uptime')}</th>
+            <th className="px-4 py-1.5 text-left text-[9px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider w-16">{t('common.restarts')}</th>
+            <th className="px-4 py-1.5 text-left text-[9px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider w-16">{t('common.mode')}</th>
+            <th className="px-4 py-1.5 text-right text-[9px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider w-32">{t('common.actions')}</th>
           </tr>
         </thead>
 
@@ -105,7 +107,7 @@ const ProcessTable: React.FC<ProcessTableProps> = ({ processes, onAction }) => {
                       <span className="opacity-50">#</span>
                       {ns}
                       <span className="opacity-40 font-normal ml-1">
-                        {grouped[ns].length} process{grouped[ns].length !== 1 ? 'es' : ''}
+                        {`${grouped[ns].length} ${t(grouped[ns].length !== 1 ? 'processList.processes' : 'processList.process')}`}
                       </span>
                     </span>
                   </td>
@@ -223,7 +225,7 @@ const ProcessTable: React.FC<ProcessTableProps> = ({ processes, onAction }) => {
                         <Link
                           to={`/process/${process.pm_id}`}
                           className="inline-flex items-center justify-center w-5 h-5 rounded bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-800/50 text-blue-600 dark:text-blue-400 transition-colors"
-                          title="Details"
+                          title={t('common.details')}
                         >
                           <InformationCircleIcon className="h-3 w-3" />
                         </Link>
@@ -232,14 +234,14 @@ const ProcessTable: React.FC<ProcessTableProps> = ({ processes, onAction }) => {
                             <button
                               onClick={() => onAction(process.pm_id, 'restart')}
                               className="inline-flex items-center justify-center w-5 h-5 rounded bg-yellow-100 dark:bg-yellow-900/30 hover:bg-yellow-200 dark:hover:bg-yellow-800/50 text-yellow-600 dark:text-yellow-400 transition-colors"
-                              title="Restart"
+                              title={t('common.restart')}
                             >
                               <ArrowPathIcon className="h-3 w-3" />
                             </button>
                             <button
                               onClick={() => onAction(process.pm_id, 'stop')}
                               className="inline-flex items-center justify-center w-5 h-5 rounded bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-800/50 text-red-600 dark:text-red-400 transition-colors"
-                              title="Stop"
+                              title={t('common.stop')}
                             >
                               <StopIcon className="h-3 w-3" />
                             </button>
@@ -248,7 +250,7 @@ const ProcessTable: React.FC<ProcessTableProps> = ({ processes, onAction }) => {
                           <button
                             onClick={() => onAction(process.pm_id, 'start')}
                             className="inline-flex items-center justify-center w-5 h-5 rounded bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hover:bg-green-800/50 text-green-600 dark:text-green-400 transition-colors"
-                            title="Start"
+                            title={t('common.start')}
                           >
                             <PlayIcon className="h-3 w-3" />
                           </button>
@@ -256,14 +258,14 @@ const ProcessTable: React.FC<ProcessTableProps> = ({ processes, onAction }) => {
                         <button
                           onClick={() => onAction(process.pm_id, 'delete')}
                           className="inline-flex items-center justify-center w-5 h-5 rounded bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-800/50 text-red-600 dark:text-red-400 transition-colors"
-                          title="Delete"
+                          title={t('common.delete')}
                         >
                           <TrashIcon className="h-3 w-3" />
                         </button>
                         <Link
                           to={`/logs/${process.pm_id}`}
                           className="inline-flex items-center justify-center w-5 h-5 rounded bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-500 dark:text-neutral-400 transition-colors"
-                          title="Logs"
+                          title={t('common.logs')}
                         >
                           <DocumentTextIcon className="h-3 w-3" />
                         </Link>
@@ -282,6 +284,7 @@ const ProcessTable: React.FC<ProcessTableProps> = ({ processes, onAction }) => {
 
 // @group ProcessList : Full-width PM2 process table — app processes and module processes in separate sections
 const ProcessList: React.FC<ProcessListProps> = ({ processes, onAction }) => {
+  const { t } = useTranslation();
 
   const appProcesses    = processes.filter(p => !isPm2Module(p));
   const moduleProcesses = processes.filter(p =>  isPm2Module(p));
@@ -292,9 +295,9 @@ const ProcessList: React.FC<ProcessListProps> = ({ processes, onAction }) => {
         <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-2xl bg-neutral-100 dark:bg-neutral-800 mb-6">
           <InformationCircleIcon className="h-8 w-8 text-neutral-400 dark:text-neutral-500" />
         </div>
-        <h3 className="text-base font-semibold text-neutral-900 dark:text-white mb-2">No PM2 Processes Found</h3>
+        <h3 className="text-base font-semibold text-neutral-900 dark:text-white mb-2">{t('processList.noProcessesTitle')}</h3>
         <p className="text-sm text-neutral-500 dark:text-neutral-400 max-w-sm mx-auto">
-          Make sure PM2 is running and has active processes to display them here.
+          {t('processList.noProcessesDesc')}
         </p>
       </div>
     );
@@ -307,14 +310,14 @@ const ProcessList: React.FC<ProcessListProps> = ({ processes, onAction }) => {
       {/* ── Application Processes ── */}
       <div className="bg-white dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-800">
         <div className="px-4 py-2 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
-          <h2 className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">Application Processes</h2>
+          <h2 className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">{t('processList.appProcesses')}</h2>
           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
             {appProcesses.length}
           </span>
         </div>
         {appProcesses.length === 0 ? (
           <div className="px-4 py-8 text-center text-xs text-neutral-400 dark:text-neutral-500">
-            No application processes running.
+            {t('processList.noAppProcesses')}
           </div>
         ) : (
           <ProcessTable processes={appProcesses} onAction={onAction} />

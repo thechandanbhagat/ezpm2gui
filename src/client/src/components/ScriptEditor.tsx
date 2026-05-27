@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -20,6 +21,7 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({
   placeholder,
 }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   const getPlaceholder = () => {
     if (placeholder) return placeholder;
@@ -88,7 +90,7 @@ class Program
   return (
     <Box>
       <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-        Inline Script
+        {t('scriptEditor.title')}
       </Typography>
       <Paper
         sx={{
@@ -122,7 +124,7 @@ class Program
         />
       </Paper>
       <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-        Tip: Use console.log/print/echo for output. Scripts should exit when complete.
+        {t('scriptEditor.tip')}
       </Typography>
     </Box>
   );

@@ -13,6 +13,7 @@ import {
   SelectChangeEvent,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { CronValidationResult } from '../types/cron';
 
@@ -56,6 +57,22 @@ const CronExpressionBuilder: React.FC<CronExpressionBuilderProps> = ({
     description: '',
   });
   const [usePreset, setUsePreset] = useState(false);
+
+  const { t } = useTranslation();
+
+  const PRESET_LABEL_KEY_MAP: Record<string, string> = {
+    'Every minute': 'cronJobs.everyMinute',
+    'Every 5 minutes': 'cronJobs.every5Minutes',
+    'Every 15 minutes': 'cronJobs.every15Minutes',
+    'Every 30 minutes': 'cronJobs.every30Minutes',
+    'Every hour': 'cronJobs.everyHour',
+    'Every 6 hours': 'cronJobs.every6Hours',
+    'Every day at midnight': 'cronJobs.everydayMidnight',
+    'Every day at noon': 'cronJobs.everydayNoon',
+    'Every Monday at 9 AM': 'cronJobs.everyMondayAm',
+    'Every weekday at 9 AM': 'cronJobs.everyWeekdayAm',
+    'Every month on the 1st': 'cronJobs.everyMonthFirst',
+  };
 
   // Common presets
   const presets = {
@@ -135,23 +152,23 @@ const CronExpressionBuilder: React.FC<CronExpressionBuilderProps> = ({
   return (
     <Box>
       <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
-        Cron Schedule
+        {t('cronJobs.cronSchedule')}
       </Typography>
 
       {/* Preset Selector */}
       <FormControl fullWidth sx={{ mb: 3 }}>
-        <InputLabel>Use Preset</InputLabel>
+        <InputLabel>{t('cronJobs.usePreset')}</InputLabel>
         <Select
           value={usePreset ? value : ''}
           onChange={handlePresetChange}
-          label="Use Preset"
+          label={t('cronJobs.usePreset')}
         >
           <MenuItem value="">
-            <em>Custom</em>
+            <em>{t('cronJobs.custom')}</em>
           </MenuItem>
           {Object.entries(presets).map(([label, expr]) => (
             <MenuItem key={expr} value={expr}>
-              {label} ({expr})
+              {t(PRESET_LABEL_KEY_MAP[label] || label)} ({expr})
             </MenuItem>
           ))}
         </Select>
@@ -182,13 +199,13 @@ const CronExpressionBuilder: React.FC<CronExpressionBuilderProps> = ({
         }}
       >
         <Typography variant="caption" sx={{ mb: 2, display: 'block', color: 'text.secondary' }}>
-          Build cron expression visually
+          {t('cronJobs.buildVisually')}
         </Typography>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6} md={2.4}>
             <TextField
               fullWidth
-              label="Minute"
+              label={t('cronJobs.minute')}
               value={cronParts.minute}
               onChange={(e) => handlePartChange('minute', e.target.value)}
               placeholder="*"
@@ -199,7 +216,7 @@ const CronExpressionBuilder: React.FC<CronExpressionBuilderProps> = ({
           <Grid item xs={12} sm={6} md={2.4}>
             <TextField
               fullWidth
-              label="Hour"
+              label={t('cronJobs.hour')}
               value={cronParts.hour}
               onChange={(e) => handlePartChange('hour', e.target.value)}
               placeholder="*"
@@ -210,7 +227,7 @@ const CronExpressionBuilder: React.FC<CronExpressionBuilderProps> = ({
           <Grid item xs={12} sm={6} md={2.4}>
             <TextField
               fullWidth
-              label="Day of Month"
+              label={t('cronJobs.dayOfMonth')}
               value={cronParts.dayOfMonth}
               onChange={(e) => handlePartChange('dayOfMonth', e.target.value)}
               placeholder="*"
@@ -221,7 +238,7 @@ const CronExpressionBuilder: React.FC<CronExpressionBuilderProps> = ({
           <Grid item xs={12} sm={6} md={2.4}>
             <TextField
               fullWidth
-              label="Month"
+              label={t('cronJobs.month')}
               value={cronParts.month}
               onChange={(e) => handlePartChange('month', e.target.value)}
               placeholder="*"
@@ -232,7 +249,7 @@ const CronExpressionBuilder: React.FC<CronExpressionBuilderProps> = ({
           <Grid item xs={12} sm={6} md={2.4}>
             <TextField
               fullWidth
-              label="Day of Week"
+              label={t('cronJobs.dayOfWeek')}
               value={cronParts.dayOfWeek}
               onChange={(e) => handlePartChange('dayOfWeek', e.target.value)}
               placeholder="*"
@@ -247,7 +264,7 @@ const CronExpressionBuilder: React.FC<CronExpressionBuilderProps> = ({
       {validation.valid && validation.nextRun && (
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
           <Typography variant="caption" color="text.secondary">
-            Next run:
+            {t('cronJobs.nextRunLabel')}
           </Typography>
           <Chip
             label={new Date(validation.nextRun).toLocaleString()}

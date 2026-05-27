@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -139,6 +140,7 @@ async function encryptFormFields(form: {
 }
 
 const RemoteConnections: React.FC = () => {
+  const { t } = useTranslation();
   const [connections, setConnections] = useState<RemoteConnection[]>([]);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingConnection, setEditingConnection] = useState<RemoteConnection | null>(null);
@@ -597,7 +599,7 @@ const RemoteConnections: React.FC = () => {
       {/* Page header */}
       <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-200 dark:border-neutral-800">
         <div>
-          <h1 className="text-base font-semibold text-neutral-900 dark:text-neutral-100 leading-tight">Remote Connections</h1>
+          <h1 className="text-base font-semibold text-neutral-900 dark:text-neutral-100 leading-tight">{t('remoteConnections.title')}</h1>
           <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">Manage SSH connections and remote PM2 processes</p>
         </div>
         <Box sx={{ display: 'flex', gap: 1 }}>

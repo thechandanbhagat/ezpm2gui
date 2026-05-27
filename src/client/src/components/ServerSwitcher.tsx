@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { RemoteConnection } from '../types/remote';
 import {
   ServerStackIcon,
@@ -24,6 +25,7 @@ const ServerSwitcher: React.FC<ServerSwitcherProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
 
   // @group Handlers : Close dropdown on outside click
   useEffect(() => {
@@ -50,7 +52,7 @@ const ServerSwitcher: React.FC<ServerSwitcherProps> = ({
                      ? 'border-neutral-700 bg-neutral-800 text-neutral-300 hover:bg-neutral-700'
                      : 'border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50'
                    }`}
-        title="Switch active server"
+        title={t('serverSwitcher.title')}
       >
         {/* Connection status dot */}
         <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${
@@ -81,9 +83,9 @@ const ServerSwitcher: React.FC<ServerSwitcherProps> = ({
           >
             <div className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0" />
             <div className="flex-1 min-w-0">
-              <div className="font-medium">Local</div>
+              <div className="font-medium">{t('serverSwitcher.local')}</div>
               <div className={`text-xs ${darkMode ? 'text-neutral-500' : 'text-neutral-400'}`}>
-                localhost
+                {t('serverSwitcher.localhost')}
               </div>
             </div>
             {activeServerId === 'local' && (
@@ -96,7 +98,7 @@ const ServerSwitcher: React.FC<ServerSwitcherProps> = ({
               <div className={`my-1 border-t ${darkMode ? 'border-neutral-700' : 'border-neutral-100'}`} />
               <p className={`px-3 py-1 text-xs uppercase tracking-wider font-semibold
                             ${darkMode ? 'text-neutral-500' : 'text-neutral-400'}`}>
-                Remote Servers
+                {t('serverSwitcher.remoteServers')}
               </p>
 
               {connections.map(c => (

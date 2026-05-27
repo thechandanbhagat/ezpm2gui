@@ -27,6 +27,7 @@ import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 import LockIcon         from '@mui/icons-material/Lock';
 import LockOpenIcon     from '@mui/icons-material/LockOpen';
 import PageHeader from './PageHeader';
+import { useTranslation } from 'react-i18next';
 
 // @group Types : Settings page types
 type SectionId = 'general' | 'appearance' | 'pm2' | 'advanced' | 'updates' | 'security';
@@ -51,15 +52,6 @@ interface Section {
   icon: React.ReactNode;
 }
 
-// @group Constants : Sidebar section definitions
-const SECTIONS: Section[] = [
-  { id: 'general',    label: 'General',    icon: <TuneIcon    sx={{ fontSize: 16 }} /> },
-  { id: 'appearance', label: 'Appearance', icon: <PaletteIcon sx={{ fontSize: 16 }} /> },
-  { id: 'pm2',        label: 'PM2',        icon: <TerminalIcon sx={{ fontSize: 16 }} /> },
-  { id: 'advanced',   label: 'Advanced',   icon: <DeleteSweepIcon sx={{ fontSize: 16 }} /> },
-  { id: 'updates',    label: 'Updates',    icon: <SystemUpdateAltIcon sx={{ fontSize: 16 }} /> },
-  { id: 'security',   label: 'Security',   icon: <LockIcon sx={{ fontSize: 16 }} /> },
-];
 
 // @group Utilities : Load setting from localStorage with fallback
 const load = (key: string, fallback: string) =>
@@ -104,6 +96,16 @@ const SectionCard: React.FC<{ title: string; children: React.ReactNode }> = ({ t
 
 // @group Settings : Main Settings page component
 const Settings: React.FC = () => {
+  const { t } = useTranslation();
+
+  const SECTIONS: Section[] = [
+    { id: 'general',    label: t('settings.sections.general'),    icon: <TuneIcon    sx={{ fontSize: 16 }} /> },
+    { id: 'appearance', label: t('settings.sections.appearance'), icon: <PaletteIcon sx={{ fontSize: 16 }} /> },
+    { id: 'pm2',        label: t('settings.sections.pm2'),        icon: <TerminalIcon sx={{ fontSize: 16 }} /> },
+    { id: 'advanced',   label: t('settings.sections.advanced'),   icon: <DeleteSweepIcon sx={{ fontSize: 16 }} /> },
+    { id: 'updates',    label: t('settings.sections.updates'),    icon: <SystemUpdateAltIcon sx={{ fontSize: 16 }} /> },
+    { id: 'security',   label: t('settings.sections.security'),   icon: <LockIcon sx={{ fontSize: 16 }} /> },
+  ];
 
   // @group State : Active sidebar section — allow external deep-link via ?section=security
   const [activeSection, setActiveSection] = useState<SectionId>(() => {
@@ -151,11 +153,11 @@ const Settings: React.FC = () => {
     setSecError(null);
     setSecSuccess(null);
     if (!/^\d{4}$/.test(pinNew)) {
-      setSecError('PIN must be exactly 4 digits');
+      setSecError(t('settings.messages.pinMustBe4Digits'));
       return;
     }
     if (pinNew !== pinConfirm) {
-      setSecError('PINs do not match');
+      setSecError(t('settings.messages.pinsDoNotMatch'));
       return;
     }
     setPinSaving(true);
@@ -170,12 +172,12 @@ const Settings: React.FC = () => {
         setPinSet(true);
         setPinNew('');
         setPinConfirm('');
-        setSecSuccess(pinSet ? 'PIN changed successfully' : 'PIN protection enabled');
+        setSecSuccess(pinSet ? t('settings.messages.pinChanged') : t('settings.messages.pinEnabled'));
       } else {
-        setSecError(json.error || 'Failed to save PIN');
+        setSecError(json.error || t('settings.messages.failedSavePin'));
       }
     } catch {
-      setSecError('Network error — could not reach the server');
+      setSecError(t('settings.messages.networkError'));
     } finally {
       setPinSaving(false);
     }
@@ -186,7 +188,7 @@ const Settings: React.FC = () => {
     setSecError(null);
     setSecSuccess(null);
     if (!pinRemovePassword) {
-      setSecError('Enter your current password to remove the PIN');
+      setSecError(t('settings.messages.enterPasswordToRemovePin'));
       return;
     }
     setPinRemoving(true);
@@ -200,12 +202,12 @@ const Settings: React.FC = () => {
       if (json.success) {
         setPinSet(false);
         setPinRemovePassword('');
-        setSecSuccess('PIN protection removed');
+        setSecSuccess(t('settings.messages.pinRemoved'));
       } else {
-        setSecError(json.error || 'Failed to remove PIN');
+        setSecError(json.error || t('settings.messages.failedRemovePin'));
       }
     } catch {
-      setSecError('Network error — could not reach the server');
+      setSecError(t('settings.messages.networkError'));
     } finally {
       setPinRemoving(false);
     }
@@ -238,12 +240,12 @@ const Settings: React.FC = () => {
         setSecNewPassword('');
         setSecConfirmPassword('');
         setSecCurrentPassword('');
-        setSecSuccess(secPasswordSet ? 'Password changed successfully' : 'Password protection enabled');
+        setSecSuccess(secPasswordSet ? t('settings.messages.passwordChanged') : t('settings.messages.passwordEnabled'));
       } else {
-        setSecError(json.error || 'Failed to save password');
+        setSecError(json.error || t('settings.messages.failedSavePassword'));
       }
     } catch {
-      setSecError('Network error — could not reach the server');
+      setSecError(t('settings.messages.networkError'));
     } finally {
       setSecSaving(false);
     }
@@ -254,7 +256,7 @@ const Settings: React.FC = () => {
     setSecError(null);
     setSecSuccess(null);
     if (!secRemovePassword) {
-      setSecError('Enter your current password to remove protection');
+      setSecError(t('settings.messages.enterPasswordToRemove'));
       return;
     }
     setSecRemoving(true);
@@ -268,12 +270,12 @@ const Settings: React.FC = () => {
       if (json.success) {
         setSecPasswordSet(false);
         setSecRemovePassword('');
-        setSecSuccess('Password protection removed');
+        setSecSuccess(t('settings.messages.passwordRemoved'));
       } else {
-        setSecError(json.error || 'Failed to remove password');
+        setSecError(json.error || t('settings.messages.failedRemovePassword'));
       }
     } catch {
-      setSecError('Network error — could not reach the server');
+      setSecError(t('settings.messages.networkError'));
     } finally {
       setSecRemoving(false);
     }
@@ -293,14 +295,14 @@ const Settings: React.FC = () => {
       const json = await res.json();
       if (json.success) {
         setAutoLockMinutes(json.autoLockMinutes);
-        setSecSuccess(json.autoLockMinutes === 0 ? 'Auto-lock disabled' : `Auto-lock set to ${json.autoLockMinutes} minute${json.autoLockMinutes !== 1 ? 's' : ''}`);
+        setSecSuccess(json.autoLockMinutes === 0 ? t('settings.messages.autoLockDisabled') : `Auto-lock set to ${json.autoLockMinutes} minute${json.autoLockMinutes !== 1 ? 's' : ''}`);
         // Notify App.tsx so the inactivity timer updates immediately
         window.dispatchEvent(new CustomEvent('ezpm2_autolock_changed', { detail: { autoLockMinutes: json.autoLockMinutes } }));
       } else {
-        setSecError(json.error || 'Failed to save auto-lock setting');
+        setSecError(json.error || t('settings.messages.failedSaveAutolock'));
       }
     } catch {
-      setSecError('Network error — could not reach the server');
+      setSecError(t('settings.messages.networkError'));
     } finally {
       setAutoLockSaving(false);
     }
@@ -329,14 +331,14 @@ const Settings: React.FC = () => {
   const [compactMode,      setCompactMode]      = useState<boolean>(load('compactMode', 'false') === 'true');
   const [showTimestamps,   setShowTimestamps]   = useState<boolean>(load('showTimestamps', 'true') === 'true');
   const [toastOpen,        setToastOpen]        = useState<boolean>(false);
-  const [toastMsg,         setToastMsg]         = useState<string>('Settings saved');
+  const [toastMsg,         setToastMsg]         = useState<string>('');
 
   // @group Handlers : Persist a key and show toast
-  const save = useCallback((key: string, value: string, msg = 'Saved') => {
+  const save = useCallback((key: string, value: string, msg?: string) => {
     localStorage.setItem(key, value);
-    setToastMsg(msg);
+    setToastMsg(msg ?? t('settings.messages.saved'));
     setToastOpen(true);
-  }, []);
+  }, [t]);
 
   const handleThemeChange = (e: SelectChangeEvent) => {
     setTheme(e.target.value);
@@ -356,13 +358,13 @@ const Settings: React.FC = () => {
     setTheme('blue');
     setCompactMode(false);
     setShowTimestamps(true);
-    setToastMsg('Reset to defaults');
+    setToastMsg(t('settings.messages.resetToDefaults'));
     setToastOpen(true);
   };
 
   const handleClearData = () => {
     localStorage.clear();
-    setToastMsg('All local data cleared');
+    setToastMsg(t('settings.messages.dataCleared'));
     setToastOpen(true);
   };
 
@@ -377,10 +379,10 @@ const Settings: React.FC = () => {
       if (json.success) {
         setVersionInfo(json.data as VersionInfo);
       } else {
-        setCheckError(json.error || 'Failed to check for updates');
+        setCheckError(json.error || t('settings.messages.failedCheckUpdates'));
       }
     } catch {
-      setCheckError('Network error — could not reach npm registry');
+      setCheckError(t('settings.messages.networkErrorNpm'));
     } finally {
       setCheckingUpdate(false);
     }
@@ -445,10 +447,10 @@ const Settings: React.FC = () => {
       case 'general':
         return (
           <>
-            <SectionCard title="Dashboard">
+            <SectionCard title={t('settings.cards.dashboard')}>
               <SettingRow
-                label="Auto Refresh"
-                description="Automatically refresh process data at a set interval"
+                label={t('settings.rows.autoRefresh')}
+                description={t('settings.rows.autoRefreshDesc')}
                 control={
                   <Switch
                     size="small"
@@ -458,8 +460,8 @@ const Settings: React.FC = () => {
                 }
               />
               <SettingRow
-                label="Refresh Interval"
-                description="How often to poll for updated process data"
+                label={t('settings.rows.refreshInterval')}
+                description={t('settings.rows.refreshIntervalDesc')}
                 last
                 control={
                   <FormControl size="small" sx={{ minWidth: 130 }}>
@@ -468,22 +470,22 @@ const Settings: React.FC = () => {
                       disabled={!autoRefresh}
                       onChange={e => { setRefreshInterval(e.target.value); save('refreshInterval', e.target.value); }}
                     >
-                      <MenuItem value="1000">Every 1s</MenuItem>
-                      <MenuItem value="2000">Every 2s</MenuItem>
-                      <MenuItem value="3000">Every 3s</MenuItem>
-                      <MenuItem value="5000">Every 5s</MenuItem>
-                      <MenuItem value="10000">Every 10s</MenuItem>
-                      <MenuItem value="30000">Every 30s</MenuItem>
+                      <MenuItem value="1000">{t('settings.intervals.every1s')}</MenuItem>
+                      <MenuItem value="2000">{t('settings.intervals.every2s')}</MenuItem>
+                      <MenuItem value="3000">{t('settings.intervals.every3s')}</MenuItem>
+                      <MenuItem value="5000">{t('settings.intervals.every5s')}</MenuItem>
+                      <MenuItem value="10000">{t('settings.intervals.every10s')}</MenuItem>
+                      <MenuItem value="30000">{t('settings.intervals.every30s')}</MenuItem>
                     </Select>
                   </FormControl>
                 }
               />
             </SectionCard>
 
-            <SectionCard title="Logs">
+            <SectionCard title={t('settings.cards.logs')}>
               <SettingRow
-                label="Log Lines to Display"
-                description="Maximum number of log lines shown in the log viewer"
+                label={t('settings.rows.logLines')}
+                description={t('settings.rows.logLinesDesc')}
                 control={
                   <FormControl size="small" sx={{ minWidth: 100 }}>
                     <Select
@@ -500,8 +502,8 @@ const Settings: React.FC = () => {
                 }
               />
               <SettingRow
-                label="Show Timestamps"
-                description="Display timestamps alongside each log line"
+                label={t('settings.rows.showTimestamps')}
+                description={t('settings.rows.showTimestampsDesc')}
                 last
                 control={
                   <Switch
@@ -519,10 +521,10 @@ const Settings: React.FC = () => {
       case 'appearance':
         return (
           <>
-            <SectionCard title="Theme">
+            <SectionCard title={t('settings.cards.theme')}>
               <SettingRow
-                label="Compact Mode"
-                description="Reduce padding and spacing for a denser layout"
+                label={t('settings.rows.compactMode')}
+                description={t('settings.rows.compactModeDesc')}
                 control={
                   <Switch
                     size="small"
@@ -532,8 +534,8 @@ const Settings: React.FC = () => {
                 }
               />
               <SettingRow
-                label="Accent Color"
-                description="Primary color used for highlights and active states"
+                label={t('settings.rows.accentColor')}
+                description={t('settings.rows.accentColorDesc')}
                 last
                 control={
                   <FormControl size="small" sx={{ minWidth: 130 }}>
@@ -541,25 +543,25 @@ const Settings: React.FC = () => {
                       <MenuItem value="blue">
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#3b82f6' }} />
-                          Blue
+                          {t('settings.colors.blue')}
                         </Box>
                       </MenuItem>
                       <MenuItem value="purple">
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#8b5cf6' }} />
-                          Purple
+                          {t('settings.colors.purple')}
                         </Box>
                       </MenuItem>
                       <MenuItem value="green">
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#22c55e' }} />
-                          Green
+                          {t('settings.colors.green')}
                         </Box>
                       </MenuItem>
                       <MenuItem value="orange">
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#f97316' }} />
-                          Orange
+                          {t('settings.colors.orange')}
                         </Box>
                       </MenuItem>
                     </Select>
@@ -570,7 +572,7 @@ const Settings: React.FC = () => {
 
             <Paper variant="outlined" sx={{ p: 2 }}>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
-                Dark / light mode is toggled from the top-right sun/moon icon in the navigation bar.
+                {t('settings.notes.darkModeToggle')}
               </Typography>
             </Paper>
           </>
@@ -579,10 +581,10 @@ const Settings: React.FC = () => {
       // ── PM2 ────────────────────────────────────────────────────
       case 'pm2':
         return (
-          <SectionCard title="PM2 Executable">
+          <SectionCard title={t('settings.cards.pm2Executable')}>
             <SettingRow
-              label="PM2 Path"
-              description="Absolute path or command name for the PM2 binary"
+              label={t('settings.rows.pm2Path')}
+              description={t('settings.rows.pm2PathDesc')}
               last
               control={
                 <TextField
@@ -603,10 +605,10 @@ const Settings: React.FC = () => {
       case 'advanced':
         return (
           <>
-            <SectionCard title="Reset">
+            <SectionCard title={t('settings.cards.reset')}>
               <SettingRow
-                label="Reset to Defaults"
-                description="Restore all settings to their original default values"
+                label={t('settings.rows.resetToDefaults')}
+                description={t('settings.rows.resetToDefaultsDesc')}
                 last
                 control={
                   <Button
@@ -615,16 +617,16 @@ const Settings: React.FC = () => {
                     startIcon={<RestartAltIcon fontSize="small" />}
                     onClick={handleResetDefaults}
                   >
-                    Reset
+                    {t('settings.buttons.reset')}
                   </Button>
                 }
               />
             </SectionCard>
 
-            <SectionCard title="Data">
+            <SectionCard title={t('settings.cards.data')}>
               <SettingRow
-                label="Clear Local Storage"
-                description="Wipe all locally stored data including preferences and cached values"
+                label={t('settings.rows.clearLocalStorage')}
+                description={t('settings.rows.clearLocalStorageDesc')}
                 last
                 control={
                   <Button
@@ -634,7 +636,7 @@ const Settings: React.FC = () => {
                     startIcon={<DeleteSweepIcon fontSize="small" />}
                     onClick={handleClearData}
                   >
-                    Clear All
+                    {t('settings.buttons.clearAll')}
                   </Button>
                 }
               />
@@ -642,8 +644,7 @@ const Settings: React.FC = () => {
 
             <Paper variant="outlined" sx={{ p: 2 }}>
               <Typography variant="caption" color="text.secondary">
-                <strong>Note:</strong> Clearing local storage will remove all saved preferences.
-                The page will revert to defaults on next load.
+                {t('settings.notes.clearDataNote')}
               </Typography>
             </Paper>
           </>
@@ -658,10 +659,10 @@ const Settings: React.FC = () => {
         return (
           <>
             {/* ── Version check ── */}
-            <SectionCard title="Version">
+            <SectionCard title={t('settings.cards.version')}>
               <SettingRow
-                label="Current Version"
-                description="The version of ezpm2gui currently running"
+                label={t('settings.rows.currentVersion')}
+                description={t('settings.rows.currentVersionDesc')}
                 control={
                   <Chip
                     label={versionInfo ? `v${versionInfo.currentVersion}` : 'unknown'}
@@ -672,8 +673,8 @@ const Settings: React.FC = () => {
                 }
               />
               <SettingRow
-                label="Latest on npm"
-                description="The most recent published version from the npm registry"
+                label={t('settings.rows.latestOnNpm')}
+                description={t('settings.rows.latestOnNpmDesc')}
                 control={
                   versionInfo ? (
                     <Chip
@@ -688,11 +689,11 @@ const Settings: React.FC = () => {
                 }
               />
               <SettingRow
-                label="Status"
+                label={t('settings.rows.statusLabel')}
                 description={
                   versionInfo?.publishedAt
-                    ? `Latest published: ${new Date(versionInfo.publishedAt).toLocaleDateString()}`
-                    : 'Click Check for Updates to fetch latest version info'
+                    ? `${t('settings.notes.latestPublishedPrefix')} ${new Date(versionInfo.publishedAt).toLocaleDateString()}`
+                    : t('settings.notes.clickToFetch')
                 }
                 last
                 control={
@@ -703,7 +704,7 @@ const Settings: React.FC = () => {
                     onClick={handleCheckUpdate}
                     disabled={checkingUpdate || installing}
                   >
-                    {checkingUpdate ? 'Checking...' : 'Check for Updates'}
+                    {checkingUpdate ? t('settings.buttons.checking') : t('settings.buttons.checkForUpdates')}
                   </Button>
                 }
               />
@@ -730,7 +731,7 @@ const Settings: React.FC = () => {
 
             {/* ── Install update ── */}
             {versionInfo?.updateAvailable && !installDone && (
-              <SectionCard title="Install Update">
+              <SectionCard title={t('settings.cards.installUpdate')}>
                 <SettingRow
                   label={`Install v${versionInfo.latestVersion}`}
                   description="Runs npm install -g ezpm2gui@latest. Frontend assets update immediately; restart the server to apply backend changes."
@@ -744,7 +745,7 @@ const Settings: React.FC = () => {
                       onClick={handleInstallUpdate}
                       disabled={installing}
                     >
-                      {installing ? 'Installing...' : 'Install Update'}
+                      {installing ? t('settings.buttons.installing') : t('settings.buttons.installUpdate')}
                     </Button>
                   }
                 />
@@ -756,7 +757,7 @@ const Settings: React.FC = () => {
               <Paper variant="outlined" sx={{ mb: 2 }}>
                 <Box sx={{ px: 2, py: 1.25, borderBottom: 1, borderColor: 'divider', bgcolor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Typography variant="subtitle2" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.6875rem' }}>
-                    Install Output
+                    {t('settings.cards.installOutput')}
                   </Typography>
                   {installing && <LinearProgress sx={{ width: 80, ml: 1 }} />}
                 </Box>
@@ -787,19 +788,19 @@ const Settings: React.FC = () => {
 
             {/* ── Post-install actions ── */}
             {installDone && (
-              <SectionCard title="Apply Update">
+              <SectionCard title={t('settings.cards.applyUpdate')}>
                 <SettingRow
-                  label="Reload Page"
-                  description="Refresh to load the updated frontend assets immediately"
+                  label={t('settings.rows.reloadPage')}
+                  description={t('settings.rows.reloadPageDesc')}
                   control={
                     <Button variant="outlined" size="small" onClick={() => window.location.reload()}>
-                      Reload
+                      {t('settings.buttons.reload')}
                     </Button>
                   }
                 />
                 <SettingRow
-                  label="Restart Server"
-                  description="Restarts the Node.js server process to apply backend changes. Requires a process manager (PM2, systemd, nodemon) to respawn the process."
+                  label={t('settings.rows.restartServer')}
+                  description={t('settings.rows.restartServerDesc')}
                   last
                   control={
                     <Button
@@ -810,7 +811,7 @@ const Settings: React.FC = () => {
                       onClick={handleRestartServer}
                       disabled={restarting}
                     >
-                      {restarting ? 'Restarting...' : 'Restart Server'}
+                      {restarting ? t('settings.buttons.restarting') : t('settings.buttons.restartServer')}
                     </Button>
                   }
                 />
@@ -841,14 +842,14 @@ const Settings: React.FC = () => {
             ) : (
               <>
                 {/* Status */}
-                <SectionCard title="Status">
+                <SectionCard title={t('settings.cards.status')}>
                   <SettingRow
-                    label="Password Protection"
-                    description="When enabled, a password is required to access EZ PM2 GUI"
+                    label={t('settings.rows.passwordProtection')}
+                    description={t('settings.rows.passwordProtectionDesc')}
                     last
                     control={
                       <Chip
-                        label={secPasswordSet ? 'Enabled' : 'Disabled'}
+                        label={secPasswordSet ? t('common.enabled') : t('settings.rows.disabled')}
                         size="small"
                         color={secPasswordSet ? 'success' : 'default'}
                         variant={secPasswordSet ? 'filled' : 'outlined'}
@@ -859,11 +860,11 @@ const Settings: React.FC = () => {
                 </SectionCard>
 
                 {/* Set / Change password */}
-                <SectionCard title={secPasswordSet ? 'Change Password' : 'Set Password'}>
+                <SectionCard title={secPasswordSet ? t('settings.cards.changePassword') : t('settings.cards.setPassword')}>
                   {secPasswordSet && (
                     <SettingRow
-                      label="Current Password"
-                      description="Required to change the existing password"
+                      label={t('settings.rows.currentPassword')}
+                      description={t('settings.rows.currentPasswordDesc')}
                       control={
                         <TextField
                           type="password"
@@ -877,8 +878,8 @@ const Settings: React.FC = () => {
                     />
                   )}
                   <SettingRow
-                    label="New Password"
-                    description="Minimum 4 characters"
+                    label={t('settings.rows.newPassword')}
+                    description={t('settings.rows.newPasswordDesc')}
                     control={
                       <TextField
                         type="password"
@@ -891,8 +892,8 @@ const Settings: React.FC = () => {
                     }
                   />
                   <SettingRow
-                    label="Confirm Password"
-                    description="Re-enter new password to confirm"
+                    label={t('settings.rows.confirmPassword')}
+                    description={t('settings.rows.confirmPasswordDesc')}
                     last
                     control={
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -911,7 +912,7 @@ const Settings: React.FC = () => {
                           disabled={secSaving || !secNewPassword || !secConfirmPassword}
                           startIcon={secSaving ? <CircularProgress size={12} color="inherit" /> : <LockIcon fontSize="small" />}
                         >
-                          {secSaving ? 'Saving...' : secPasswordSet ? 'Change' : 'Enable'}
+                          {secSaving ? t('settings.buttons.saving') : secPasswordSet ? t('settings.buttons.change') : t('settings.buttons.enable')}
                         </Button>
                       </Box>
                     }
@@ -920,10 +921,10 @@ const Settings: React.FC = () => {
 
                 {/* Remove password */}
                 {secPasswordSet && (
-                  <SectionCard title="Remove Password">
+                  <SectionCard title={t('settings.cards.removePassword')}>
                     <SettingRow
-                      label="Disable Protection"
-                      description="Enter your current password to remove password protection"
+                      label={t('settings.rows.disableProtection')}
+                      description={t('settings.rows.disableProtectionDesc')}
                       last
                       control={
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -943,7 +944,7 @@ const Settings: React.FC = () => {
                             disabled={secRemoving || !secRemovePassword}
                             startIcon={secRemoving ? <CircularProgress size={12} color="inherit" /> : <LockOpenIcon fontSize="small" />}
                           >
-                            {secRemoving ? 'Removing...' : 'Remove'}
+                            {secRemoving ? t('settings.buttons.removing') : t('settings.buttons.remove')}
                           </Button>
                         </Box>
                       }
@@ -953,22 +954,22 @@ const Settings: React.FC = () => {
 
                 {/* PIN Protection */}
                 {secPasswordSet && (
-                  <SectionCard title="PIN Protection">
+                  <SectionCard title={t('settings.cards.pinProtection')}>
                     <SettingRow
-                      label="PIN Status"
-                      description="A 4-digit PIN can be used on the lock screen as an alternative to your password"
+                      label={t('settings.rows.pinStatus')}
+                      description={t('settings.rows.pinStatusDesc')}
                       control={
                         <Chip
                           size="small"
-                          label={pinSet ? 'Enabled' : 'Disabled'}
+                          label={pinSet ? t('common.enabled') : t('settings.rows.disabled')}
                           color={pinSet ? 'success' : 'default'}
                           variant={pinSet ? 'filled' : 'outlined'}
                         />
                       }
                     />
                     <SettingRow
-                      label={pinSet ? 'Change PIN' : 'Set PIN'}
-                      description="Enter a 4-digit numeric PIN"
+                      label={pinSet ? t('settings.rows.changePin') : t('settings.rows.setPin')}
+                      description={t('settings.rows.pinDesc')}
                       control={
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <TextField
@@ -994,15 +995,15 @@ const Settings: React.FC = () => {
                             disabled={pinSaving || pinNew.length !== 4 || pinConfirm.length !== 4}
                             startIcon={pinSaving ? <CircularProgress size={12} color="inherit" /> : undefined}
                           >
-                            {pinSaving ? 'Saving...' : pinSet ? 'Change' : 'Enable'}
+                            {pinSaving ? t('settings.buttons.saving') : pinSet ? t('settings.buttons.change') : t('settings.buttons.enable')}
                           </Button>
                         </Box>
                       }
                     />
                     {pinSet && (
                       <SettingRow
-                        label="Remove PIN"
-                        description="Enter your current password to remove PIN protection"
+                        label={t('settings.rows.removePin')}
+                        description={t('settings.rows.removePinDesc')}
                         last
                         control={
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -1022,7 +1023,7 @@ const Settings: React.FC = () => {
                               disabled={pinRemoving || !pinRemovePassword}
                               startIcon={pinRemoving ? <CircularProgress size={12} color="inherit" /> : <LockOpenIcon fontSize="small" />}
                             >
-                              {pinRemoving ? 'Removing...' : 'Remove'}
+                              {pinRemoving ? t('settings.buttons.removing') : t('settings.buttons.remove')}
                             </Button>
                           </Box>
                         }
@@ -1034,10 +1035,10 @@ const Settings: React.FC = () => {
 
                 {/* Auto-lock timeout */}
                 {secPasswordSet && (
-                  <SectionCard title="Auto-Lock">
+                  <SectionCard title={t('settings.cards.autoLock')}>
                     <SettingRow
-                      label="Lock after inactivity"
-                      description="Automatically lock the app after a period of inactivity. Set to 0 to disable."
+                      label={t('settings.rows.lockAfterInactivity')}
+                      description={t('settings.rows.lockAfterInactivityDesc')}
                       last
                       control={
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -1049,7 +1050,7 @@ const Settings: React.FC = () => {
                             inputProps={{ min: 0, max: 480, step: 1 }}
                             sx={{ width: 80 }}
                           />
-                          <Typography variant="caption" color="text.secondary">min</Typography>
+                          <Typography variant="caption" color="text.secondary">{t('settings.messages.min')}</Typography>
                           <Button
                             variant="outlined"
                             size="small"
@@ -1057,7 +1058,7 @@ const Settings: React.FC = () => {
                             disabled={autoLockSaving}
                             startIcon={autoLockSaving ? <CircularProgress size={12} color="inherit" /> : undefined}
                           >
-                            {autoLockSaving ? 'Saving...' : 'Save'}
+                            {autoLockSaving ? t('settings.buttons.saving') : t('settings.buttons.save')}
                           </Button>
                         </Box>
                       }
@@ -1067,8 +1068,7 @@ const Settings: React.FC = () => {
 
                 <Paper variant="outlined" sx={{ p: 2 }}>
                   <Typography variant="caption" color="text.secondary">
-                    The password is hashed with PBKDF2 (SHA-512, 100,000 iterations) and stored server-side.
-                    It is never stored in plain text.
+                    {t('settings.notes.securityNote')}
                   </Typography>
                 </Paper>
               </>
@@ -1082,7 +1082,7 @@ const Settings: React.FC = () => {
   // @group Render : Page layout — sidebar + content
   return (
     <Box>
-      <PageHeader title="Settings" subtitle="Application preferences and configuration" />
+      <PageHeader title={t('settings.title')} subtitle={t('settings.subtitle')} />
 
       <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
 
@@ -1123,7 +1123,7 @@ const Settings: React.FC = () => {
               {SECTIONS.find(s => s.id === activeSection)?.label}
             </Typography>
             <Chip
-              label="Auto-saved"
+              label={t('settings.autoSaved')}
               size="small"
               variant="outlined"
               sx={{ fontSize: '0.6875rem', height: 18, opacity: 0.5 }}

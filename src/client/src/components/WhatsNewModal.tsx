@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   XMarkIcon,
   SparklesIcon,
@@ -20,8 +21,8 @@ interface HighlightItem {
   icon: React.ElementType;
   color: string;
   bg: string;
-  title: string;
-  description: string;
+  titleKey: string;
+  descKey: string;
 }
 
 interface WhatsNewModalProps {
@@ -36,36 +37,36 @@ const HIGHLIGHTS: HighlightItem[] = [
     icon: SignalIcon,
     color: 'text-indigo-500',
     bg: 'bg-indigo-500/10',
-    title: 'Live Metrics Page',
-    description: 'Per-process rolling 1-hour CPU and memory sparklines, updated every 3s. Find it under Metrics in the sidebar.',
+    titleKey: 'whatsNew.feature1Title',
+    descKey: 'whatsNew.feature1Desc',
   },
   {
     icon: ChartBarIcon,
     color: 'text-cyan-500',
     bg: 'bg-cyan-500/10',
-    title: 'Metrics History (SQLite)',
-    description: 'Remote process metrics recorded every 30s to a local SQLite DB. View CPU and memory charts across 30 min to 7 days.',
+    titleKey: 'whatsNew.feature2Title',
+    descKey: 'whatsNew.feature2Desc',
   },
   {
     icon: CpuChipIcon,
     color: 'text-emerald-500',
     bg: 'bg-emerald-500/10',
-    title: 'Inline Sparklines',
-    description: 'Every row in the Metrics table now shows a 1-hour CPU and memory micro-graph — no extra click required.',
+    titleKey: 'whatsNew.feature3Title',
+    descKey: 'whatsNew.feature3Desc',
   },
   {
     icon: CircleStackIcon,
     color: 'text-violet-500',
     bg: 'bg-violet-500/10',
-    title: 'Background Metrics Poller',
-    description: 'Server-side poller samples connected remote servers every 30s regardless of which page you are on.',
+    titleKey: 'whatsNew.feature4Title',
+    descKey: 'whatsNew.feature4Desc',
   },
   {
     icon: ClockIcon,
     color: 'text-orange-500',
     bg: 'bg-orange-500/10',
-    title: '30-Day Retention',
-    description: 'Historical metrics auto-purge after 30 days to keep the database lean. Downsampling kicks in beyond 500 points.',
+    titleKey: 'whatsNew.feature5Title',
+    descKey: 'whatsNew.feature5Desc',
   },
 ];
 
@@ -81,6 +82,7 @@ export function markWhatsNewSeen(): void {
 // @group Component : Compact "What's New" popup shown once per session
 const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ open, onClose, darkMode }) => {
   const overlayRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
 
   // @group Effects : Close on Escape key
   useEffect(() => {
@@ -129,7 +131,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ open, onClose, darkMode }
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className={`text-sm font-bold ${textPri}`}>What's New</h2>
+                  <h2 className={`text-sm font-bold ${textPri}`}>{t('whatsNew.title')}</h2>
                   <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-violet-500/15 text-violet-500 border border-violet-500/25 leading-none">
                     v{VERSION}
                   </span>
@@ -155,13 +157,13 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ open, onClose, darkMode }
           {HIGHLIGHTS.map((item) => {
             const Icon = item.icon;
             return (
-              <div key={item.title} className="flex items-start gap-3">
+              <div key={item.titleKey} className="flex items-start gap-3">
                 <div className={`mt-0.5 shrink-0 w-7 h-7 rounded-lg ${item.bg} flex items-center justify-center`}>
                   <Icon className={`h-3.5 w-3.5 ${item.color}`} />
                 </div>
                 <div>
-                  <p className={`text-xs font-semibold leading-tight ${textPri}`}>{item.title}</p>
-                  <p className={`text-[11px] leading-relaxed mt-0.5 ${textMuted}`}>{item.description}</p>
+                  <p className={`text-xs font-semibold leading-tight ${textPri}`}>{t(item.titleKey)}</p>
+                  <p className={`text-[11px] leading-relaxed mt-0.5 ${textMuted}`}>{t(item.descKey)}</p>
                 </div>
               </div>
             );
@@ -177,14 +179,14 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ open, onClose, darkMode }
               darkMode ? 'text-neutral-400 hover:text-neutral-200' : 'text-neutral-500 hover:text-neutral-700'
             }`}
           >
-            Full changelog
+            {t('whatsNew.fullChangelog')}
             <ArrowRightIcon className="h-3 w-3" />
           </Link>
           <button
             onClick={onClose}
             className="px-4 py-1.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold transition-colors"
           >
-            Got it
+            {t('whatsNew.gotIt')}
           </button>
         </div>
 

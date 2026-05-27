@@ -18,6 +18,7 @@ import {
   Snackbar
 } from '@mui/material';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 
 interface ConfigurationProps {
   procId?: number | string;
@@ -38,7 +39,8 @@ interface ConfigData {
 }
 
 const ProcessConfiguration: React.FC<ConfigurationProps> = ({ procId: propProcId }) => {
-  const params = useParams<{ id: string }>();
+  const { t } = useTranslation();
+  const params= useParams<{ id: string }>();
   const processId = propProcId || Number(params.id);
   const [config, setConfig] = useState<ConfigData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -148,13 +150,13 @@ const ProcessConfiguration: React.FC<ConfigurationProps> = ({ procId: propProcId
     }
   };
 
-  if (loading) return <Typography>Loading configuration...</Typography>;
-  if (!config) return <Typography color="error">Configuration not found</Typography>;
+  if (loading) return <Typography>{t('processConfig.loading')}</Typography>;
+  if (!config) return <Typography color="error">{t('processConfig.notFound')}</Typography>;
 
   return (
     <Box>
       <Paper sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h5" gutterBottom>Process Configuration</Typography>
+        <Typography variant="h5" gutterBottom>{t('processConfig.title')}</Typography>
         <Divider sx={{ mb: 3 }} />
 
         <Grid container spacing={3}>
@@ -172,7 +174,7 @@ const ProcessConfiguration: React.FC<ConfigurationProps> = ({ procId: propProcId
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
-              label="Script Path"
+              label={t('processConfig.scriptPath')}
               name="script"
               value={config.script}
               onChange={handleInputChange}
@@ -183,7 +185,7 @@ const ProcessConfiguration: React.FC<ConfigurationProps> = ({ procId: propProcId
           <Grid item xs={12}>
             <TextField
               fullWidth
-              label="Current Working Directory"
+              label={t('processConfig.workingDir')}
               name="cwd"
               value={config.cwd}
               onChange={handleInputChange}
@@ -194,7 +196,7 @@ const ProcessConfiguration: React.FC<ConfigurationProps> = ({ procId: propProcId
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
-              label="Instances"
+              label={t('processConfig.instances')}
               name="instances"
               type="number"
               value={config.instances}
@@ -205,12 +207,12 @@ const ProcessConfiguration: React.FC<ConfigurationProps> = ({ procId: propProcId
           
           <Grid item xs={12} md={6}>
             <FormControl fullWidth margin="normal">
-              <InputLabel>Execution Mode</InputLabel>
+              <InputLabel>{t('processConfig.execMode')}</InputLabel>
               <Select
                 name="exec_mode"
                 value={config.exec_mode}
                 onChange={handleSelectChange}
-                label="Execution Mode"
+                label={t('processConfig.execMode')}
               >
                 <MenuItem value="fork">Fork</MenuItem>
                 <MenuItem value="cluster">Cluster</MenuItem>
@@ -227,7 +229,7 @@ const ProcessConfiguration: React.FC<ConfigurationProps> = ({ procId: propProcId
                   name="autorestart"
                 />
               }
-              label="Auto Restart"
+              label={t('processConfig.autoRestart')}
             />
           </Grid>
           
@@ -240,14 +242,14 @@ const ProcessConfiguration: React.FC<ConfigurationProps> = ({ procId: propProcId
                   name="watch"
                 />
               }
-              label="Watch for Changes"
+              label={t('processConfig.watchChanges')}
             />
           </Grid>
           
           <Grid item xs={12}>
             <TextField
               fullWidth
-              label="Max Memory Restart"
+              label={t('processConfig.maxMemory')}
               name="max_memory_restart"
               value={config.max_memory_restart}
               onChange={handleInputChange}
@@ -257,7 +259,7 @@ const ProcessConfiguration: React.FC<ConfigurationProps> = ({ procId: propProcId
           </Grid>
         </Grid>
         
-        <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>Environment Variables</Typography>
+        <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>{t('processConfig.envVars')}</Typography>
         <Divider sx={{ mb: 3 }} />
         
         {envKeys.map(key => (
@@ -279,7 +281,7 @@ const ProcessConfiguration: React.FC<ConfigurationProps> = ({ procId: propProcId
               color="error"
               onClick={() => removeEnvVar(key)}
             >
-              Remove
+              {t('processConfig.remove')}
             </Button>
           </Box>
         ))}
@@ -287,13 +289,13 @@ const ProcessConfiguration: React.FC<ConfigurationProps> = ({ procId: propProcId
         <Box sx={{ display: 'flex', mt: 2 }}>
           <TextField
             sx={{ mr: 1, flexGrow: 1 }}
-            label="New Key"
+            label={t('processConfig.newKey')}
             value={newEnvKey}
             onChange={(e) => setNewEnvKey(e.target.value)}
           />
           <TextField
             sx={{ mr: 1, flexGrow: 2 }}
-            label="New Value"
+            label={t('processConfig.newValue')}
             value={newEnvValue}
             onChange={(e) => setNewEnvValue(e.target.value)}
           />
@@ -312,13 +314,13 @@ const ProcessConfiguration: React.FC<ConfigurationProps> = ({ procId: propProcId
             onClick={saveConfig}
             sx={{ mr: 2 }}
           >
-            Save Configuration
+            {t('processConfig.saveConfig')}
           </Button>
           <Button
             variant="outlined"
             onClick={() => navigate('/processes')}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
         </Box>
       </Paper>

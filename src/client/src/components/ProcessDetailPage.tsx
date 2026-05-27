@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { PM2Process } from '../types/pm2';
 import ProcessLogs from './ProcessLogs';
 import LogFileBrowser from './LogFileBrowser';
@@ -56,6 +57,7 @@ interface ProcessDetailPageProps {
 // @group ProcessDetailPage : Detail view for a single PM2 process
 const ProcessDetailPage: React.FC<ProcessDetailPageProps> = ({ onAction, connectionId }) => {
   const { id } = useParams<{ id: string }>();
+  const { t } = useTranslation();
   const [process, setProcess] = useState<PM2Process | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
@@ -129,7 +131,7 @@ const ProcessDetailPage: React.FC<ProcessDetailPageProps> = ({ onAction, connect
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8, gap: 1.5 }}>
         <CircularProgress size={20} />
-        <Typography variant="body2" color="text.secondary">Loading process details…</Typography>
+        <Typography variant="body2" color="text.secondary">{t('processDetail.loadingDetails')}</Typography>
       </Box>
     );
   }
@@ -141,7 +143,7 @@ const ProcessDetailPage: React.FC<ProcessDetailPageProps> = ({ onAction, connect
           {error || 'Process not found'}
         </Alert> */}
         <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => navigate('/')}>
-          Back to Process List
+          {t('processDetail.backToList')}
         </Button>
       </Box>
     );
@@ -172,7 +174,7 @@ const ProcessDetailPage: React.FC<ProcessDetailPageProps> = ({ onAction, connect
               onClick={() => executeAction('start')}
               disabled={process.pm2_env.status === 'online'}
             >
-              Start
+              {t('common.start')}
             </Button>
             <Button
               variant="outlined"
@@ -182,7 +184,7 @@ const ProcessDetailPage: React.FC<ProcessDetailPageProps> = ({ onAction, connect
               onClick={() => executeAction('stop')}
               disabled={process.pm2_env.status === 'stopped'}
             >
-              Stop
+              {t('common.stop')}
             </Button>
             <Button
               variant="outlined"
@@ -190,7 +192,7 @@ const ProcessDetailPage: React.FC<ProcessDetailPageProps> = ({ onAction, connect
               startIcon={<RefreshIcon />}
               onClick={() => executeAction('restart')}
             >
-              Restart
+              {t('common.restart')}
             </Button>
             <Button
               variant="outlined"
@@ -199,7 +201,7 @@ const ProcessDetailPage: React.FC<ProcessDetailPageProps> = ({ onAction, connect
               startIcon={<DeleteIcon />}
               onClick={() => executeAction('delete')}
             >
-              Delete
+              {t('common.delete')}
             </Button>
           </Box>
         }
@@ -209,10 +211,10 @@ const ProcessDetailPage: React.FC<ProcessDetailPageProps> = ({ onAction, connect
       <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
         <Grid container spacing={2}>
           {[
-            { label: 'CPU Usage',     value: process.monit ? `${process.monit.cpu}%` : 'N/A' },
-            { label: 'Memory',        value: process.monit ? formatMemory(process.monit.memory) : 'N/A' },
-            { label: 'Restarts',      value: process.pm2_env.restart_time },
-            { label: 'Started At',    value: formatDate(process.pm2_env.pm_uptime) },
+            { label: t('processDetail.cpuUsage'),  value: process.monit ? `${process.monit.cpu}%` : t('common.na') },
+            { label: t('common.memory'),            value: process.monit ? formatMemory(process.monit.memory) : t('common.na') },
+            { label: t('common.restarts'),          value: process.pm2_env.restart_time },
+            { label: t('processDetail.startedAt'),  value: formatDate(process.pm2_env.pm_uptime) },
           ].map(({ label, value }) => (
             <Grid item xs={6} sm={3} key={label}>
               <Typography variant="caption" color="text.secondary" display="block">{label}</Typography>
@@ -226,10 +228,10 @@ const ProcessDetailPage: React.FC<ProcessDetailPageProps> = ({ onAction, connect
       <Paper variant="outlined">
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)} aria-label="process details tabs">
-            <Tab label="Details"   id="process-tab-0" aria-controls="process-tabpanel-0" />
-            <Tab label="Logs"      id="process-tab-1" aria-controls="process-tabpanel-1" />
-            <Tab label="Log Files" id="process-tab-2" aria-controls="process-tabpanel-2" />
-            <Tab label="Metrics"   id="process-tab-3" aria-controls="process-tabpanel-3" />
+            <Tab label={t('common.details')}     id="process-tab-0" aria-controls="process-tabpanel-0" />
+            <Tab label={t('common.logs')}        id="process-tab-1" aria-controls="process-tabpanel-1" />
+            <Tab label="Log Files"               id="process-tab-2" aria-controls="process-tabpanel-2" />
+            <Tab label={t('common.metrics')}     id="process-tab-3" aria-controls="process-tabpanel-3" />
           </Tabs>
         </Box>
 
@@ -237,14 +239,14 @@ const ProcessDetailPage: React.FC<ProcessDetailPageProps> = ({ onAction, connect
         <TabPanel value={activeTab} index={0}>
           <Grid container spacing={2}>
             <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>Process Information</Typography>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>{t('processDetail.processDetails')}</Typography>
               <Grid container spacing={1.5}>
                 {[
-                  { label: 'Namespace',   value: process.pm2_env.namespace || 'default' },
-                  { label: 'Exec Mode',   value: process.pm2_env.exec_mode || 'N/A' },
-                  { label: 'Instances',   value: process.pm2_env.instances || 1 },
-                  { label: 'Created At',  value: formatDate(process.pm2_env.created_at) },
-                  { label: 'Restarts',    value: process.pm2_env.restart_time },
+                  { label: t('common.namespace'),         value: process.pm2_env.namespace || 'default' },
+                  { label: t('processDetail.execMode'),   value: process.pm2_env.exec_mode || t('common.na') },
+                  { label: t('processDetail.instances'),  value: process.pm2_env.instances || 1 },
+                  { label: t('processDetail.createdAt'),  value: formatDate(process.pm2_env.created_at) },
+                  { label: t('common.restarts'),          value: process.pm2_env.restart_time },
                 ].map(({ label, value }) => (
                   <Grid item xs={6} key={label}>
                     <Typography variant="caption" color="text.secondary" display="block">{label}</Typography>
@@ -252,7 +254,7 @@ const ProcessDetailPage: React.FC<ProcessDetailPageProps> = ({ onAction, connect
                   </Grid>
                 ))}
                 <Grid item xs={12}>
-                  <Typography variant="caption" color="text.secondary" display="block">Script Path</Typography>
+                  <Typography variant="caption" color="text.secondary" display="block">{t('processDetail.scriptPath')}</Typography>
                   <Typography variant="body2" fontWeight={500} sx={{ wordBreak: 'break-all' }}>
                     {process.pm2_env.pm_exec_path}
                   </Typography>
@@ -261,7 +263,7 @@ const ProcessDetailPage: React.FC<ProcessDetailPageProps> = ({ onAction, connect
             </Grid>
 
             <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>Environment Variables</Typography>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>{t('processDetail.environmentVariables')}</Typography>
               <Paper
                 variant="outlined"
                 sx={{ p: 1.5, maxHeight: 260, overflow: 'auto', bgcolor: 'action.hover' }}
@@ -271,7 +273,7 @@ const ProcessDetailPage: React.FC<ProcessDetailPageProps> = ({ onAction, connect
                     {JSON.stringify(process.pm2_env.env, null, 2)}
                   </Box>
                 ) : (
-                  <Typography variant="body2" color="text.secondary">No environment variables found.</Typography>
+                  <Typography variant="body2" color="text.secondary">{t('processDetail.noEnvVars')}</Typography>
                 )}
               </Paper>
             </Grid>

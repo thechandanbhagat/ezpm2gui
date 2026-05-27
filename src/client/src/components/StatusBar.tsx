@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   XMarkIcon,
   ExclamationCircleIcon,
@@ -30,20 +31,7 @@ interface StatusBarProps {
   status: StatusBarStatus;
 }
 
-// @group Constants : Rotating tips shown in the idle state
-const TIPS = [
-  'Use pm2 save to persist your process list across reboots.',
-  'Cluster mode spreads your app across all CPU cores for maximum throughput.',
-  'PM2 automatically restarts crashed processes — no babysitting required.',
-  'Use an Ecosystem Config file to manage all your apps in one place.',
-  'Watch mode restarts your app automatically whenever a source file changes.',
-  'Log rotation prevents log files from growing unbounded on long-running servers.',
-  'You can assign a namespace to group related processes together in the dashboard.',
-  'Remote Servers lets you monitor and control PM2 on other machines from here.',
-  'The Deploy App wizard generates a pm2 start command from a visual form.',
-];
-
-// @group Utilities : Per-type visual config
+// @group Utilities: Per-type visual config
 const TYPE_CONFIG = {
   error:   { label: 'ERR',     labelClass: 'bg-red-600 text-white',                   icon: ExclamationCircleIcon,   textClass: 'text-red-300' },
   warn:    { label: 'WARN',    labelClass: 'bg-amber-500 text-white',                 icon: ExclamationTriangleIcon, textClass: 'text-amber-200' },
@@ -53,6 +41,18 @@ const TYPE_CONFIG = {
 
 // @group StatusBar : Single-row persistent footer — tips at rest, notifications inline
 const StatusBar: React.FC<StatusBarProps> = ({ notifications, onDismiss, status }) => {
+  const { t } = useTranslation();
+  const TIPS = [
+    t('statusBar.tip1'),
+    t('statusBar.tip2'),
+    t('statusBar.tip3'),
+    t('statusBar.tip4'),
+    t('statusBar.tip5'),
+    t('statusBar.tip6'),
+    t('statusBar.tip7'),
+    t('statusBar.tip8'),
+    t('statusBar.tip9'),
+  ];
   const current = notifications[0];
 
   // @group TipRotator : Cycle through tips every 8 s
@@ -60,6 +60,7 @@ const StatusBar: React.FC<StatusBarProps> = ({ notifications, onDismiss, status 
   const [tipVisible, setTipVisible] = useState(true);
   const tipTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     tipTimerRef.current = setInterval(() => {
       setTipVisible(false);
@@ -69,6 +70,7 @@ const StatusBar: React.FC<StatusBarProps> = ({ notifications, onDismiss, status 
       }, 400);
     }, 8000);
     return () => { if (tipTimerRef.current) clearInterval(tipTimerRef.current); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // @group NotifTimer : Auto-dismiss current notification after 10 s
@@ -102,13 +104,13 @@ const StatusBar: React.FC<StatusBarProps> = ({ notifications, onDismiss, status 
           {status.connected
             ? <SignalIcon className="h-3 w-3 shrink-0" />
             : <SignalSlashIcon className="h-3 w-3 shrink-0 animate-pulse" />}
-          <span className="font-medium">{status.connected ? 'Connected' : 'Disconnected'}</span>
+          <span className="font-medium">{status.connected ? t('common.connected') : t('common.disconnected')}</span>
         </div>
 
         {/* Server */}
         <div className="flex items-center px-2.5 h-full border-r border-neutral-800 dark:border-neutral-900
                         text-neutral-400 hover:bg-neutral-800/60 transition-colors cursor-default">
-          {status.activeServer === 'local' ? 'Local' : status.activeServer}
+          {status.activeServer === 'local' ? t('serverSwitcher.local') : status.activeServer}
         </div>
 
         {/* Process counts */}
@@ -117,7 +119,7 @@ const StatusBar: React.FC<StatusBarProps> = ({ notifications, onDismiss, status 
           <span className="font-semibold text-neutral-200">{status.onlineCount}</span>
           <span className="text-neutral-600">/</span>
           <span>{status.processCount}</span>
-          <span className="text-neutral-500 ml-0.5">online</span>
+          <span className="text-neutral-500 ml-0.5">{t('monitDashboard.online')}</span>
         </div>
       </div>
 
@@ -142,7 +144,7 @@ const StatusBar: React.FC<StatusBarProps> = ({ notifications, onDismiss, status 
                   <button
                     onClick={() => onDismiss(current.id)}
                     className="shrink-0 text-neutral-500 hover:text-neutral-300 transition-colors ml-0.5"
-                    aria-label="Dismiss"
+                    aria-label={t('statusBar.dismiss')}
                   >
                     <XMarkIcon className="h-3 w-3" />
                   </button>
@@ -154,7 +156,7 @@ const StatusBar: React.FC<StatusBarProps> = ({ notifications, onDismiss, status 
           // Tip mode
           <div className={`flex items-center gap-2 min-w-0 transition-opacity duration-400 ${tipVisible ? 'opacity-100' : 'opacity-0'}`}>
             <span className="shrink-0 text-[9px] font-bold px-1.5 py-px rounded bg-violet-700/80 text-violet-200">
-              TIP
+              {t('statusBar.tip')}
             </span>
             <span className="truncate text-neutral-500">{TIPS[tipIndex]}</span>
           </div>

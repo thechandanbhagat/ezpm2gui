@@ -23,6 +23,7 @@ import PasswordGate from './components/PasswordGate';
 import WhatsNew from './components/WhatsNew';
 import WhatsNewModal, { shouldShowWhatsNew, markWhatsNewSeen } from './components/WhatsNewModal';
 import StatusBar, { Notification } from './components/StatusBar';
+import LanguageSwitcher from './components/LanguageSwitcher';
 import {
   Dialog,
   DialogContent,
@@ -896,6 +897,9 @@ const App: React.FC = () => {
                 >
                   {darkMode ? <SunIcon className="h-4 w-4" /> : <MoonIcon className="h-4 w-4" />}
                 </button>
+
+                {/* Language Switcher */}
+                <LanguageSwitcher darkMode={darkMode} />
               </div>
             </div>
           </nav>

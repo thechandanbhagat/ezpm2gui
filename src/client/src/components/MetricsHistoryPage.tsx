@@ -4,6 +4,7 @@ import { Tooltip } from '@mui/material';
 import { Refresh as RefreshIcon } from '@mui/icons-material';
 import { IconButton } from '@mui/material';
 import PageHeader from './PageHeader';
+import { useTranslation } from 'react-i18next';
 
 // @group Types : Mirror of the server-side MetricPoint
 interface MetricPoint {
@@ -114,6 +115,7 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
 
 // @group MetricsHistoryPage : Main page component
 const MetricsHistoryPage: React.FC = () => {
+  const { t } = useTranslation();
   const [data, setData] = useState<ProcessHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -316,8 +318,8 @@ const MetricsHistoryPage: React.FC = () => {
   return (
     <div className="space-y-4">
       <PageHeader
-        title="Metrics History"
-        subtitle="CPU & memory history per process — last 3 minutes, refreshed every 3 s"
+        title={t('metricsHistory.title')}
+        subtitle={t('metricsHistory.subtitle')}
         actions={
           <div className="flex items-center gap-2">
             {lastUpdated && (
@@ -334,7 +336,7 @@ const MetricsHistoryPage: React.FC = () => {
                     : 'border-neutral-300 dark:border-neutral-600 text-neutral-500 dark:text-neutral-400'
                 }`}
               >
-                {autoRefresh ? 'Live' : 'Paused'}
+                {autoRefresh ? t('metricsHistory.live') : t('metricsHistory.paused')}
               </button>
             </Tooltip>
             <Tooltip title="Refresh now">
@@ -346,12 +348,12 @@ const MetricsHistoryPage: React.FC = () => {
 
       {loading ? (
         <div className="text-xs text-neutral-400 dark:text-neutral-500 py-12 text-center">
-          Loading metrics history...
+          {t('metricsHistory.loading')}
         </div>
       ) : sorted.length === 0 ? (
         <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg p-8 text-center">
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
-            No history yet. Data is collected every 3 seconds once the server starts tracking processes.
+            {t('metricsHistory.noHistory')}
           </p>
         </div>
       ) : (
@@ -361,10 +363,10 @@ const MetricsHistoryPage: React.FC = () => {
               <thead className="bg-neutral-50 dark:bg-neutral-800/50 border-b border-neutral-200 dark:border-neutral-800">
                 <tr>
                   {[
-                    { key: 'id' as const,     label: 'ID' },
-                    { key: 'name' as const,   label: 'Name / Status' },
-                    { key: 'cpu' as const,    label: 'CPU' },
-                    { key: 'memory' as const, label: 'Memory' },
+                    { key: 'id' as const,     label: t('common.id') },
+                    { key: 'name' as const,   label: t('common.name') },
+                    { key: 'cpu' as const,    label: t('common.cpu') },
+                    { key: 'memory' as const, label: t('common.memory') },
                   ].map(({ key, label }) => (
                     <th
                       key={key}
@@ -375,7 +377,7 @@ const MetricsHistoryPage: React.FC = () => {
                     </th>
                   ))}
                   <th className="px-3 py-2 text-center text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">
-                    Window
+                    {t('metricsHistory.window')}
                   </th>
                   <th className="px-3 py-2 w-8" />
                 </tr>
@@ -390,9 +392,7 @@ const MetricsHistoryPage: React.FC = () => {
 
       {/* Legend */}
       <p className="text-[10px] text-neutral-400 dark:text-neutral-500">
-        Sparklines show all recorded data points (up to 60). Click any row to expand the full history table.
-        CPU color: <span className="text-emerald-500">green</span> &lt;60% · <span className="text-amber-500">amber</span> 60–80% · <span className="text-rose-500">red</span> &gt;80%.
-        Memory% is relative to total system RAM.
+        {t('metricsHistory.sparklineHint')}
       </p>
     </div>
   );

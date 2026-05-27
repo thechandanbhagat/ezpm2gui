@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ArrowPathIcon,
   PlusIcon,
@@ -340,6 +341,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ moduleName, onClose, onNotify
 
 // @group ModuleManagement : Install, uninstall, configure, and browse PM2 modules
 const ModuleManagement: React.FC<{ onNotify: NotifyFn }> = ({ onNotify }) => {
+  const { t } = useTranslation();
   const [modules,         setModules]         = useState<Module[]>([]);
   const [loading,         setLoading]         = useState(true);
   const [dialogOpen,      setDialogOpen]      = useState(false);
@@ -407,8 +409,8 @@ const ModuleManagement: React.FC<{ onNotify: NotifyFn }> = ({ onNotify }) => {
     <div>
       {/* Header */}
       <PageHeader
-        title="PM2 Modules"
-        subtitle="Install, configure and manage PM2 plugin modules"
+        title={t('modules.title')}
+        subtitle={t('modules.subtitle')}
         actions={
           <div className="flex items-center gap-2">
             <button
@@ -421,7 +423,7 @@ const ModuleManagement: React.FC<{ onNotify: NotifyFn }> = ({ onNotify }) => {
                          disabled:opacity-50 transition-colors flex items-center gap-1.5"
             >
               <ArrowPathIcon className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
+              {t('common.refresh')}
             </button>
             <button
               onClick={() => setDialogOpen(true)}

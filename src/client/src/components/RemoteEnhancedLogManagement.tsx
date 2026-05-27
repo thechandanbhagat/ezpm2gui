@@ -59,6 +59,7 @@ import { PM2Process } from '../types/pm2';
 import { RemoteConnection } from '../types/remote';
 import axios from 'axios';
 import { io } from 'socket.io-client';
+import { useTranslation } from 'react-i18next';
 
 interface RemoteLogEntry {
   id: string;
@@ -104,6 +105,7 @@ interface ProcessLogStats {
 
 const RemoteEnhancedLogManagement: React.FC = () => {
   const theme = useTheme();
+  const { t } = useTranslation();
   const logContainerRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<any>(null);
 
@@ -499,7 +501,7 @@ const RemoteEnhancedLogManagement: React.FC = () => {
             startIcon={isStreaming ? <PauseIcon /> : <PlayIcon />}
             disabled={filters.serverIds.length === 0}
           >
-            {isStreaming ? 'Stop' : 'Stream'}
+            {isStreaming ? t('logs.stopStream') : t('logs.liveStream')}
           </Button>
           <IconButton onClick={fetchLogs} disabled={loading}><RefreshIcon fontSize="small" /></IconButton>
           <IconButton onClick={clearLogs}><ClearIcon fontSize="small" /></IconButton>
@@ -528,7 +530,7 @@ const RemoteEnhancedLogManagement: React.FC = () => {
                 <TextField
                   fullWidth
                   size="small"
-                  placeholder="Search logs..."
+                  placeholder={t('logs.searchLogs')}
                   value={filters.searchTerm}
                   onChange={(e) => setFilters(prev => ({ ...prev, searchTerm: e.target.value }))}
                   InputProps={{
@@ -545,20 +547,20 @@ const RemoteEnhancedLogManagement: React.FC = () => {
                     value={filters.serverIds}
                     onChange={handleServerFilterChange}
                     renderValue={(selected) => (
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                        {(selected as string[]).map((id) => {
-                          const server = serverGroups.find(g => g.serverId === id);
-                          return (
-                            <Chip 
-                              key={id} 
-                              label={server?.serverName || id} 
-                              size="small" 
-                              icon={getServerIcon(server?.isRemote || false)}
-                            />
-                          );
-                        })}
-                      </Box>
-                    )}
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {(selected as string[]).map((id) => {
+                            const server = serverGroups.find(g => g.serverId === id);
+                            return (
+                              <Chip 
+                                key={id} 
+                                label={server?.serverName || id} 
+                                size="small" 
+                                icon={getServerIcon(server?.isRemote || false)}
+                              />
+                            );
+                          })}
+                        </Box>
+                      )}
                   >
                     {serverGroups.map((serverGroup) => (
                       <MenuItem key={serverGroup.serverId} value={serverGroup.serverId}>
@@ -661,7 +663,7 @@ const RemoteEnhancedLogManagement: React.FC = () => {
                     size="small"
                   />
                 }
-                label="Auto-scroll"
+                label={t('logs.autoScroll')}
                 sx={{ ml: 2 }}
               />
             </Box>
@@ -686,7 +688,7 @@ const RemoteEnhancedLogManagement: React.FC = () => {
             {loading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
                 <CircularProgress />
-                <Typography sx={{ ml: 2 }}>Loading logs...</Typography>
+                <Typography sx={{ ml: 2 }}>{t('logs.loadingLogs')}</Typography>
               </Box>
             ) : (
               <Box
@@ -898,7 +900,7 @@ const RemoteEnhancedLogManagement: React.FC = () => {
                                   </Box>
                                 ) : (
                                   <Typography variant="caption" color="text.secondary">
-                                    No logs available
+                                    {t('logs.noLogsAvailable')}
                                   </Typography>
                                 )}
                               </Box>
