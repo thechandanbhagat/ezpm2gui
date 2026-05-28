@@ -120,13 +120,8 @@ const App: React.FC = () => {
   // @group WhatsNew : Show popup once per session
   const [showWhatsNew, setShowWhatsNew] = useState<boolean>(false);
   
-  // Theme state — read from localStorage first, fall back to system preference
-  const [darkMode, setDarkMode] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return true;
-    const saved = localStorage.getItem('ezpm2gui-theme');
-    if (saved !== null) return saved === 'dark';
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  });
+  // Theme state — always dark; toggle kept for compatibility but always starts dark
+  const [darkMode, setDarkMode] = useState<boolean>(true);
 
   // @group Theme : Sync Tailwind 'dark' class on <html> so dark: variants work globally
   useEffect(() => {
@@ -562,10 +557,10 @@ const App: React.FC = () => {
 
   if (loading) {
     return (
-      <div className={`min-h-screen flex items-center justify-center ${darkMode ? 'bg-neutral-950' : 'bg-neutral-100'}`}>
+      <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
         <div className="flex items-center gap-2.5">
-          <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary-500 border-t-transparent"></div>
-          <span className={`text-sm font-medium ${darkMode ? 'text-neutral-300' : 'text-neutral-600'}`}>
+          <div className="animate-spin rounded-full h-5 w-5 border-2 border-[#22c55e] border-t-transparent"></div>
+          <span className="text-[#888] font-mono text-xs">
             Loading PM2 data…
           </span>
         </div>
@@ -579,21 +574,11 @@ const App: React.FC = () => {
   //   dark  → neutral-900 (#0f172a) cards on neutral-950 (#020617) page bg
   const muiTheme = createTheme({
     palette: {
-      mode: darkMode ? 'dark' : 'light',
-      ...(darkMode
-        ? {
-            background: {
-              default: '#020617',   // neutral-950 — matches page bg
-              paper:   '#0f172a',   // neutral-900 — matches process-list card bg
-            },
-          }
-        : {
-            background: {
-              default: '#f1f5f9',   // neutral-100 — matches page bg
-              paper:   '#ffffff',   // white       — matches process-list card bg
-            },
-          }
-      ),
+      mode: 'dark',
+      background: {
+        default: '#0a0a0a',
+        paper:   '#111111',
+      },
     },
     typography: {
       fontFamily: 'inherit',          // use the Tailwind / CSS font stack
@@ -694,29 +679,23 @@ const App: React.FC = () => {
         />
       )}
 
-      <div className={`min-h-screen ${darkMode ? 'bg-neutral-950' : 'bg-neutral-100'}`}>
+      <div className="min-h-screen bg-[#0a0a0a]">
         <div className="flex">
 
           {/* ── Top Navigation Bar (36px) ── */}
-          <nav className={`fixed w-full z-50 h-9 flex items-center border-b ${
-            darkMode
-              ? 'bg-neutral-900 border-neutral-800'
-              : 'bg-white border-neutral-200'
-          }`}>
+          <nav className="fixed w-full z-50 h-9 flex items-center border-b bg-[#0a0a0a] border-[#1e1e1e]">
             <div className="flex items-center w-full px-3 gap-2">
               {/* Mobile hamburger / Desktop sidebar collapse toggle */}
               <button
                 onClick={toggleMenu}
-                className={`sm:hidden p-1 rounded ${darkMode ? 'text-neutral-400 hover:text-white' : 'text-neutral-500 hover:text-neutral-900'}`}
+                className="sm:hidden p-1 rounded text-[#555] hover:text-[#e8e8e8] hover:bg-[#1a1a1a] transition-colors"
               >
                 <Bars3Icon className="h-4 w-4" />
               </button>
               <button
                 onClick={toggleSidebar}
                 title={sidebarCollapsed ? t('header.expandSidebar') : t('header.collapseSidebar')}
-                className={`hidden sm:flex items-center justify-center p-1 rounded transition-colors ${
-                  darkMode ? 'text-neutral-400 hover:text-white hover:bg-neutral-800' : 'text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100'
-                }`}
+                className="hidden sm:flex items-center justify-center p-1 rounded transition-colors text-[#555] hover:text-[#e8e8e8] hover:bg-[#1a1a1a]"
               >
                 <Bars3Icon className="h-4 w-4" />
               </button>
@@ -724,9 +703,9 @@ const App: React.FC = () => {
               {/* Logo */}
               <Link
                 to="/"
-                className="text-sm font-bold tracking-tight no-underline"
+                className="font-mono text-xs font-bold text-[#e8e8e8] tracking-tight no-underline"
               >
-                <span className="text-gradient">EZ PM2 GUI</span>
+                EZ PM2 GUI
               </Link>
 
               {/* @group Auth : No-password banner — shown when password protection is not yet enabled */}
@@ -734,11 +713,7 @@ const App: React.FC = () => {
                 <Link
                   to="/settings?section=security"
                   title={t('header.enablePasswordProtection')}
-                  className={`hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium no-underline border transition-colors ${
-                    darkMode
-                      ? 'bg-orange-400/10 border-orange-400/30 text-orange-400 hover:bg-orange-400/20'
-                      : 'bg-orange-50 border-orange-300 text-orange-700 hover:bg-orange-100'
-                  }`}
+                  className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-full no-underline border transition-colors bg-[#2d1500] border-[#f59e0b]/30 text-[#f59e0b] font-mono text-[10px] hover:bg-[#3d1e00]"
                 >
                   <ShieldExclamationIcon className="h-3.5 w-3.5" />
                   <span>{t('header.noPasswordSet')}</span>
@@ -752,17 +727,15 @@ const App: React.FC = () => {
               {activeServerId !== 'local' && (() => {
                 const conn = remoteConnections.find(c => c.id === activeServerId);
                 return (
-                  <div className="hidden sm:flex items-center gap-1.5 text-xs font-medium">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-pulse shrink-0" />
-                    <span className={darkMode ? 'text-primary-300' : 'text-primary-700'}>
+                  <div className="hidden sm:flex items-center gap-1.5 font-mono text-xs">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#22d3ee] animate-pulse shrink-0" />
+                    <span className="text-[#22d3ee] font-medium">
                       <strong>{conn?.name || 'Remote Server'}</strong>
-                      {conn && <span className="opacity-60 font-normal"> · {conn.username}@{conn.host}</span>}
+                      {conn && <span className="text-[#555] font-normal"> · {conn.username}@{conn.host}</span>}
                     </span>
                     <button
                       onClick={() => handleServerSwitch('local')}
-                      className={`ml-1 text-xs underline opacity-70 hover:opacity-100 transition-opacity ${
-                        darkMode ? 'text-primary-400' : 'text-primary-600'
-                      }`}
+                      className="ml-1 text-xs underline opacity-70 hover:opacity-100 transition-opacity text-[#888]"
                     >
                       {t('header.switchToLocal')}
                     </button>
@@ -778,17 +751,13 @@ const App: React.FC = () => {
                   <Link
                     to="/settings"
                     title={t('header.updateAvailable')}
-                    className={`relative flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium no-underline border transition-colors ${
-                      darkMode
-                        ? 'bg-yellow-400/10 border-yellow-400/30 text-yellow-400 hover:bg-yellow-400/20'
-                        : 'bg-yellow-50 border-yellow-300 text-yellow-700 hover:bg-yellow-100'
-                    }`}
+                    className="relative flex items-center gap-1 px-2 py-0.5 rounded no-underline border transition-colors bg-[#1a1200] border-[#f59e0b]/30 text-[#f59e0b] font-mono text-[10px] hover:bg-[#251900]"
                   >
                     <ArrowUpCircleIcon className="h-3.5 w-3.5" />
                     <span>{t('header.update')}</span>
                     <span className="flex h-1.5 w-1.5 ml-0.5">
-                      <span className="animate-ping absolute inline-flex h-1.5 w-1.5 rounded-full bg-yellow-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-yellow-400"></span>
+                      <span className="animate-ping absolute inline-flex h-1.5 w-1.5 rounded-full bg-[#f59e0b] opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#f59e0b]"></span>
                     </span>
                   </Link>
                 )}
@@ -798,16 +767,14 @@ const App: React.FC = () => {
                   <button
                     onClick={() => setAppUnlocked(false)}
                     title={t('header.lockApp')}
-                    className={`p-1 rounded transition-colors ${
-                      darkMode ? 'text-green-400 hover:text-red-400' : 'text-green-600 hover:text-red-500'
-                    }`}
+                    className="p-1 rounded transition-colors text-[#22c55e] hover:text-[#ef4444]"
                   >
                     <LockClosedIcon className="h-3.5 w-3.5" />
                   </button>
                 )}
 
                 {/* Divider */}
-                <span className={`h-4 w-px mx-0.5 ${darkMode ? 'bg-neutral-700' : 'bg-neutral-200'}`} />
+                <span className="h-4 w-px mx-0.5 bg-[#1e1e1e]" />
 
                 {/* @group GitHub : Star button */}
                 <a
@@ -815,11 +782,7 @@ const App: React.FC = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   title={t('header.starTooltip')}
-                  className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium no-underline border transition-colors ${
-                    darkMode
-                      ? 'bg-neutral-800 border-neutral-700 text-neutral-300 hover:border-yellow-400/60 hover:text-yellow-400'
-                      : 'bg-neutral-50 border-neutral-200 text-neutral-600 hover:border-yellow-400 hover:text-yellow-600'
-                  }`}
+                  className="flex items-center gap-1 px-2 py-0.5 rounded no-underline border transition-colors bg-[#111] border-[#1e1e1e] text-[#888] hover:border-[#f59e0b]/60 hover:text-[#f59e0b] font-mono text-[10px]"
                 >
                   <StarIcon className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">{t('header.star')}</span>
@@ -831,11 +794,7 @@ const App: React.FC = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   title={t('header.viewOnGitHub')}
-                  className={`p-1 rounded transition-colors ${
-                    darkMode
-                      ? 'text-neutral-400 hover:text-white'
-                      : 'text-neutral-500 hover:text-neutral-900'
-                  }`}
+                  className="p-1 rounded transition-colors text-[#555] hover:text-[#e8e8e8]"
                 >
                   <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true">
                     <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
@@ -843,7 +802,7 @@ const App: React.FC = () => {
                 </a>
 
                 {/* Divider */}
-                <span className={`h-4 w-px mx-0.5 ${darkMode ? 'bg-neutral-700' : 'bg-neutral-200'}`} />
+                <span className="h-4 w-px mx-0.5 bg-[#1e1e1e]" />
 
                 {/* @group ServerSwitcher : Global server context switcher */}
                 <ServerSwitcher
@@ -854,15 +813,13 @@ const App: React.FC = () => {
                 />
 
                 {/* Divider */}
-                <span className={`h-4 w-px mx-0.5 ${darkMode ? 'bg-neutral-700' : 'bg-neutral-200'}`} />
+                <span className="h-4 w-px mx-0.5 bg-[#1e1e1e]" />
 
                 {/* What's New */}
                 <button
                   onClick={() => setShowWhatsNew(true)}
                   title={t('header.whatsNew')}
-                  className={`p-1 rounded transition-colors ${
-                    darkMode ? 'text-violet-400 hover:text-violet-300' : 'text-violet-500 hover:text-violet-700'
-                  }`}
+                  className="p-1 rounded transition-colors text-[#a78bfa] hover:text-[#c4b5fd]"
                 >
                   <SparklesIcon className="h-4 w-4" />
                 </button>
@@ -871,9 +828,7 @@ const App: React.FC = () => {
                 <button
                   onClick={toggleAbout}
                   title={t('header.about')}
-                  className={`p-1 rounded transition-colors ${
-                    darkMode ? 'text-neutral-400 hover:text-white' : 'text-neutral-500 hover:text-neutral-900'
-                  }`}
+                  className="p-1 rounded transition-colors text-[#555] hover:text-[#e8e8e8]"
                 >
                   <InformationCircleIcon className="h-4 w-4" />
                 </button>
@@ -882,9 +837,7 @@ const App: React.FC = () => {
                 <Link
                   to="/settings"
                   title={t('header.settings')}
-                  className={`p-1 rounded transition-colors ${
-                    darkMode ? 'text-neutral-400 hover:text-white' : 'text-neutral-500 hover:text-neutral-900'
-                  }`}
+                  className="p-1 rounded transition-colors text-[#555] hover:text-[#e8e8e8]"
                 >
                   <Cog6ToothIcon className="h-4 w-4" />
                 </Link>
@@ -892,11 +845,7 @@ const App: React.FC = () => {
                 {/* Dark-mode toggle */}
                 <button
                   onClick={toggleDarkMode}
-                  className={`p-1 rounded transition-colors ${
-                    darkMode
-                      ? 'text-neutral-400 hover:text-yellow-400'
-                      : 'text-neutral-500 hover:text-neutral-900'
-                  }`}
+                  className="p-1 rounded transition-colors text-[#555] hover:text-[#e8e8e8]"
                   title={darkMode ? t('header.lightMode') : t('header.darkMode')}
                 >
                   {darkMode ? <SunIcon className="h-4 w-4" /> : <MoonIcon className="h-4 w-4" />}
@@ -912,9 +861,7 @@ const App: React.FC = () => {
           {menuOpen && (
             <div className="fixed inset-0 z-40 sm:hidden">
               <div className="fixed inset-0 bg-black/50" onClick={toggleMenu} />
-              <div className={`fixed left-0 top-0 h-full w-[200px] border-r shadow-xl ${
-                darkMode ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-200'
-              }`}>
+              <div className="fixed left-0 top-0 h-full w-[200px] border-r shadow-xl bg-[#0d0d0d] border-[#1e1e1e]">
                 <div className="pt-9 h-full overflow-y-auto">
                   <SidebarMenu onItemClick={toggleMenu} />
                 </div>
@@ -923,16 +870,16 @@ const App: React.FC = () => {
           )}
 
           {/* ── Desktop Sidebar ── */}
-          <div className={`hidden sm:flex flex-col fixed left-0 top-9 z-[40] h-[calc(100vh-2.25rem-22px)] border-r overflow-y-auto transition-[width] duration-200 ${
+          <div className={`hidden sm:flex flex-col fixed left-0 top-9 z-[40] h-[calc(100vh-2.25rem-22px)] border-r overflow-y-auto transition-[width] duration-200 bg-[#0d0d0d] border-[#1e1e1e] ${
             sidebarCollapsed ? 'w-[44px]' : 'w-[200px]'
-          } ${darkMode ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-200'}`}>
+          }`}>
             <SidebarMenu collapsed={sidebarCollapsed} />
           </div>
 
           {/* ── Main Content ── */}
-          <main className={`flex-1 pt-9 min-h-screen transition-[margin] duration-200 ${
+          <main className={`flex-1 pt-9 min-h-screen transition-[margin] duration-200 bg-[#0a0a0a] ${
             sidebarCollapsed ? 'sm:ml-[44px]' : 'sm:ml-[200px]'
-          } ${darkMode ? 'bg-neutral-950' : 'bg-neutral-100'}`}>
+          }`}>
             <div className="px-3 py-3 pb-8">
 
               <Routes>
