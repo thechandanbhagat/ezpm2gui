@@ -15,6 +15,8 @@
   },
   "header": {
     "noPasswordSet": "No password set — go to Settings / Security to enable",
+    "enablePasswordProtection": "Enable password protection in Settings",
+    "updateAvailable": "A newer version of EZ PM2 GUI is available",
     "switchToLocal": "Switch to Local",
     "update": "Update",
     "star": "Star",

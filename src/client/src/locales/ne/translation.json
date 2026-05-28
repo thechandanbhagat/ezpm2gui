@@ -15,6 +15,8 @@
   },
   "header": {
     "noPasswordSet": "पासवर्ड सेट छैन — सेटिङ / सुरक्षामा जानुहोस् र सक्षम गर्नुहोस्",
+    "enablePasswordProtection": "सेटिङ्समा पासवर्ड सुरक्षा सक्षम गर्नुहोस्",
+    "updateAvailable": "EZ PM2 GUI को नयाँ संस्करण उपलब्ध छ",
     "switchToLocal": "लोकलमा स्विच गर्नुहोस्",
     "update": "अपडेट",
     "star": "स्टार",
