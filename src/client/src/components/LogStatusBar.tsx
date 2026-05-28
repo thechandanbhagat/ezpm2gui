@@ -47,10 +47,10 @@ const parseRawLogs = (raw: string[]): LogEntry[] => {
   return out;
 };
 
-const TAB_H  = 28;  // px — status bar height
+const TAB_H  = 28;   // px — status bar height
 const PANEL_H = 320; // px — expanded log area height
 
-// @group LogStatusBar : VS Code-style bottom status bar with slide-up log panel
+// @group LogStatusBar : CLI-style bottom status bar with slide-up log panel
 const LogStatusBar: React.FC<LogStatusBarProps> = ({ logWindows, onClose, onClear }) => {
   const { t } = useTranslation();
   const [activeKey, setActiveKey]       = useState<string | null>(null);
@@ -66,17 +66,15 @@ const LogStatusBar: React.FC<LogStatusBarProps> = ({ logWindows, onClose, onClea
   // Intentionally only reacts to logWindows changes, NOT activeKey — so that a
   // user-initiated collapse (activeKey → null) is preserved until a new window opens.
   useEffect(() => {
-    const keys    = Object.keys(logWindows);
+    const keys     = Object.keys(logWindows);
     const prevKeys = prevKeysRef.current;
 
-    // A new session was opened → auto-select it
     const newKeys = keys.filter(k => !prevKeys.includes(k));
     if (newKeys.length > 0) {
       setActiveKey(newKeys[newKeys.length - 1]);
     } else if (keys.length === 0) {
       setActiveKey(null);
     } else {
-      // Active session was closed by the user → fall back to first remaining
       setActiveKey(prev => (prev && logWindows[prev] ? prev : null));
     }
 
@@ -86,7 +84,6 @@ const LogStatusBar: React.FC<LogStatusBarProps> = ({ logWindows, onClose, onClea
   // @group PauseHandling : Freeze log snapshot when pause is toggled on
   const handlePause = () => {
     if (!isPaused) {
-      // Capture the current parsed view so it stays frozen
       const snap: Record<string, LogEntry[]> = {};
       Object.entries(logWindows).forEach(([k, w]) => { snap[k] = parseRawLogs(w.logs); });
       setFrozen(snap);
@@ -156,10 +153,10 @@ const LogStatusBar: React.FC<LogStatusBarProps> = ({ logWindows, onClose, onClea
           height: PANEL_H,
           display: 'flex',
           flexDirection: 'column',
-          bgcolor: '#0c0c0c',
-          borderTop: '1px solid rgba(255,255,255,0.09)',
-          borderLeft: '1px solid rgba(255,255,255,0.06)',
-          borderRight: '1px solid rgba(255,255,255,0.06)',
+          bgcolor: '#0a0a0a',
+          borderTop: '1px solid #1e1e1e',
+          borderLeft: '1px solid #1e1e1e',
+          borderRight: '1px solid #1e1e1e',
         }}>
           {/* Panel header */}
           <Box sx={{
@@ -169,31 +166,31 @@ const LogStatusBar: React.FC<LogStatusBarProps> = ({ logWindows, onClose, onClea
             px: 1.5,
             flexShrink: 0,
             height: 30,
-            bgcolor: '#181818',
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
+            bgcolor: '#0d0d0d',
+            borderBottom: '1px solid #1e1e1e',
           }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               {/* Live / paused indicator */}
               <Box sx={{
                 width: 6, height: 6, borderRadius: '50%',
                 bgcolor: isPaused ? '#555' : '#22c55e',
-                boxShadow: isPaused ? 'none' : '0 0 5px #22c55e88',
+                boxShadow: isPaused ? 'none' : '0 0 5px rgba(34,197,94,0.5)',
               }} />
-              <Typography sx={{ fontFamily: 'monospace', fontSize: '0.7rem', color: '#aaa' }}>
+              <Typography sx={{ fontFamily: 'monospace', fontSize: '0.68rem', color: '#888' }}>
                 {activeWindow?.processName}
-                <Box component="span" sx={{ color: '#555', mx: 0.5 }}>·</Box>
+                <Box component="span" sx={{ color: '#333', mx: 0.5 }}>·</Box>
                 {activeWindow?.connectionName}
               </Typography>
               <Box sx={{ display: 'flex', gap: 0.75 }}>
                 {countOf(activeKey, 'stdout') > 0 && (
-                  <Box sx={{ px: 0.6, py: 0, borderRadius: '3px', bgcolor: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.25)' }}>
+                  <Box sx={{ px: 0.6, py: 0, borderRadius: '2px', bgcolor: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.25)' }}>
                     <Typography sx={{ fontSize: '0.6rem', color: '#22c55e', fontFamily: 'monospace', lineHeight: '16px' }}>
                       OUT {countOf(activeKey, 'stdout')}
                     </Typography>
                   </Box>
                 )}
                 {countOf(activeKey, 'stderr') > 0 && (
-                  <Box sx={{ px: 0.6, py: 0, borderRadius: '3px', bgcolor: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)' }}>
+                  <Box sx={{ px: 0.6, py: 0, borderRadius: '2px', bgcolor: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)' }}>
                     <Typography sx={{ fontSize: '0.6rem', color: '#ef4444', fontFamily: 'monospace', lineHeight: '16px' }}>
                       ERR {countOf(activeKey, 'stderr')}
                     </Typography>
@@ -204,22 +201,22 @@ const LogStatusBar: React.FC<LogStatusBarProps> = ({ logWindows, onClose, onClea
 
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <Tooltip title={isPaused ? t('logPanel.resume') : t('logPanel.pause')}>
-                <IconButton size="small" onClick={handlePause} sx={{ color: '#666', '&:hover': { color: '#ccc' } }}>
+                <IconButton size="small" onClick={handlePause} sx={{ color: '#555', '&:hover': { color: '#888' } }}>
                   {isPaused ? <PlayIcon sx={{ fontSize: 13 }} /> : <PauseIcon sx={{ fontSize: 13 }} />}
                 </IconButton>
               </Tooltip>
               <Tooltip title={t('logPanel.clear')}>
-                <IconButton size="small" onClick={() => onClear(activeKey)} sx={{ color: '#666', '&:hover': { color: '#ccc' } }}>
+                <IconButton size="small" onClick={() => onClear(activeKey)} sx={{ color: '#555', '&:hover': { color: '#888' } }}>
                   <ClearIcon sx={{ fontSize: 13 }} />
                 </IconButton>
               </Tooltip>
               <Tooltip title={t('logPanel.collapse')}>
-                <IconButton size="small" onClick={() => setActiveKey(null)} sx={{ color: '#666', '&:hover': { color: '#ccc' } }}>
+                <IconButton size="small" onClick={() => setActiveKey(null)} sx={{ color: '#555', '&:hover': { color: '#888' } }}>
                   <CollapseIcon sx={{ fontSize: 14 }} />
                 </IconButton>
               </Tooltip>
               <Tooltip title={t('logPanel.closeSession')}>
-                <IconButton size="small" onClick={() => onClose(activeKey)} sx={{ color: '#666', '&:hover': { color: '#ef4444' } }}>
+                <IconButton size="small" onClick={() => onClose(activeKey)} sx={{ color: '#555', '&:hover': { color: '#ef4444' } }}>
                   <CloseIcon sx={{ fontSize: 13 }} />
                 </IconButton>
               </Tooltip>
@@ -233,11 +230,11 @@ const LogStatusBar: React.FC<LogStatusBarProps> = ({ logWindows, onClose, onClea
             py: 0.5,
             '&::-webkit-scrollbar': { width: 4 },
             '&::-webkit-scrollbar-track': { bgcolor: 'transparent' },
-            '&::-webkit-scrollbar-thumb': { bgcolor: '#2a2a2a', borderRadius: 2 },
+            '&::-webkit-scrollbar-thumb': { bgcolor: '#1e1e1e', borderRadius: 2 },
           }}>
             {activeLogs.length === 0 ? (
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                <Typography sx={{ color: '#3a3a3a', fontSize: '0.75rem', fontFamily: 'monospace' }}>
+                <Typography sx={{ color: '#555', fontSize: '0.72rem', fontFamily: 'monospace' }}>
                   {isPaused ? t('logPanel.paused') : t('logPanel.waiting')}
                 </Typography>
               </Box>
@@ -251,18 +248,25 @@ const LogStatusBar: React.FC<LogStatusBarProps> = ({ logWindows, onClose, onClea
                     gap: 1,
                     px: 1.5,
                     py: '1px',
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.025)' },
+                    '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' },
                   }}
                 >
-                  <Typography component="span" sx={{ color: '#3d3d3d', fontSize: '0.68rem', flexShrink: 0, fontFamily: 'monospace', pt: '1px' }}>
+                  <Typography component="span" sx={{ color: '#333', fontSize: '0.65rem', flexShrink: 0, fontFamily: 'monospace', pt: '1px' }}>
                     {fmt(log.timestamp)}
                   </Typography>
-                  <Typography component="span" sx={{ color: log.type === 'stderr' ? '#7f1d1d' : '#14532d', fontSize: '0.65rem', flexShrink: 0, fontFamily: 'monospace', pt: '1px', minWidth: 22 }}>
+                  <Typography component="span" sx={{
+                    color: log.type === 'stderr' ? '#ef4444' : '#22c55e',
+                    fontSize: '0.62rem',
+                    flexShrink: 0,
+                    fontFamily: 'monospace',
+                    pt: '1px',
+                    minWidth: 22,
+                  }}>
                     {log.type === 'stderr' ? 'ERR' : 'OUT'}
                   </Typography>
                   <Typography component="span" sx={{
-                    color: log.type === 'stderr' ? '#fca5a5' : '#d4d4d4',
-                    fontSize: '0.75rem',
+                    color: log.type === 'stderr' ? '#fca5a5' : '#e8e8e8',
+                    fontSize: '0.72rem',
                     fontFamily: 'monospace',
                     wordBreak: 'break-word',
                     flex: 1,
@@ -281,8 +285,8 @@ const LogStatusBar: React.FC<LogStatusBarProps> = ({ logWindows, onClose, onClea
       {/* ── Tab bar ── */}
       <Box sx={{
         height: TAB_H,
-        bgcolor: '#161616',
-        borderTop: '1px solid rgba(255,255,255,0.1)',
+        bgcolor: '#0d0d0d',
+        borderTop: '1px solid #1e1e1e',
         display: 'flex',
         alignItems: 'center',
         flexShrink: 0,
@@ -290,10 +294,10 @@ const LogStatusBar: React.FC<LogStatusBarProps> = ({ logWindows, onClose, onClea
       }}>
         {/* Section label — always visible, left-pinned */}
         <Typography sx={{
-          fontSize: '0.6rem', color: '#444', fontFamily: 'monospace',
-          textTransform: 'uppercase', letterSpacing: '0.08em',
+          fontSize: '0.58rem', color: '#555', fontFamily: 'monospace',
+          textTransform: 'uppercase', letterSpacing: '0.1em',
           px: 1, whiteSpace: 'nowrap', flexShrink: 0,
-          borderRight: '1px solid rgba(255,255,255,0.06)',
+          borderRight: '1px solid #1a1a1a',
           alignSelf: 'stretch', display: 'flex', alignItems: 'center',
         }}>
           LOGS
@@ -310,7 +314,7 @@ const LogStatusBar: React.FC<LogStatusBarProps> = ({ logWindows, onClose, onClea
             cursor: 'pointer',
             color: '#555',
             flexShrink: 0,
-            '&:hover': { color: '#aaa', bgcolor: 'rgba(255,255,255,0.04)' },
+            '&:hover': { color: '#888', bgcolor: 'rgba(255,255,255,0.03)' },
           }}
         >
           <ChevronLeftIcon sx={{ fontSize: 16 }} />
@@ -331,95 +335,94 @@ const LogStatusBar: React.FC<LogStatusBarProps> = ({ logWindows, onClose, onClea
             height: '100%',
             '&::-webkit-scrollbar': { height: 3 },
             '&::-webkit-scrollbar-track': { bgcolor: 'transparent' },
-            '&::-webkit-scrollbar-thumb': { bgcolor: '#2a2a2a', borderRadius: 2 },
+            '&::-webkit-scrollbar-thumb': { bgcolor: '#1e1e1e', borderRadius: 2 },
           }}
         >
+          {Object.entries(logWindows).map(([key, win]) => {
+            const isActive = key === activeKey;
+            const outCount = countOf(key, 'stdout');
+            const errCount = countOf(key, 'stderr');
 
-        {Object.entries(logWindows).map(([key, win]) => {
-          const isActive  = key === activeKey;
-          const outCount  = countOf(key, 'stdout');
-          const errCount  = countOf(key, 'stderr');
-
-          return (
-            <Box
-              key={key}
-              onClick={() => setActiveKey(isActive ? null : key)}
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0.6,
-                px: 1,
-                height: 20,
-                borderRadius: '3px',
-                cursor: 'pointer',
-                flexShrink: 0,
-                bgcolor: isActive ? 'rgba(255,255,255,0.08)' : 'transparent',
-                border: isActive ? '1px solid rgba(255,255,255,0.1)' : '1px solid transparent',
-                transition: 'background 0.1s',
-                '&:hover': { bgcolor: isActive ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)' },
-              }}
-            >
-              {/* Live pulse dot */}
-              <Box sx={{
-                width: 5, height: 5, borderRadius: '50%', flexShrink: 0,
-                bgcolor: '#22c55e',
-                boxShadow: '0 0 4px #22c55e88',
-              }} />
-
-              {/* Process name */}
-              <Typography sx={{
-                fontSize: '0.68rem',
-                fontFamily: 'monospace',
-                color: isActive ? '#e5e5e5' : '#888',
-                fontWeight: isActive ? 600 : 400,
-                whiteSpace: 'nowrap',
-              }}>
-                {win.processName}
-              </Typography>
-
-              {/* Connection name */}
-              <Typography sx={{ fontSize: '0.62rem', color: '#3d3d3d', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
-                {win.connectionName}
-              </Typography>
-
-              {/* Counts */}
-              {outCount > 0 && (
-                <Typography sx={{ fontSize: '0.62rem', color: '#22c55e', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
-                  {outCount}
-                </Typography>
-              )}
-              {errCount > 0 && (
-                <Typography sx={{ fontSize: '0.62rem', color: '#ef4444', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
-                  {errCount}
-                </Typography>
-              )}
-
-              {/* Expand / collapse chevron */}
-              {isActive
-                ? <CollapseIcon sx={{ fontSize: 11, color: '#555', ml: 0.25 }} />
-                : <ExpandIcon   sx={{ fontSize: 11, color: '#3a3a3a', ml: 0.25 }} />
-              }
-
-              {/* Close × */}
+            return (
               <Box
-                component="span"
-                onClick={e => { e.stopPropagation(); onClose(key); }}
+                key={key}
+                onClick={() => setActiveKey(isActive ? null : key)}
                 sx={{
-                  fontSize: '13px',
-                  lineHeight: 1,
-                  color: '#444',
-                  cursor: 'pointer',
-                  ml: 0.25,
                   display: 'flex',
                   alignItems: 'center',
-                  '&:hover': { color: '#ef4444' },
+                  gap: 0.6,
+                  px: 1,
+                  height: 20,
+                  borderRadius: '2px',
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  bgcolor: isActive ? '#111' : 'transparent',
+                  border: isActive ? '1px solid #1e1e1e' : '1px solid transparent',
+                  transition: 'background 0.1s',
+                  '&:hover': { bgcolor: isActive ? '#141414' : 'rgba(255,255,255,0.03)' },
                 }}
               >
-                ×
+                {/* Live pulse dot */}
+                <Box sx={{
+                  width: 5, height: 5, borderRadius: '50%', flexShrink: 0,
+                  bgcolor: '#22c55e',
+                  boxShadow: '0 0 4px rgba(34,197,94,0.5)',
+                }} />
+
+                {/* Process name */}
+                <Typography sx={{
+                  fontSize: '0.65rem',
+                  fontFamily: 'monospace',
+                  color: isActive ? '#e8e8e8' : '#888',
+                  fontWeight: isActive ? 600 : 400,
+                  whiteSpace: 'nowrap',
+                }}>
+                  {win.processName}
+                </Typography>
+
+                {/* Connection name */}
+                <Typography sx={{ fontSize: '0.6rem', color: '#333', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
+                  {win.connectionName}
+                </Typography>
+
+                {/* Counts */}
+                {outCount > 0 && (
+                  <Typography sx={{ fontSize: '0.6rem', color: '#22c55e', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
+                    {outCount}
+                  </Typography>
+                )}
+                {errCount > 0 && (
+                  <Typography sx={{ fontSize: '0.6rem', color: '#ef4444', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
+                    {errCount}
+                  </Typography>
+                )}
+
+                {/* Expand / collapse chevron */}
+                {isActive
+                  ? <CollapseIcon sx={{ fontSize: 11, color: '#555', ml: 0.25 }} />
+                  : <ExpandIcon   sx={{ fontSize: 11, color: '#333', ml: 0.25 }} />
+                }
+
+                {/* Close × */}
+                <Box
+                  component="span"
+                  onClick={e => { e.stopPropagation(); onClose(key); }}
+                  sx={{
+                    fontSize: '13px',
+                    lineHeight: 1,
+                    color: '#555',
+                    cursor: 'pointer',
+                    ml: 0.25,
+                    display: 'flex',
+                    alignItems: 'center',
+                    '&:hover': { color: '#ef4444' },
+                  }}
+                >
+                  ×
+                </Box>
               </Box>
-            </Box>
-          );
-        })}
+            );
+          })}
         </Box>{/* end scrollable tab list */}
 
         {/* Scroll right button */}
@@ -433,7 +436,7 @@ const LogStatusBar: React.FC<LogStatusBarProps> = ({ logWindows, onClose, onClea
             cursor: 'pointer',
             color: '#555',
             flexShrink: 0,
-            '&:hover': { color: '#aaa', bgcolor: 'rgba(255,255,255,0.04)' },
+            '&:hover': { color: '#888', bgcolor: 'rgba(255,255,255,0.03)' },
           }}
         >
           <ChevronRightIcon sx={{ fontSize: 16 }} />
