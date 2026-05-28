@@ -711,7 +711,7 @@ const App: React.FC = () => {
               </button>
               <button
                 onClick={toggleSidebar}
-                title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                title={sidebarCollapsed ? t('header.expandSidebar') : t('header.collapseSidebar')}
                 className={`hidden sm:flex items-center justify-center p-1 rounded transition-colors ${
                   darkMode ? 'text-neutral-400 hover:text-white hover:bg-neutral-800' : 'text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100'
                 }`}
@@ -731,7 +731,7 @@ const App: React.FC = () => {
               {passwordSet === false && (
                 <Link
                   to="/settings?section=security"
-                  title="Enable password protection in Settings"
+                  title={t('header.enablePasswordProtection')}
                   className={`hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium no-underline border transition-colors ${
                     darkMode
                       ? 'bg-orange-400/10 border-orange-400/30 text-orange-400 hover:bg-orange-400/20'
@@ -762,7 +762,7 @@ const App: React.FC = () => {
                         darkMode ? 'text-primary-400' : 'text-primary-600'
                       }`}
                     >
-                      Switch to Local
+                      {t('header.switchToLocal')}
                     </button>
                   </div>
                 );
@@ -775,7 +775,7 @@ const App: React.FC = () => {
                 {updateAvailable && (
                   <Link
                     to="/settings"
-                    title="A newer version of EZ PM2 GUI is available"
+                    title={t('header.updateAvailable')}
                     className={`relative flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium no-underline border transition-colors ${
                       darkMode
                         ? 'bg-yellow-400/10 border-yellow-400/30 text-yellow-400 hover:bg-yellow-400/20'
@@ -783,7 +783,7 @@ const App: React.FC = () => {
                     }`}
                   >
                     <ArrowUpCircleIcon className="h-3.5 w-3.5" />
-                    <span>Update</span>
+                    <span>{t('header.update')}</span>
                     <span className="flex h-1.5 w-1.5 ml-0.5">
                       <span className="animate-ping absolute inline-flex h-1.5 w-1.5 rounded-full bg-yellow-400 opacity-75"></span>
                       <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-yellow-400"></span>
@@ -795,7 +795,7 @@ const App: React.FC = () => {
                 {passwordSet === true && appUnlocked && (
                   <button
                     onClick={() => setAppUnlocked(false)}
-                    title="Lock app"
+                    title={t('header.lockApp')}
                     className={`p-1 rounded transition-colors ${
                       darkMode ? 'text-green-400 hover:text-red-400' : 'text-green-600 hover:text-red-500'
                     }`}
@@ -857,7 +857,7 @@ const App: React.FC = () => {
                 {/* What's New */}
                 <button
                   onClick={() => setShowWhatsNew(true)}
-                  title="What's New"
+                  title={t('header.whatsNew')}
                   className={`p-1 rounded transition-colors ${
                     darkMode ? 'text-violet-400 hover:text-violet-300' : 'text-violet-500 hover:text-violet-700'
                   }`}
@@ -868,7 +868,7 @@ const App: React.FC = () => {
                 {/* About */}
                 <button
                   onClick={toggleAbout}
-                  title="About"
+                  title={t('header.about')}
                   className={`p-1 rounded transition-colors ${
                     darkMode ? 'text-neutral-400 hover:text-white' : 'text-neutral-500 hover:text-neutral-900'
                   }`}
@@ -879,7 +879,7 @@ const App: React.FC = () => {
                 {/* Settings */}
                 <Link
                   to="/settings"
-                  title="Settings"
+                  title={t('header.settings')}
                   className={`p-1 rounded transition-colors ${
                     darkMode ? 'text-neutral-400 hover:text-white' : 'text-neutral-500 hover:text-neutral-900'
                   }`}
@@ -895,7 +895,7 @@ const App: React.FC = () => {
                       ? 'text-neutral-400 hover:text-yellow-400'
                       : 'text-neutral-500 hover:text-neutral-900'
                   }`}
-                  title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+                  title={darkMode ? t('header.lightMode') : t('header.darkMode')}
                 >
                   {darkMode ? <SunIcon className="h-4 w-4" /> : <MoonIcon className="h-4 w-4" />}
                 </button>
