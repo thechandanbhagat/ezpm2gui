@@ -255,7 +255,7 @@ const RemoteConnections: React.FC = () => {
       }
     } catch (error) {
       console.error('Connection failed:', error);
-      setError(`Connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setError(t('remoteConnections.connectionFailed', { message: error instanceof Error ? error.message : 'Unknown error' }));
     } finally {
       setLoading(prev => ({ ...prev, [connectionId]: false }));
     }
@@ -283,7 +283,7 @@ const RemoteConnections: React.FC = () => {
       }
     } catch (error) {
       console.error('Disconnect failed:', error);
-      setError('Disconnect failed');
+      setError(t('remoteConnections.disconnectFailed'));
     }
   };
 
@@ -600,23 +600,26 @@ const RemoteConnections: React.FC = () => {
       <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-200 dark:border-neutral-800">
         <div>
           <h1 className="text-base font-semibold text-neutral-900 dark:text-neutral-100 leading-tight">{t('remoteConnections.title')}</h1>
-          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">Manage SSH connections and remote PM2 processes</p>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{t('remoteConnections.subtitle')}</p>
         </div>
         <Box sx={{ display: 'flex', gap: 1 }}>
           {connections.some(c => !c.connected) && (
             <Button variant="outlined" size="small" startIcon={<PlayIcon />}
-              onClick={handleConnectAll} disabled={Object.values(loading).some(l => l)}>
-              Connect All
+              onClick={handleConnectAll} disabled={Object.values(loading).some(l => l)}
+              sx={{ fontSize: '0.7rem', py: 0.25, px: 1 }}>
+              {t('remoteConnections.connectAll')}
             </Button>
           )}
           {connections.some(c => c.connected) && (
             <Button variant="outlined" size="small" startIcon={<StopIcon />}
-              onClick={handleDisconnectAll} disabled={Object.values(loading).some(l => l)}>
-              Disconnect All
+              onClick={handleDisconnectAll} disabled={Object.values(loading).some(l => l)}
+              sx={{ fontSize: '0.7rem', py: 0.25, px: 1 }}>
+              {t('remoteConnections.disconnectAll')}
             </Button>
           )}
-          <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={() => setOpenDialog(true)}>
-            Add Connection
+          <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={() => setOpenDialog(true)}
+            sx={{ fontSize: '0.7rem', py: 0.25, px: 1 }}>
+            {t('remoteConnections.addConnection')}
           </Button>
         </Box>
       </div>
@@ -631,8 +634,8 @@ const RemoteConnections: React.FC = () => {
         {connections.length === 0 ? (
           <Grid item xs={12}>
             <Paper variant="outlined" sx={{ p: 3, textAlign: 'center' }}>
-              <Typography variant="body2" color="text.secondary">
-                No remote connections configured. Click "Add Connection" to get started.
+              <Typography variant="caption" color="text.secondary">
+                {t('remoteConnections.noConnections')}
               </Typography>
             </Paper>
           </Grid>
@@ -642,15 +645,16 @@ const RemoteConnections: React.FC = () => {
               {/* Connection header row */}
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, py: 1, borderBottom: expandedConnections.has(connection.id) ? '1px solid' : 'none', borderColor: 'divider' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
-                  <Typography variant="body2" fontWeight={600} sx={{ whiteSpace: 'nowrap' }}>
+                  <Typography variant="body2" fontWeight={600} sx={{ whiteSpace: 'nowrap', fontSize: '0.75rem' }}>
                     {connection.name}
                   </Typography>
                   <Chip
-                    label={connection.connected ? 'Connected' : 'Disconnected'}
+                    label={connection.connected ? t('remoteConnections.connected') : t('remoteConnections.disconnected')}
                     color={connection.connected ? 'success' : 'default'}
                     size="small"
+                    sx={{ fontSize: '0.65rem', height: 18 }}
                   />
-                  <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'nowrap', fontSize: '0.7rem' }}>
                     {connection.username}@{connection.host}:{connection.port}
                   </Typography>
                 </Box>
@@ -667,15 +671,17 @@ const RemoteConnections: React.FC = () => {
                         {expandedConnections.has(connection.id) ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
                       </IconButton>
                       <Button variant="outlined" size="small"
-                        onClick={() => handleDisconnect(connection.id)} disabled={loading[connection.id]}>
-                        Disconnect
+                        onClick={() => handleDisconnect(connection.id)} disabled={loading[connection.id]}
+                        sx={{ fontSize: '0.7rem', py: 0.25, px: 1 }}>
+                        {t('remoteConnections.disconnect')}
                       </Button>
                     </>
                   ) : (
                     <Button variant="contained" size="small"
                       onClick={() => handleConnect(connection.id)} disabled={loading[connection.id]}
-                      startIcon={loading[connection.id] ? <CircularProgress size={12} /> : undefined}>
-                      Connect
+                      startIcon={loading[connection.id] ? <CircularProgress size={12} /> : undefined}
+                      sx={{ fontSize: '0.7rem', py: 0.25, px: 1 }}>
+                      {t('remoteConnections.connect')}
                     </Button>
                   )}
                   <IconButton size="small" onClick={() => openEditDialog(connection)}>
@@ -691,9 +697,9 @@ const RemoteConnections: React.FC = () => {
               <Collapse in={expandedConnections.has(connection.id) && connection.connected}>
                 <Box>
                   <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)}
-                    sx={{ px: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
-                    <Tab label="Processes" />
-                    <Tab label="System Info" />
+                    sx={{ px: 2, borderBottom: '1px solid', borderColor: 'divider', minHeight: 32 }}>
+                    <Tab label={t('remoteConnections.tabProcesses')} sx={{ fontSize: '0.7rem', minHeight: 32, py: 0, px: 1.5 }} />
+                    <Tab label={t('remoteConnections.tabSystemInfo')} sx={{ fontSize: '0.7rem', minHeight: 32, py: 0, px: 1.5 }} />
                   </Tabs>
 
                   {/* Processes tab */}
@@ -703,38 +709,38 @@ const RemoteConnections: React.FC = () => {
                         <CircularProgress size={20} />
                       </Box>
                     ) : processes[connection.id] === undefined ? (
-                      <Typography variant="body2" color="text.secondary">
-                        Click refresh to load processes.
+                      <Typography variant="caption" color="text.secondary">
+                        {t('remoteConnections.clickRefreshToLoad')}
                       </Typography>
                     ) : processes[connection.id].length === 0 ? (
-                      <Typography variant="body2" color="text.secondary">
-                        No PM2 processes running on this server.
+                      <Typography variant="caption" color="text.secondary">
+                        {t('remoteConnections.noPm2Processes')}
                       </Typography>
                     ) : (
                       <Table size="small">
                         <TableHead>
                           <TableRow>
-                            <TableCell>Name</TableCell>
-                            <TableCell>Status</TableCell>
-                            <TableCell>CPU</TableCell>
-                            <TableCell>Memory</TableCell>
-                            <TableCell>Uptime</TableCell>
-                            <TableCell>Actions</TableCell>
+                            <TableCell sx={{ fontSize: '0.7rem', py: 0.5 }}>{t('remoteConnections.colName')}</TableCell>
+                            <TableCell sx={{ fontSize: '0.7rem', py: 0.5 }}>{t('remoteConnections.colStatus')}</TableCell>
+                            <TableCell sx={{ fontSize: '0.7rem', py: 0.5 }}>{t('remoteConnections.colCpu')}</TableCell>
+                            <TableCell sx={{ fontSize: '0.7rem', py: 0.5 }}>{t('remoteConnections.colMemory')}</TableCell>
+                            <TableCell sx={{ fontSize: '0.7rem', py: 0.5 }}>{t('remoteConnections.colUptime')}</TableCell>
+                            <TableCell sx={{ fontSize: '0.7rem', py: 0.5 }}>{t('remoteConnections.colActions')}</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
                           {processes[connection.id].map((process) => (
                             <TableRow key={process.name}>
-                              <TableCell>
-                                <Typography variant="body2" fontWeight={500}>{process.name}</Typography>
+                              <TableCell sx={{ py: 0.5 }}>
+                                <Typography variant="caption" fontWeight={500}>{process.name}</Typography>
                               </TableCell>
-                              <TableCell>
-                                <Chip label={process.status} color={getStatusColor(process.status) as any} size="small" />
+                              <TableCell sx={{ py: 0.5 }}>
+                                <Chip label={process.status} color={getStatusColor(process.status) as any} size="small" sx={{ fontSize: '0.65rem', height: 18 }} />
                               </TableCell>
-                              <TableCell><Typography variant="body2">{process.cpu}%</Typography></TableCell>
-                              <TableCell><Typography variant="body2">{process.memory}</Typography></TableCell>
-                              <TableCell><Typography variant="body2">{process.uptime}</Typography></TableCell>
-                              <TableCell>
+                              <TableCell sx={{ py: 0.5 }}><Typography variant="caption">{process.cpu}%</Typography></TableCell>
+                              <TableCell sx={{ py: 0.5 }}><Typography variant="caption">{process.memory}</Typography></TableCell>
+                              <TableCell sx={{ py: 0.5 }}><Typography variant="caption">{process.uptime}</Typography></TableCell>
+                              <TableCell sx={{ py: 0.5 }}>
                                 {process.status === 'online' ? (
                                   <Button
                                     size="small"
@@ -742,7 +748,7 @@ const RemoteConnections: React.FC = () => {
                                     color="error"
                                     startIcon={<StopIcon fontSize="small" />}
                                     onClick={() => handleProcessAction(connection.id, process.name, 'stop')}
-                                    sx={{ mr: 0.5 }}
+                                    sx={{ mr: 0.5, fontSize: '0.65rem', py: 0.25, px: 0.75 }}
                                   >
                                     Stop
                                   </Button>
@@ -753,7 +759,7 @@ const RemoteConnections: React.FC = () => {
                                     color="success"
                                     startIcon={<PlayIcon fontSize="small" />}
                                     onClick={() => handleProcessAction(connection.id, process.name, 'start')}
-                                    sx={{ mr: 0.5 }}
+                                    sx={{ mr: 0.5, fontSize: '0.65rem', py: 0.25, px: 0.75 }}
                                   >
                                     Start
                                   </Button>
@@ -780,12 +786,12 @@ const RemoteConnections: React.FC = () => {
                     {systemInfo[connection.id] ? (
                       <Grid container spacing={2}>
                         <Grid item xs={12} md={6}>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>System Information</Typography>
+                          <Typography variant="caption" sx={{ fontWeight: 700, mb: 1, display: 'block' }}>{t('remoteConnections.systemInformation')}</Typography>
                           {[
-                            ['Hostname',     systemInfo[connection.id].hostname],
-                            ['Platform',     systemInfo[connection.id].platform],
-                            ['Architecture', systemInfo[connection.id].arch],
-                            ['Node.js',      systemInfo[connection.id].nodeVersion],
+                            [t('remoteConnections.hostname'),     systemInfo[connection.id].hostname],
+                            [t('remoteConnections.platform'),     systemInfo[connection.id].platform],
+                            [t('remoteConnections.architecture'), systemInfo[connection.id].arch],
+                            [t('remoteConnections.nodeJs'),      systemInfo[connection.id].nodeVersion],
                           ].map(([label, value]) => (
                             <Box key={label} sx={{ display: 'flex', gap: 1, mb: 0.5 }}>
                               <Typography variant="caption" color="text.secondary" sx={{ minWidth: 90 }}>{label}:</Typography>
@@ -794,12 +800,12 @@ const RemoteConnections: React.FC = () => {
                           ))}
                         </Grid>
                         <Grid item xs={12} md={6}>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>Resources</Typography>
+                          <Typography variant="caption" sx={{ fontWeight: 700, mb: 1, display: 'block' }}>{t('remoteConnections.resources')}</Typography>
                           {[
-                            ['Total Memory', systemInfo[connection.id].totalMemory],
-                            ['Free Memory',  systemInfo[connection.id].freeMemory],
-                            ['CPU Count',    systemInfo[connection.id].cpuCount],
-                            ['Load Average', systemInfo[connection.id].loadAverage?.join(', ')],
+                            [t('remoteConnections.totalMemory'), systemInfo[connection.id].totalMemory],
+                            [t('remoteConnections.freeMemory'),  systemInfo[connection.id].freeMemory],
+                            [t('remoteConnections.cpuCount'),    systemInfo[connection.id].cpuCount],
+                            [t('remoteConnections.loadAverage'), systemInfo[connection.id].loadAverage?.join(', ')],
                           ].map(([label, value]) => (
                             <Box key={label} sx={{ display: 'flex', gap: 1, mb: 0.5 }}>
                               <Typography variant="caption" color="text.secondary" sx={{ minWidth: 90 }}>{label}:</Typography>
@@ -809,7 +815,7 @@ const RemoteConnections: React.FC = () => {
                         </Grid>
                       </Grid>
                     ) : (
-                      <Typography variant="body2" color="text.secondary">No system info available.</Typography>
+                      <Typography variant="caption" color="text.secondary">{t('remoteConnections.noSystemInfo')}</Typography>
                     )}
                   </TabPanel>
                 </Box>
@@ -821,13 +827,13 @@ const RemoteConnections: React.FC = () => {
 
       {/* Add/Edit Connection Dialog */}
       <Dialog open={openDialog} onClose={handleDialogClose} maxWidth="md" fullWidth>
-        <DialogTitle>{editingConnection ? 'Edit Remote Connection' : 'Add Remote Connection'}</DialogTitle>
+        <DialogTitle sx={{ fontSize: '0.875rem', py: 1.5 }}>{editingConnection ? t('remoteConnections.editRemoteConnection') : t('remoteConnections.addRemoteConnection')}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Connection Name"
+                label={t('remoteConnections.connectionName')}
                 value={connectionForm.name}
                 onChange={(e) => setConnectionForm(prev => ({ ...prev, name: e.target.value }))}
               />
@@ -835,7 +841,7 @@ const RemoteConnections: React.FC = () => {
             <Grid item xs={12} md={8}>
               <TextField
                 fullWidth
-                label="Host"
+                label={t('remoteConnections.host')}
                 value={connectionForm.host}
                 onChange={(e) => setConnectionForm(prev => ({ ...prev, host: e.target.value }))}
               />
@@ -843,7 +849,7 @@ const RemoteConnections: React.FC = () => {
             <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
-                label="Port"
+                label={t('remoteConnections.port')}
                 type="number"
                 value={connectionForm.port}
                 onChange={(e) => setConnectionForm(prev => ({ ...prev, port: parseInt(e.target.value) }))}
@@ -852,7 +858,7 @@ const RemoteConnections: React.FC = () => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Username"
+                label={t('remoteConnections.username')}
                 value={connectionForm.username}
                 onChange={(e) => setConnectionForm(prev => ({ ...prev, username: e.target.value }))}
               />
@@ -860,17 +866,17 @@ const RemoteConnections: React.FC = () => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Password"
+                label={t('remoteConnections.password')}
                 type="password"
                 value={connectionForm.password}
                 onChange={(e) => setConnectionForm(prev => ({ ...prev, password: e.target.value }))}
-                placeholder={editingConnection ? "Leave blank to keep existing password" : ""}
-                helperText={editingConnection ? "Leave blank to keep current password" : ""}
+                placeholder={editingConnection ? t('remoteConnections.passwordPlaceholder') : ""}
+                helperText={editingConnection ? t('remoteConnections.leaveBlankCurrent') : ""}
               />
             </Grid>
             <Grid item xs={12}>              <TextField
                 fullWidth
-                label="Private Key (optional)"
+                label={t('remoteConnections.privateKey')}
                 multiline
                 rows={4}
                 value={connectionForm.privateKey}
@@ -885,15 +891,15 @@ const RemoteConnections: React.FC = () => {
                     onChange={(e) => setConnectionForm(prev => ({ ...prev, useSudo: e.target.checked }))}
                   />
                 }
-                label="Use sudo for privileged commands (requires password)"
+                label={t('remoteConnections.useSudo')}
               />
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleDialogClose}>Cancel</Button>
-          <Button onClick={handleDialogSubmit} variant="contained">
-            {editingConnection ? 'Update Connection' : 'Add Connection'}
+          <Button onClick={handleDialogClose} size="small" sx={{ fontSize: '0.75rem' }}>{t('common.cancel')}</Button>
+          <Button onClick={handleDialogSubmit} variant="contained" size="small" sx={{ fontSize: '0.75rem' }}>
+            {editingConnection ? t('remoteConnections.updateConnection') : t('remoteConnections.addConnection')}
           </Button>
         </DialogActions>
       </Dialog>      {/* VS Code-style log status bar — renders all active log sessions as tabs */}
