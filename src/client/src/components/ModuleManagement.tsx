@@ -355,7 +355,7 @@ const ModuleManagement: React.FC<{ onNotify: NotifyFn }> = ({ onNotify }) => {
       const res = await axios.get('/api/modules');
       setModules(res.data);
     } catch (err: any) {
-      onNotify(err.response?.data?.error || 'Failed to fetch modules', 'error');
+      onNotify(err.response?.data?.error || t('errors.failedToFetchModules'), 'error');
     } finally {
       setLoading(false);
     }
@@ -365,7 +365,7 @@ const ModuleManagement: React.FC<{ onNotify: NotifyFn }> = ({ onNotify }) => {
 
   // @group Handlers : Install a module by name
   const handleInstall = async () => {
-    if (!newModuleName.trim()) { onNotify('Module name is required', 'warn'); return; }
+    if (!newModuleName.trim()) { onNotify(t('errors.moduleNameRequired'), 'warn'); return; }
     try {
       setInstalling(true);
       await axios.post('/api/modules/install', { moduleName: newModuleName.trim() });

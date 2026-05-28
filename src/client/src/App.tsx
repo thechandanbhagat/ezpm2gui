@@ -179,9 +179,9 @@ const App: React.FC = () => {
 
         // Check if it's a PM2 not installed error
         if (err.response?.data?.pmNotInstalled) {
-          enqueueNotification(err.response.data.error || 'PM2 is not installed. Please install PM2 globally: npm install -g pm2');
+          enqueueNotification(err.response.data.error || t('errors.pm2NotInstalled'));
         } else {
-          enqueueNotification('Failed to connect to the server. Is PM2 running?');
+          enqueueNotification(t('errors.failedToConnect'));
         }
 
         setLoading(false);
@@ -216,7 +216,7 @@ const App: React.FC = () => {
 
         connectionErrorTimeout = setTimeout(() => {
           if (Date.now() - lastDataUpdate > 5000 && !socketConnected) {
-            enqueueNotification('Connection to server lost. Trying to reconnect...', 'warn');
+            enqueueNotification(t('errors.connectionLost'), 'warn');
           }
         }, 3000);
       }
@@ -248,7 +248,7 @@ const App: React.FC = () => {
 
         connectionErrorTimeout = setTimeout(() => {
           if (!socketConnected && Date.now() - lastDataUpdate > 5000) {
-            enqueueNotification('Connection to server lost. Trying to reconnect...', 'warn');
+            enqueueNotification(t('errors.connectionLost'), 'warn');
           }
         }, 5000);
       }
@@ -304,7 +304,7 @@ const App: React.FC = () => {
         setProcesses(res.data);
       } catch (err: any) {
         console.error('Error fetching remote processes:', err);
-        enqueueNotification(`Failed to fetch processes from remote server: ${err.response?.data?.error || err.message}`);
+        enqueueNotification(t('errors.failedFetchRemote', { error: err.response?.data?.error || err.message }));
       }
     };
 
@@ -460,7 +460,7 @@ const App: React.FC = () => {
       }
     } catch (err) {
       console.error(`Error performing ${action}:`, err);
-      enqueueNotification(`Failed to ${action} process. ${err instanceof Error ? err.message : 'Unknown error'}`);
+      enqueueNotification(t('errors.failedProcessAction', { action, error: err instanceof Error ? err.message : 'Unknown error' }));
     }
   };
   
@@ -517,7 +517,7 @@ const App: React.FC = () => {
           const res = await axios.get<RemoteConnection[]>('/api/remote/connections');
           setRemoteConnections(res.data);
         } catch (err: any) {
-          enqueueNotification(`Failed to connect to ${conn.name || conn.host}: ${err.response?.data?.error || err.message}`);
+          enqueueNotification(t('errors.failedConnectTo', { name: conn.name || conn.host, error: err.response?.data?.error || err.message }));
         }
       }
     } else {
@@ -979,7 +979,7 @@ const App: React.FC = () => {
                       setProcesses(response.data);
                     } catch (err) {
                       console.error('Error refreshing processes:', err);
-                      enqueueNotification('Failed to refresh process data');
+                      enqueueNotification(t('errors.failedRefreshProcessData'));
                     }
                   };
                   fetchProcesses();
