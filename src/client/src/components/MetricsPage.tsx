@@ -17,6 +17,9 @@ import {
   ChartBarIcon,
   SignalIcon,
   ClockIcon,
+  PlayIcon,
+  StopIcon,
+  TrashIcon,
 } from '@heroicons/react/24/outline';
 import PageHeader from './PageHeader';
 import { PM2Process, SystemMetricsData } from '../types/pm2';
@@ -78,26 +81,30 @@ const Sparkline = ({
   width = 120,
   height = 30,
   max,
+  fluid = false,
 }: {
   values: number[];
   color: string;
   width?: number;
   height?: number;
   max?: number;
+  fluid?: boolean;
 }) => {
+  const W_vb = 200; // fixed viewBox coordinate space
+  const H_vb = height;
   if (values.length < 2) {
+    const style = fluid
+      ? { display: 'block', width: '100%', height }
+      : { display: 'inline-block', width, height, lineHeight: `${height}px` };
     return (
-      <span
-        style={{ display: 'inline-block', width, height, lineHeight: `${height}px` }}
-        className="text-center text-neutral-300 dark:text-neutral-700 text-xs"
-      >
+      <span style={style} className="text-center text-neutral-300 dark:text-neutral-700 text-xs">
         —
       </span>
     );
   }
   const pad  = 2;
-  const W    = width - pad * 2;
-  const H    = height - pad * 2;
+  const W    = W_vb - pad * 2;
+  const H    = H_vb - pad * 2;
   const yMax = max ?? Math.max(...values, 0.01);
   const norm = (v: number) => pad + H - (v / yMax) * H;
 
@@ -112,8 +119,12 @@ const Sparkline = ({
     `${pad},${pad + H}`,
   ].join(' ');
 
+  const svgProps = fluid
+    ? { width: '100%', height, viewBox: `0 0 ${W_vb} ${H_vb}`, preserveAspectRatio: 'none' as const, style: { display: 'block' } }
+    : { width, height, style: { display: 'inline-block', verticalAlign: 'middle' } };
+
   return (
-    <svg width={width} height={height} style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+    <svg {...svgProps}>
       <polygon points={fillPts} fill={color} fillOpacity={0.12} stroke="none" />
       <polyline
         points={pts}
@@ -148,6 +159,21 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
   const [selectedLiveProc, setSelectedLiveProc] = useState<string>('');
   const liveBufferRef = useRef<Map<string, LivePoint[]>>(new Map());
   const [, setLiveRender] = useState(0); // bump to force re-render on buffer update
+  const [actionLoading, setActionLoading] = useState<{ [pmId: number]: boolean }>({});
+
+  const handleProcessAction = useCallback(async (
+    e: React.MouseEvent, proc: PM2Process, action: 'start' | 'stop' | 'restart' | 'delete'
+  ) => {
+    e.stopPropagation();
+    setActionLoading(prev => ({ ...prev, [proc.pm_id]: true }));
+    try {
+      await axios.post(`/api/process/${proc.pm_id}/${action}`);
+    } catch (err) {
+      console.error(`Failed to ${action} process:`, err);
+    } finally {
+      setActionLoading(prev => ({ ...prev, [proc.pm_id]: false }));
+    }
+  }, []);
 
   // @group HistoryState
   const [connections,       setConnections]       = useState<ConnectionInfo[]>([]);
@@ -355,7 +381,7 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
   }: { label: string; value: number; unit: string; color: string }) => (
     <div className="flex flex-col gap-0.5">
       <span className="text-xs text-neutral-500 dark:text-neutral-400">{label}</span>
-      <span className={`text-sm font-semibold ${color}`}>
+      <span className={`text-xs font-semibold ${color}`}>
         {value.toFixed(2)}
         <span className="text-xs font-normal text-neutral-400 ml-0.5">{unit}</span>
       </span>
@@ -383,6 +409,26 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
 
   // @group LiveCurrentProcess : current live process being viewed
   const currentProc = processes.find(p => p.name === selectedLiveProc);
+
+  // @group SplitPane : Draggable divider state for live tab (left % of total width, default 3:2 = 60%)
+  const [splitPct, setSplitPct] = useState(60);
+  const splitContainerRef = useRef<HTMLDivElement>(null);
+  const isDragging = useRef(false);
+
+  const onDividerPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    isDragging.current = true;
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  };
+
+  const onDividerPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging.current || !splitContainerRef.current) return;
+    const rect = splitContainerRef.current.getBoundingClientRect();
+    const pct = ((e.clientX - rect.left) / rect.width) * 100;
+    setSplitPct(Math.min(75, Math.max(25, pct)));
+  };
+
+  const onDividerPointerUp = () => { isDragging.current = false; };
 
   return (
     <div>
@@ -412,60 +458,152 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
 
       {/* ════════════════════ LIVE TAB ════════════════════ */}
       {tab === 'live' && (
-        <div className="space-y-4">
-          {/* Process selector + current status bar */}
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="flex flex-col gap-0.5">
-              <label className="text-xs text-neutral-500 dark:text-neutral-400">Process</label>
-              <select
-                value={selectedLiveProc}
-                onChange={e => setSelectedLiveProc(e.target.value)}
-                className={selectCls}
-              >
-                {processes.length === 0
-                  ? <option value="">No processes running</option>
-                  : processes.map(p => (
-                      <option key={p.pm_id} value={p.name}>{p.name}</option>
-                    ))
-                }
-              </select>
-            </div>
-
-            {currentProc && (
-              <div className="flex items-center gap-3 text-xs">
-                <span className={`px-2 py-0.5 rounded-full font-medium ${
-                  currentProc.pm2_env.status === 'online'
-                    ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
-                    : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500'
-                }`}>
-                  {currentProc.pm2_env.status}
-                </span>
-                <span className="text-neutral-500 dark:text-neutral-400">
-                  CPU: <span className="font-semibold text-indigo-500">{currentProc.monit.cpu.toFixed(1)}%</span>
-                </span>
-                <span className="text-neutral-500 dark:text-neutral-400">
-                  Mem: <span className="font-semibold text-cyan-500">{fmtMem(currentProc.monit.memory)}</span>
-                </span>
-                <span className="text-neutral-400 dark:text-neutral-600">
-                  {livePoints.length} pts · updates every 3s
-                </span>
-              </div>
-            )}
+        processes.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <ChartBarIcon className="h-10 w-10 text-neutral-300 dark:text-neutral-700 mb-3" />
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">No processes found</p>
+            <p className="text-xs text-neutral-400 dark:text-neutral-600 mt-1">
+              Make sure PM2 is running and connected
+            </p>
           </div>
+        ) : (
+          <div
+            ref={splitContainerRef}
+            className="flex min-h-0"
+            onPointerMove={onDividerPointerMove}
+            onPointerUp={onDividerPointerUp}
+          >
 
-          {processes.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <ChartBarIcon className="h-10 w-10 text-neutral-300 dark:text-neutral-700 mb-3" />
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">No processes found</p>
-              <p className="text-xs text-neutral-400 dark:text-neutral-600 mt-1">
-                Make sure PM2 is running and connected
-              </p>
+            {/* ── Left: Process list (default 3/5) ── */}
+            <div
+              className="shrink-0 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 overflow-hidden flex flex-col"
+              style={{ width: `${splitPct}%` }}
+            >
+              <div className="px-3 py-2 border-b border-neutral-100 dark:border-neutral-800 shrink-0">
+                <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Processes</p>
+              </div>
+              <div className="overflow-y-auto flex-1">
+                {processes.map(proc => {
+                  const procBuf = liveBufferRef.current.get(proc.name) ?? [];
+                  const isSelected = proc.name === selectedLiveProc;
+                  return (
+                    <div
+                      key={proc.pm_id}
+                      onClick={() => setSelectedLiveProc(proc.name)}
+                      className={`cursor-pointer px-3 py-2 flex flex-col gap-1.5 border-b border-neutral-100 dark:border-neutral-800 transition-colors ${
+                        isSelected
+                          ? 'bg-primary-50 dark:bg-primary-900/20 border-l-2 border-l-primary-500'
+                          : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
+                      }`}
+                    >
+                      {/* Name + status dot + action buttons */}
+                      <div className="flex items-center gap-1.5 min-w-0 group/row">
+                        <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${
+                          proc.pm2_env.status === 'online' ? 'bg-emerald-500' :
+                          proc.pm2_env.status === 'errored' ? 'bg-rose-500' : 'bg-neutral-400'
+                        }`} />
+                        <span className={`text-xs font-medium truncate flex-1 min-w-0 ${
+                          isSelected ? 'text-primary-700 dark:text-primary-300' : 'text-neutral-800 dark:text-neutral-200'
+                        }`}>{proc.name}</span>
+
+                        {/* Action buttons — always visible */}
+                        <div className="shrink-0 flex items-center gap-0.5">
+                          {actionLoading[proc.pm_id] ? (
+                            <ArrowPathIcon className="h-3 w-3 animate-spin text-neutral-400" />
+                          ) : proc.pm2_env.status === 'online' ? (
+                            <>
+                              <button
+                                onClick={e => handleProcessAction(e, proc, 'restart')}
+                                title="Restart"
+                                className="h-4 w-4 rounded flex items-center justify-center bg-amber-100 dark:bg-amber-900/30 hover:bg-amber-200 dark:hover:bg-amber-800/50 text-amber-600 dark:text-amber-400"
+                              >
+                                <ArrowPathIcon className="h-2.5 w-2.5" />
+                              </button>
+                              <button
+                                onClick={e => handleProcessAction(e, proc, 'stop')}
+                                title="Stop"
+                                className="h-4 w-4 rounded flex items-center justify-center bg-rose-100 dark:bg-rose-900/30 hover:bg-rose-200 dark:hover:bg-rose-800/50 text-rose-600 dark:text-rose-400"
+                              >
+                                <StopIcon className="h-2.5 w-2.5" />
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              onClick={e => handleProcessAction(e, proc, 'start')}
+                              title="Start"
+                              className="h-4 w-4 rounded flex items-center justify-center bg-emerald-100 dark:bg-emerald-900/30 hover:bg-emerald-200 dark:hover:bg-emerald-800/50 text-emerald-600 dark:text-emerald-400"
+                            >
+                              <PlayIcon className="h-2.5 w-2.5" />
+                            </button>
+                          )}
+                          <button
+                            onClick={e => handleProcessAction(e, proc, 'delete')}
+                            title="Delete"
+                            className="h-4 w-4 rounded flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 hover:bg-rose-100 dark:hover:bg-rose-900/30 text-neutral-400 hover:text-rose-500"
+                          >
+                            <TrashIcon className="h-2.5 w-2.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* CPU + MEM sparklines in one row */}
+                      <div className="flex items-center gap-2 pointer-events-none">
+                        <span className="text-xs text-neutral-400 dark:text-neutral-600 shrink-0">CPU</span>
+                        <span className={`text-xs tabular-nums shrink-0 ${
+                          proc.monit.cpu > 80 ? 'text-rose-500' :
+                          proc.monit.cpu > 50 ? 'text-amber-500' : 'text-emerald-500'
+                        }`}>{proc.monit.cpu.toFixed(1)}%</span>
+                        <div className="flex-1 min-w-0">
+                          <Sparkline values={procBuf.map(p => p.cpu)} color={isSelected ? '#6366f1' : '#9ca3af'} max={100} height={20} fluid />
+                        </div>
+                        <span className="text-xs text-neutral-400 dark:text-neutral-600 shrink-0">MEM</span>
+                        <span className="text-xs tabular-nums shrink-0 text-cyan-600 dark:text-cyan-400">{fmtMem(proc.monit.memory)}</span>
+                        <div className="flex-1 min-w-0">
+                          <Sparkline values={procBuf.map(p => p.memMb)} color={isSelected ? '#22d3ee' : '#9ca3af'} height={20} fluid />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          ) : (
-            <>
-              {/* ── Live CPU Chart ── */}
-              <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
-                <div className="flex items-center justify-between mb-3">
+
+            {/* ── Drag divider ── */}
+            <div
+              onPointerDown={onDividerPointerDown}
+              className="w-1.5 mx-1 shrink-0 flex items-center justify-center cursor-col-resize group select-none"
+            >
+              <div className="w-0.5 h-full rounded-full bg-neutral-200 dark:bg-neutral-700 group-hover:bg-primary-400 dark:group-hover:bg-primary-500 transition-colors" />
+            </div>
+
+            {/* ── Right: Charts (2 rows, default 2/5) ── */}
+            <div className="flex flex-col gap-3 min-w-0 flex-1">
+              {/* Selected process status bar */}
+              {currentProc && (
+                <div className="flex items-center gap-3 text-xs px-1">
+                  <span className="font-semibold text-neutral-700 dark:text-neutral-300">{currentProc.name}</span>
+                  <span className={`px-2 py-0.5 rounded-full font-medium ${
+                    currentProc.pm2_env.status === 'online'
+                      ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
+                      : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500'
+                  }`}>
+                    {currentProc.pm2_env.status}
+                  </span>
+                  <span className="text-neutral-500 dark:text-neutral-400">
+                    CPU: <span className="font-semibold text-indigo-500">{currentProc.monit.cpu.toFixed(1)}%</span>
+                  </span>
+                  <span className="text-neutral-500 dark:text-neutral-400">
+                    Mem: <span className="font-semibold text-cyan-500">{fmtMem(currentProc.monit.memory)}</span>
+                  </span>
+                  <span className="text-neutral-400 dark:text-neutral-600 ml-auto">
+                    {livePoints.length} pts · updates every 3s
+                  </span>
+                </div>
+              )}
+
+              {/* Row 1: CPU Chart */}
+              <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-3 flex-1">
+                <div className="flex items-center justify-between mb-2">
                   <div>
                     <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">CPU Usage</p>
                     <p className="text-xs text-neutral-400">rolling {livePoints.length} pts</p>
@@ -476,7 +614,7 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
                     <StatCard label="Max" value={liveCpuStats.max} unit="%" color="text-rose-400" />
                   </div>
                 </div>
-                <div className="h-40">
+                <div className="h-36">
                   {livePoints.length > 0
                     ? <Line data={liveCpuChart} options={chartOptions('%', 100)} />
                     : <div className="h-full flex items-center justify-center text-xs text-neutral-400">
@@ -486,9 +624,9 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
                 </div>
               </div>
 
-              {/* ── Live Memory Chart ── */}
-              <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
-                <div className="flex items-center justify-between mb-3">
+              {/* Row 2: Memory Chart */}
+              <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-3 flex-1">
+                <div className="flex items-center justify-between mb-2">
                   <div>
                     <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Memory Usage</p>
                     <p className="text-xs text-neutral-400">rolling {livePoints.length} pts</p>
@@ -499,7 +637,7 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
                     <StatCard label="Max" value={liveMemStats.max} unit="MB" color="text-rose-400" />
                   </div>
                 </div>
-                <div className="h-40">
+                <div className="h-36">
                   {livePoints.length > 0
                     ? <Line data={liveMemChart} options={chartOptions('MB')} />
                     : <div className="h-full flex items-center justify-center text-xs text-neutral-400">
@@ -508,88 +646,10 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
                   }
                 </div>
               </div>
+            </div>
 
-              {/* ── All processes snapshot table ── */}
-              <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 overflow-hidden">
-                <div className="px-4 py-2.5 border-b border-neutral-100 dark:border-neutral-800">
-                  <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
-                    All Processes — Live Snapshot
-                  </p>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="text-left text-neutral-500 dark:text-neutral-400 border-b border-neutral-100 dark:border-neutral-800">
-                        <th className="px-4 py-2 font-medium">Name</th>
-                        <th className="px-4 py-2 font-medium">Status</th>
-                        <th className="px-4 py-2 font-medium">CPU</th>
-                        <th className="px-4 py-2 font-medium">CPU (1h)</th>
-                        <th className="px-4 py-2 font-medium">Memory</th>
-                        <th className="px-4 py-2 font-medium">Mem (1h)</th>
-                        <th className="px-4 py-2 font-medium">Restarts</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                      {processes.map(proc => (
-                        <tr
-                          key={proc.pm_id}
-                          onClick={() => setSelectedLiveProc(proc.name)}
-                          className={`cursor-pointer transition-colors ${
-                            proc.name === selectedLiveProc
-                              ? 'bg-primary-50 dark:bg-primary-900/20'
-                              : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
-                          }`}
-                        >
-                          <td className="px-4 py-1.5 font-medium text-neutral-800 dark:text-neutral-200">
-                            {proc.name}
-                          </td>
-                          <td className="px-4 py-1.5">
-                            <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${
-                              proc.pm2_env.status === 'online'
-                                ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
-                                : proc.pm2_env.status === 'errored'
-                                ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400'
-                                : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500'
-                            }`}>
-                              {proc.pm2_env.status}
-                            </span>
-                          </td>
-                          <td className="px-4 py-1.5 tabular-nums">
-                            <span className={
-                              proc.monit.cpu > 80 ? 'text-rose-500' :
-                              proc.monit.cpu > 50 ? 'text-amber-500' : 'text-emerald-500'
-                            }>
-                              {proc.monit.cpu.toFixed(1)}%
-                            </span>
-                          </td>
-                          <td className="px-2 py-1">
-                            <Sparkline
-                              values={(liveBufferRef.current.get(proc.name) ?? []).map(p => p.cpu)}
-                              color="#6366f1"
-                              max={100}
-                            />
-                          </td>
-                          <td className="px-4 py-1.5 text-cyan-600 dark:text-cyan-400 tabular-nums">
-                            {fmtMem(proc.monit.memory)}
-                          </td>
-                          <td className="px-2 py-1">
-                            <Sparkline
-                              values={(liveBufferRef.current.get(proc.name) ?? []).map(p => p.memMb)}
-                              color="#22d3ee"
-                            />
-                          </td>
-                          <td className="px-4 py-1.5 text-neutral-500 dark:text-neutral-400 tabular-nums">
-                            {proc.pm2_env.restart_time}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
+          </div>
+        )
       )}
 
       {/* ════════════════════ HISTORY TAB ════════════════════ */}
@@ -664,7 +724,7 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
           {!selectedConn && (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <ChartBarIcon className="h-10 w-10 text-neutral-300 dark:text-neutral-700 mb-3" />
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
                 Select a connection to view recorded history
               </p>
               <p className="text-xs text-neutral-400 dark:text-neutral-600 mt-1">
@@ -680,7 +740,7 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
 
           {selectedConn && !selectedHistProc && (
             <div className="flex items-center justify-center py-12">
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
                 No processes recorded for this connection yet
               </p>
             </div>

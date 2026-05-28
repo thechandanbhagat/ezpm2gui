@@ -359,6 +359,7 @@ const ModuleManagement: React.FC<{ onNotify: NotifyFn }> = ({ onNotify }) => {
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onNotify]);
 
   useEffect(() => { fetchModules(); }, [fetchModules]);

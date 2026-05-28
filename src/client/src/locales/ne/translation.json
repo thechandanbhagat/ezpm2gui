@@ -335,6 +335,7 @@
   },
   "metricsPage": {
     "title": "मेट्रिक्स",
+    "subtitle": "तपाईंको PM2 प्रक्रियाहरूको वास्तविक-समय प्रदर्शन मेट्रिक्स",
     "live": "लाइभ",
     "history": "इतिहास",
     "min": "न्यून",
@@ -402,7 +403,18 @@
     "loadAverage": "लोड औसत",
     "noSystemInfo": "सिस्टम जानकारी उपलब्ध छैन।",
     "tabProcesses": "प्रक्रियाहरू",
-    "tabSystemInfo": "सिस्टम जानकारी"
+    "tabSystemInfo": "सिस्टम जानकारी",
+    "logStreamingError": "लग स्ट्रिमिङ त्रुटि: {{error}}",
+    "failedToLoadConnections": "जडानहरू लोड गर्न असफल",
+    "failedToConnectInvalidResponse": "जडान गर्न असफल (अमान्य सर्भर प्रतिक्रिया)",
+    "failedToLoadProcesses": "प्रक्रियाहरू लोड गर्न असफल: {{error}}",
+    "failedToLoadProcessesNetwork": "प्रक्रियाहरू लोड गर्न असफल: नेटवर्क त्रुटि",
+    "failedToOpenLiveLogs": "लाइभ लगहरू खोल्न असफल",
+    "failedToProcessAction": "{{action}} प्रक्रिया असफल",
+    "processActionFailed": "प्रक्रिया {{action}} असफल",
+    "failedToAddConnection": "जडान थप्न असफल",
+    "failedToUpdateConnection": "जडान अपडेट गर्न असफल",
+    "failedToDeleteConnection": "जडान मेटाउन असफल"
   },
   "remoteEnhancedLogs": {
     "title": "उन्नत लगहरू",

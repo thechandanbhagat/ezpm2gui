@@ -201,7 +201,7 @@ const RemoteConnections: React.FC = () => {
 
     newSocket.on('remote-log-error', (data: any) => {
       console.error('Remote log error:', data);
-      setError(`Log streaming error: ${data.error}`);
+      setError(t('remoteConnections.logStreamingError', { error: data.error }));
     });
     
     return () => {
@@ -209,6 +209,7 @@ const RemoteConnections: React.FC = () => {
         newSocket.disconnect();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadConnections = async () => {
@@ -220,7 +221,7 @@ const RemoteConnections: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to load connections:', error);
-      setError('Failed to load connections');
+      setError(t('remoteConnections.failedToLoadConnections'));
     }
   };
   const handleConnect = async (connectionId: string) => {
@@ -246,11 +247,11 @@ const RemoteConnections: React.FC = () => {
         // Try to parse as JSON, but handle non-JSON responses
         try {
           const errorData = await response.json();
-          setError(errorData.error || 'Failed to connect');
+          setError(errorData.error || t('remoteConnections.failedToConnect'));
         } catch (parseError) {
           // If response isn't valid JSON, get text instead
           const errorText = await response.text();
-          setError(errorText || 'Failed to connect (Invalid server response)');
+          setError(errorText || t('remoteConnections.failedToConnectInvalidResponse'));
         }
       }
     } catch (error) {
@@ -296,12 +297,12 @@ const RemoteConnections: React.FC = () => {
         setProcesses(prev => ({ ...prev, [connectionId]: data }));
       } else {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        setError(`Failed to load processes: ${errorData.error || response.statusText}`);
+        setError(t('remoteConnections.failedToLoadProcesses', { error: errorData.error || response.statusText }));
         setProcesses(prev => ({ ...prev, [connectionId]: [] }));
       }
     } catch (error) {
       console.error('Failed to load processes:', error);
-      setError('Failed to load processes: network error');
+      setError(t('remoteConnections.failedToLoadProcessesNetwork'));
       setProcesses(prev => ({ ...prev, [connectionId]: [] }));
     } finally {
       setLoading(prev => ({ ...prev, [`${connectionId}-processes`]: false }));
@@ -381,7 +382,7 @@ const RemoteConnections: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to open live logs:', error);
-      setError('Failed to open live logs');
+      setError(t('remoteConnections.failedToOpenLiveLogs'));
     }
   };  const closeLiveLogs = (windowKey: string) => {
     const logWindow = logWindows[windowKey];
@@ -419,11 +420,11 @@ const RemoteConnections: React.FC = () => {
         await loadProcesses(connectionId);
       } else {
         const errorData = await response.json();
-        setError(errorData.error || `Failed to ${action} process`);
+        setError(errorData.error || t('remoteConnections.failedToProcessAction', { action }));
       }
     } catch (error) {
       console.error(`Process ${action} failed:`, error);
-      setError(`Process ${action} failed`);
+      setError(t('remoteConnections.processActionFailed', { action }));
     }
   };
 
@@ -457,11 +458,11 @@ const RemoteConnections: React.FC = () => {
         });
       } else {
         const errorData = await response.json();
-        setError(errorData.error || 'Failed to add connection');
+        setError(errorData.error || t('remoteConnections.failedToAddConnection'));
       }
     } catch (error) {
       console.error('Failed to add connection:', error);
-      setError('Failed to add connection');
+      setError(t('remoteConnections.failedToAddConnection'));
     }
   };
 
@@ -512,11 +513,11 @@ const RemoteConnections: React.FC = () => {
         });
       } else {
         const errorData = await response.json();
-        setError(errorData.error || 'Failed to update connection');
+        setError(errorData.error || t('remoteConnections.failedToUpdateConnection'));
       }
     } catch (error) {
       console.error('Failed to update connection:', error);
-      setError('Failed to update connection');
+      setError(t('remoteConnections.failedToUpdateConnection'));
     }
   };
 
@@ -553,7 +554,7 @@ const RemoteConnections: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to delete connection:', error);
-      setError('Failed to delete connection');
+      setError(t('remoteConnections.failedToDeleteConnection'));
     }
   };
 
@@ -750,7 +751,7 @@ const RemoteConnections: React.FC = () => {
                                     onClick={() => handleProcessAction(connection.id, process.name, 'stop')}
                                     sx={{ mr: 0.5, fontSize: '0.65rem', py: 0.25, px: 0.75 }}
                                   >
-                                    Stop
+                                     {t('actions.stop')}
                                   </Button>
                                 ) : (
                                   <Button
@@ -761,7 +762,7 @@ const RemoteConnections: React.FC = () => {
                                     onClick={() => handleProcessAction(connection.id, process.name, 'start')}
                                     sx={{ mr: 0.5, fontSize: '0.65rem', py: 0.25, px: 0.75 }}
                                   >
-                                    Start
+                                     {t('actions.start')}
                                   </Button>
                                 )}
                                 <IconButton size="small" onClick={() => handleProcessAction(connection.id, process.name, 'restart')}>
