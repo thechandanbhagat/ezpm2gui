@@ -13,10 +13,9 @@ interface PasswordGateProps {
   passwordSet: boolean;
 }
 
-// @group Component : Full-screen lock screen — supports PIN keypad and password entry
-const PasswordGate: React.FC<PasswordGateProps> = ({ darkMode, onUnlock, pinSet, passwordSet }) => {
+// @group Component : Full-screen CLI lock screen — supports PIN keypad and password entry
+const PasswordGate: React.FC<PasswordGateProps> = ({ onUnlock, pinSet, passwordSet }) => {
   const { t } = useTranslation();
-  // Default to PIN mode when PIN is configured
   const [mode,     setMode]     = useState<'pin' | 'password'>(pinSet ? 'pin' : 'password');
   const [pin,      setPin]      = useState('');
   const [password, setPassword] = useState('');
@@ -106,48 +105,43 @@ const PasswordGate: React.FC<PasswordGateProps> = ({ darkMode, onUnlock, pinSet,
     }
   };
 
-  // @group Styles
-  const bg          = darkMode ? 'bg-neutral-950'  : 'bg-neutral-100';
-  const cardBg      = darkMode ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-200';
-  const textPrimary = darkMode ? 'text-neutral-100' : 'text-neutral-900';
-  const textMuted   = darkMode ? 'text-neutral-500' : 'text-neutral-500';
-  const digitBtn    = darkMode ? 'bg-neutral-800 hover:bg-neutral-700 active:bg-neutral-600 text-neutral-100' : 'bg-neutral-100 hover:bg-neutral-200 active:bg-neutral-300 text-neutral-900';
-
   // @group Render
   return (
-    <div className={`fixed inset-0 z-[9999] flex items-center justify-center ${bg}`}>
-      <div className={`w-full max-w-xs mx-4 rounded-xl border shadow-2xl overflow-hidden ${cardBg}`}>
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#0a0a0a]">
+      <div className="w-full max-w-xs mx-4 bg-[#111] border border-[#1e1e1e] rounded-sm overflow-hidden">
 
         {/* Header */}
         <div className="px-6 pt-7 pb-3 text-center">
-          <div className="inline-flex items-center justify-center w-11 h-11 rounded-full bg-primary-600/10 mb-3">
-            <LockClosedIcon className="h-5 w-5 text-primary-500" />
+          <div className="inline-flex items-center justify-center w-10 h-10 rounded-sm bg-[#1a1a1a] border border-[#1e1e1e] mb-4">
+            <LockClosedIcon className="h-4 w-4 text-[#888]" />
           </div>
-          <h1 className={`text-sm font-semibold mb-0.5 ${textPrimary}`}>EZ PM2 GUI</h1>
-          <p className={`text-xs ${textMuted}`}>
+          <h1 className="font-mono text-[11px] font-bold text-[#e8e8e8] uppercase tracking-[0.1em] mb-1">
+            EZ PM2 GUI
+          </h1>
+          <p className="text-[10px] font-mono text-[#555]">
             {mode === 'pin' ? t('passwordGate.enterPin') : t('passwordGate.enterPassword')}
           </p>
         </div>
 
         {/* Mode toggle — only shown when both PIN and password are configured */}
         {pinSet && passwordSet && (
-          <div className={`flex mx-5 mb-3 rounded-lg overflow-hidden border text-xs font-medium ${darkMode ? 'border-neutral-700' : 'border-neutral-200'}`}>
+          <div className="flex mx-5 mb-3 rounded-sm overflow-hidden border border-[#1e1e1e] text-[10px] font-mono">
             <button
               onClick={() => switchMode('pin')}
               className={`flex-1 py-1.5 transition-colors ${
                 mode === 'pin'
-                  ? 'bg-primary-600 text-white'
-                  : darkMode ? 'text-neutral-400 hover:text-neutral-200' : 'text-neutral-500 hover:text-neutral-700'
+                  ? 'bg-[#1a1a1a] text-[#e8e8e8]'
+                  : 'text-[#555] hover:text-[#888]'
               }`}
             >
               {t('passwordGate.pinMode')}
             </button>
             <button
               onClick={() => switchMode('password')}
-              className={`flex-1 py-1.5 transition-colors ${
+              className={`flex-1 py-1.5 transition-colors border-l border-[#1e1e1e] ${
                 mode === 'password'
-                  ? 'bg-primary-600 text-white'
-                  : darkMode ? 'text-neutral-400 hover:text-neutral-200' : 'text-neutral-500 hover:text-neutral-700'
+                  ? 'bg-[#1a1a1a] text-[#e8e8e8]'
+                  : 'text-[#555] hover:text-[#888]'
               }`}
             >
               {t('passwordGate.passwordMode')}
@@ -163,10 +157,10 @@ const PasswordGate: React.FC<PasswordGateProps> = ({ darkMode, onUnlock, pinSet,
               {Array.from({ length: PIN_LENGTH }).map((_, i) => (
                 <div
                   key={i}
-                  className={`w-3 h-3 rounded-full border-2 transition-all duration-100 ${
+                  className={`w-2.5 h-2.5 rounded-full border transition-all duration-100 ${
                     i < pin.length
-                      ? 'bg-primary-500 border-primary-500 scale-110'
-                      : darkMode ? 'border-neutral-600' : 'border-neutral-300'
+                      ? 'bg-[#22c55e] border-[#22c55e]'
+                      : 'bg-[#1a1a1a] border-[#333]'
                   }`}
                 />
               ))}
@@ -174,7 +168,7 @@ const PasswordGate: React.FC<PasswordGateProps> = ({ darkMode, onUnlock, pinSet,
 
             {/* Error */}
             {error && (
-              <p className="text-xs text-red-500 text-center mb-3 -mt-1">{error}</p>
+              <p className="text-[10px] font-mono text-[#ef4444] text-center mb-3 -mt-1">{error}</p>
             )}
 
             {/* Numeric keypad */}
@@ -184,7 +178,7 @@ const PasswordGate: React.FC<PasswordGateProps> = ({ darkMode, onUnlock, pinSet,
                   key={d}
                   onClick={() => addDigit(d)}
                   disabled={loading}
-                  className={`py-3.5 rounded-lg text-base font-semibold transition-colors select-none disabled:opacity-40 ${digitBtn}`}
+                  className="py-3.5 bg-[#141414] border border-[#1e1e1e] rounded-sm font-mono text-[#e8e8e8] text-sm font-semibold hover:bg-[#1a1a1a] transition-colors select-none disabled:opacity-40"
                 >
                   {d}
                 </button>
@@ -193,27 +187,31 @@ const PasswordGate: React.FC<PasswordGateProps> = ({ darkMode, onUnlock, pinSet,
               <button
                 onClick={() => { setPin(''); setError(''); }}
                 disabled={loading}
-                className={`py-3.5 rounded-lg text-xs font-medium transition-colors select-none disabled:opacity-40 ${textMuted} ${darkMode ? 'hover:text-neutral-300' : 'hover:text-neutral-600'}`}
+                className="py-3.5 rounded-sm font-mono text-[10px] text-[#555] hover:text-[#888] transition-colors select-none disabled:opacity-40"
               >
                 {t('passwordGate.clear')}
               </button>
               <button
                 onClick={() => addDigit('0')}
                 disabled={loading}
-                className={`py-3.5 rounded-lg text-base font-semibold transition-colors select-none disabled:opacity-40 ${digitBtn}`}
+                className="py-3.5 bg-[#141414] border border-[#1e1e1e] rounded-sm font-mono text-[#e8e8e8] text-sm font-semibold hover:bg-[#1a1a1a] transition-colors select-none disabled:opacity-40"
               >
                 0
               </button>
               <button
                 onClick={() => { setPin(prev => prev.slice(0, -1)); setError(''); }}
                 disabled={loading || pin.length === 0}
-                className={`py-3.5 rounded-lg flex items-center justify-center transition-colors select-none disabled:opacity-30 ${textMuted} ${darkMode ? 'hover:text-neutral-200' : 'hover:text-neutral-700'}`}
+                className="py-3.5 rounded-sm flex items-center justify-center text-[#555] hover:text-[#888] transition-colors select-none disabled:opacity-30"
               >
-                <BackspaceIcon className="h-5 w-5" />
+                <BackspaceIcon className="h-4 w-4" />
               </button>
             </div>
 
-            {loading && <p className={`text-xs text-center mt-3 ${textMuted}`}>{t('passwordGate.verifying')}</p>}
+            {loading && (
+              <p className="text-[10px] font-mono text-[#555] text-center mt-3">
+                {t('passwordGate.verifying')}
+              </p>
+            )}
           </div>
         )}
 
@@ -226,17 +224,17 @@ const PasswordGate: React.FC<PasswordGateProps> = ({ darkMode, onUnlock, pinSet,
               onChange={e => setPassword(e.target.value)}
               placeholder={t('passwordGate.passwordPlaceholder')}
               autoFocus
-              className={`w-full px-3 py-2 rounded-lg border text-sm outline-none transition-colors ${
-                darkMode
-                  ? 'bg-neutral-800 border-neutral-700 text-neutral-100 placeholder-neutral-500 focus:border-primary-500'
-                  : 'bg-neutral-50 border-neutral-300 text-neutral-900 placeholder-neutral-400 focus:border-primary-500'
-              } ${error ? 'border-red-500' : ''}`}
+              className={`w-full bg-[#0d0d0d] border text-[#e8e8e8] font-mono text-xs rounded-sm px-3 py-2 outline-none transition-colors placeholder:text-[#555] focus:border-[#555] ${
+                error ? 'border-[#ef4444]' : 'border-[#1e1e1e]'
+              }`}
             />
-            {error && <p className="text-xs text-red-500">{error}</p>}
+            {error && (
+              <p className="text-[10px] font-mono text-[#ef4444]">{error}</p>
+            )}
             <button
               type="submit"
               disabled={loading || !password}
-              className="w-full py-2 rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors"
+              className="bg-[#e8e8e8] text-[#0a0a0a] font-mono text-xs font-semibold px-4 py-2 rounded-sm w-full hover:bg-[#d0d0d0] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? t('passwordGate.verifying') : t('passwordGate.unlock')}
             </button>
