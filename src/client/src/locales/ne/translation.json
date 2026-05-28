@@ -707,5 +707,16 @@
     "linesToLoad": "लोड गर्ने लाइनहरू",
     "scanningDir": "लग डाइरेक्टरी स्क्यान हुँदैछ…",
     "downloadFullFile": "पूर्ण फाइल डाउनलोड"
+  },
+  "errors": {
+    "failedToConnect": "सर्भरमा जोड्न असफल। के PM2 चलिरहेको छ?",
+    "pm2NotInstalled": "PM2 स्थापित छैन। कृपया विश्वव्यापी रूपमा PM2 स्थापना गर्नुहोस्: npm install -g pm2",
+    "failedToFetchModules": "मोड्युलहरू प्राप्त गर्न असफल",
+    "moduleNameRequired": "मोड्युलको नाम आवश्यक छ",
+    "connectionLost": "सर्भरसँग जडान हराएको छ। पुनः जडान गर्ने प्रयास गर्दैछ...",
+    "failedFetchRemote": "रिमोट सर्भरबाट प्रक्रियाहरू प्राप्त गर्न असफल: {{error}}",
+    "failedProcessAction": "प्रक्रिया {{action}} गर्न असफल। {{error}}",
+    "failedConnectTo": "{{name}} मा जडान गर्न असफल: {{error}}",
+    "failedRefreshProcessData": "प्रक्रिया डेटा रिफ्रेस गर्न असफल"
   }
 }

@@ -705,5 +705,16 @@
     "linesToLoad": "Lines to load",
     "scanningDir": "Scanning log directory…",
     "downloadFullFile": "Download full file"
+  },
+  "errors": {
+    "failedToConnect": "Failed to connect to the server. Is PM2 running?",
+    "pm2NotInstalled": "PM2 is not installed. Please install PM2 globally: npm install -g pm2",
+    "failedToFetchModules": "Failed to fetch modules",
+    "moduleNameRequired": "Module name is required",
+    "connectionLost": "Connection to server lost. Trying to reconnect...",
+    "failedFetchRemote": "Failed to fetch processes from remote server: {{error}}",
+    "failedProcessAction": "Failed to {{action}} process. {{error}}",
+    "failedConnectTo": "Failed to connect to {{name}}: {{error}}",
+    "failedRefreshProcessData": "Failed to refresh process data"
   }
 }
