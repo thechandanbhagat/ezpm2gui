@@ -490,8 +490,8 @@ const RemoteEnhancedLogManagement: React.FC = () => {
       {/* Page header using shared component — import not needed, inline for MUI context */}
       <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-200 dark:border-neutral-800">
         <div>
-          <h1 className="text-base font-semibold text-neutral-900 dark:text-neutral-100 leading-tight">Enhanced Logs</h1>
-          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">Unified log viewer across local and remote servers</p>
+          <h1 className="text-base font-semibold text-neutral-900 dark:text-neutral-100 leading-tight">{t('remoteEnhancedLogs.title')}</h1>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{t('remoteEnhancedLogs.subtitle')}</p>
         </div>
         <Box sx={{ display: 'flex', gap: 0.5 }}>
           <Button
@@ -516,9 +516,9 @@ const RemoteEnhancedLogManagement: React.FC = () => {
       )}
 
       <Tabs value={selectedTab} onChange={(_, newValue) => setSelectedTab(newValue)} sx={{ mb: 2 }}>
-        <Tab label="Log Viewer" />
-        <Tab label="Statistics" />
-        <Tab label="Server Tree" />
+        <Tab label={t('remoteEnhancedLogs.tabLogViewer')} />
+        <Tab label={t('remoteEnhancedLogs.tabStatistics')} />
+        <Tab label={t('remoteEnhancedLogs.tabServerTree')} />
       </Tabs>
 
       {selectedTab === 0 && (
@@ -541,7 +541,7 @@ const RemoteEnhancedLogManagement: React.FC = () => {
               
               <Grid item xs={12} md={3}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Servers</InputLabel>
+                  <InputLabel>{t('remoteEnhancedLogs.serversFilter')}</InputLabel>
                   <Select
                     multiple
                     value={filters.serverIds}
@@ -577,7 +577,7 @@ const RemoteEnhancedLogManagement: React.FC = () => {
 
               <Grid item xs={12} md={3}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Applications</InputLabel>
+                  <InputLabel>{t('remoteEnhancedLogs.applicationsFilter')}</InputLabel>
                   <Select
                     multiple
                     value={filters.processIds}
@@ -605,15 +605,15 @@ const RemoteEnhancedLogManagement: React.FC = () => {
 
               <Grid item xs={12} md={3}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Time Range</InputLabel>
+                  <InputLabel>{t('remoteEnhancedLogs.timeRange')}</InputLabel>
                   <Select
                     value={filters.timeRange}
                     onChange={(e) => setFilters(prev => ({ ...prev, timeRange: e.target.value as any }))}
                   >
-                    <MenuItem value="1h">Last Hour</MenuItem>
-                    <MenuItem value="6h">Last 6 Hours</MenuItem>
-                    <MenuItem value="24h">Last 24 Hours</MenuItem>
-                    <MenuItem value="all">All Time</MenuItem>
+                    <MenuItem value="1h">{t('remoteEnhancedLogs.lastHour')}</MenuItem>
+                    <MenuItem value="6h">{t('remoteEnhancedLogs.last6Hours')}</MenuItem>
+                    <MenuItem value="24h">{t('remoteEnhancedLogs.last24Hours')}</MenuItem>
+                    <MenuItem value="all">{t('remoteEnhancedLogs.allTime')}</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -621,26 +621,26 @@ const RemoteEnhancedLogManagement: React.FC = () => {
 
             <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
               <Typography variant="body2" sx={{ mr: 2 }}>
-                Log Types:
+                {t('remoteEnhancedLogs.logTypes')}
               </Typography>
               <ButtonGroup size="small">
                 <Button
                   variant={filters.logTypes.includes('out') ? 'contained' : 'outlined'}
                   onClick={() => handleLogTypeChange('out')}
                 >
-                  Stdout
+                  {t('remoteEnhancedLogs.stdout')}
                 </Button>
                 <Button
                   variant={filters.logTypes.includes('err') ? 'contained' : 'outlined'}
                   onClick={() => handleLogTypeChange('err')}
                   color="error"
                 >
-                  Stderr
+                  {t('remoteEnhancedLogs.stderr')}
                 </Button>
               </ButtonGroup>
 
               <Typography variant="body2" sx={{ ml: 2, mr: 2 }}>
-                Levels:
+                {t('remoteEnhancedLogs.levels')}
               </Typography>
               <ButtonGroup size="small">
                 {(['error', 'warn', 'info', 'debug'] as const).map(level => (
@@ -673,10 +673,10 @@ const RemoteEnhancedLogManagement: React.FC = () => {
           <Paper variant="outlined" sx={{ height: 'calc(100vh - 380px)', minHeight: 300, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
               <Typography variant="h6">
-                Logs ({filteredLogs.length})
+                      {t('remoteEnhancedLogs.logsCount', { count: filteredLogs.length })}
                 {isStreaming && (
                   <Chip 
-                    label="STREAMING" 
+                    label={t('remoteEnhancedLogs.streaming')}
                     color="success" 
                     size="small" 
                     sx={{ ml: 2 }} 
@@ -710,7 +710,7 @@ const RemoteEnhancedLogManagement: React.FC = () => {
                     height: '100%' 
                   }}>
                     <Typography color="text.secondary">
-                      No logs found matching the current filters
+                      {t('remoteEnhancedLogs.noLogsFound')}
                     </Typography>
                   </Box>
                 ) : (
@@ -775,26 +775,26 @@ const RemoteEnhancedLogManagement: React.FC = () => {
                     </Typography>
                   </Box>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Server: {stat.serverName}
+                    {t('remoteEnhancedLogs.server', { name: stat.serverName })}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Total Logs: {stat.totalLogs}
+                    {t('remoteEnhancedLogs.totalLogs', { count: stat.totalLogs })}
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
                     <Chip
-                      label={`${stat.errorCount} Errors`}
+                      label={t('remoteEnhancedLogs.errors', { count: stat.errorCount })}
                       color="error"
                       size="small"
                       variant={stat.errorCount > 0 ? 'filled' : 'outlined'}
                     />
                     <Chip
-                      label={`${stat.warningCount} Warnings`}
+                      label={t('remoteEnhancedLogs.warnings', { count: stat.warningCount })}
                       color="warning"
                       size="small"
                       variant={stat.warningCount > 0 ? 'filled' : 'outlined'}
                     />
                     <Chip
-                      label={`${stat.infoCount} Info`}
+                      label={t('remoteEnhancedLogs.info', { count: stat.infoCount })}
                       color="info"
                       size="small"
                       variant={stat.infoCount > 0 ? 'filled' : 'outlined'}
@@ -802,7 +802,7 @@ const RemoteEnhancedLogManagement: React.FC = () => {
                   </Box>
                   {stat.lastLogTime && (
                     <Typography variant="caption" color="text.secondary">
-                      Last log: {stat.lastLogTime.toLocaleString()}
+                      {t('remoteEnhancedLogs.lastLog', { time: stat.lastLogTime.toLocaleString() })}
                     </Typography>
                   )}
                 </CardContent>
@@ -815,7 +815,7 @@ const RemoteEnhancedLogManagement: React.FC = () => {
       {selectedTab === 2 && (
         <Paper sx={{ p: 3 }}>
           <Typography variant="h6" gutterBottom>
-            Server and Application Tree
+            {t('remoteEnhancedLogs.serverAndAppTree')}
           </Typography>
           <Divider sx={{ mb: 2 }} />
           
@@ -845,8 +845,8 @@ const RemoteEnhancedLogManagement: React.FC = () => {
                   {serverGroup.processes.length === 0 ? (
                     <ListItem>
                       <ListItemText 
-                        primary="No applications found"
-                        secondary={serverGroup.isRemote ? "Check remote connection" : "No PM2 processes running"}
+                        primary={t('remoteEnhancedLogs.noApplicationsFound')}
+                        secondary={serverGroup.isRemote ? t('remoteEnhancedLogs.checkRemoteConnection') : t('remoteEnhancedLogs.noPm2Running')}
                       />
                     </ListItem>
                   ) : (
@@ -885,14 +885,14 @@ const RemoteEnhancedLogManagement: React.FC = () => {
                                     />
                                     {processLogs.errorCount > 0 && (
                                       <Chip
-                                        label={`${processLogs.errorCount} Errors`}
+                                        label={t('remoteEnhancedLogs.errors', { count: processLogs.errorCount })}
                                         size="small"
                                         color="error"
                                       />
                                     )}
                                     {processLogs.warningCount > 0 && (
                                       <Chip
-                                        label={`${processLogs.warningCount} Warnings`}
+                                        label={t('remoteEnhancedLogs.warnings', { count: processLogs.warningCount })}
                                         size="small"
                                         color="warning"
                                       />
