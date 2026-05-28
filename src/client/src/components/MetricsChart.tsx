@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { PM2Process } from '../types/pm2';
 import { Line } from 'react-chartjs-2';
 import axios from 'axios';
@@ -47,6 +48,7 @@ interface MetricPoint {
 
 const MetricsChart: React.FC<MetricsChartProps> = ({ processId, initialData }) => {
   const [metrics, setMetrics] = useState<MetricPoint[]>([]);
+  const { t } = useTranslation();
 
   // Helper function to format memory usage
   const formatMemory = (bytes: number): string => {
@@ -104,7 +106,7 @@ const MetricsChart: React.FC<MetricsChartProps> = ({ processId, initialData }) =
     labels: metrics.map(m => new Date(m.timestamp).toLocaleTimeString()),
     datasets: [
       {
-        label: 'CPU Usage (%)',
+        label: t('metricsPage.cpuDataset'),
         data: metrics.map(m => m.cpu),
         fill: false,
         borderColor: 'rgb(75, 192, 192)',
@@ -117,7 +119,7 @@ const MetricsChart: React.FC<MetricsChartProps> = ({ processId, initialData }) =
     labels: metrics.map(m => new Date(m.timestamp).toLocaleTimeString()),
     datasets: [
       {
-        label: 'Memory Usage (MB)',
+        label: t('metricsPage.memoryDataset'),
         data: metrics.map(m => m.memory / (1024 * 1024)), // Convert to MB
         fill: false,
         borderColor: 'rgb(255, 99, 132)',
@@ -133,7 +135,7 @@ const MetricsChart: React.FC<MetricsChartProps> = ({ processId, initialData }) =
           <Card variant="outlined">
             <CardContent>
               <Typography variant="subtitle2" color="text.secondary">
-                Current CPU Usage
+                {t('metricsPage.currentCpu')}
               </Typography>
               <Typography variant="h4" color="primary">
                 {latestCpu.toFixed(1)}%
@@ -145,7 +147,7 @@ const MetricsChart: React.FC<MetricsChartProps> = ({ processId, initialData }) =
           <Card variant="outlined">
             <CardContent>
               <Typography variant="subtitle2" color="text.secondary">
-                Current Memory Usage
+                {t('metricsPage.currentMemory')}
               </Typography>
               <Typography variant="h4" color="primary">
                 {formatMemory(latestMemory)}
@@ -159,7 +161,7 @@ const MetricsChart: React.FC<MetricsChartProps> = ({ processId, initialData }) =
         <Grid item xs={12} md={6}>
           <Paper variant="outlined" sx={{ p: 2 }}>
             <Typography variant="subtitle2" gutterBottom color="text.secondary">
-              CPU Usage Over Time
+              {t('metricsPage.cpuOverTime')}
             </Typography>
             <Box sx={{ height: 250 }}>
               <Line 
@@ -181,7 +183,7 @@ const MetricsChart: React.FC<MetricsChartProps> = ({ processId, initialData }) =
         <Grid item xs={12} md={6}>
           <Paper variant="outlined" sx={{ p: 2 }}>
             <Typography variant="subtitle2" gutterBottom color="text.secondary">
-              Memory Usage Over Time
+              {t('metricsPage.memoryOverTime')}
             </Typography>
             <Box sx={{ height: 250 }}>
               <Line 

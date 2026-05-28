@@ -99,6 +99,62 @@ The project uses TypeScript for type safety. Make sure to:
 npm run dev
 ```
 
+## Adding a New Language (i18n)
+
+EZ PM2 GUI uses [i18next](https://www.i18next.com/) + [react-i18next](https://react.i18next.com/) for translations. Adding a new language takes four steps.
+
+### 1. Create the translation file
+
+Copy the English source as your starting point:
+
+```bash
+cp src/client/src/locales/en/translation.json \
+   src/client/src/locales/<code>/translation.json
+```
+
+Replace `<code>` with the [BCP-47 language tag](https://en.wikipedia.org/wiki/IETF_language_tag) (e.g. `fr` for French, `de` for German, `zh` for Chinese).
+
+Translate every value in the JSON — **do not change the keys**.  
+The Chinese draft (`src/client/src/locales/zh/translation.json`) is available as a reference example.
+
+### 2. Register the locale in `src/client/src/i18n.ts`
+
+```ts
+import frTranslation from './locales/fr/translation.json';
+
+// inside .init({ resources: { ... } })
+fr: { translation: frTranslation },
+```
+
+### 3. Add the language to the switcher in `src/client/src/components/LanguageSwitcher.tsx`
+
+```ts
+const LANGUAGES = [
+  { code: 'en', label: 'English' },
+  { code: 'ne', label: 'नेपाली' },
+  { code: 'fr', label: 'Français' }, // ← add your entry
+];
+```
+
+Use the **native name** of the language as the label (e.g. `Deutsch`, `Español`, `中文`) so speakers can identify it regardless of the active locale.
+
+### 4. Build and verify
+
+```bash
+cd src/client && npm run build
+```
+
+The build must complete with **Compiled successfully** and zero ESLint warnings. Open the app, switch to your new language via the globe icon in the navbar, and spot-check a few pages.
+
+### Contribution checklist
+
+- [ ] All keys from `en/translation.json` are present (no missing keys — i18next falls back to `en` silently, hiding gaps)
+- [ ] Translations are reviewed by a native speaker
+- [ ] Build passes with zero warnings
+- [ ] PR title follows the pattern: `feat(i18n): add <Language> translation`
+
+---
+
 ## Publishing as an NPM Package
 
 1. Update version in `package.json`

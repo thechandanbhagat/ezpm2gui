@@ -16,9 +16,11 @@ import CronJobDialog from './CronJobDialog';
 import ConfirmationDialog from './ConfirmationDialog';
 import PageHeader from './PageHeader';
 import { CronJobConfig, CronJobStatus } from '../types/cron';
+import { useTranslation } from 'react-i18next';
 
 // @group CronJobsPage : Cron job management page
 const CronJobsPage: React.FC = () => {
+  const { t } = useTranslation();
   const [jobs, setJobs] = useState<CronJobStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -90,104 +92,106 @@ const CronJobsPage: React.FC = () => {
   // @group Utilities : Badge color helpers
   const scriptTypeBadge = (type: string) => {
     const map: Record<string, string> = {
-      node:   'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-400/30',
-      python: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-400/30',
-      shell:  'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-400/30',
-      dotnet: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-400/30',
+      node:   'bg-[#22c55e]/10 text-[#22c55e] border-[#22c55e]/20',
+      python: 'bg-[#22d3ee]/10 text-[#22d3ee] border-[#22d3ee]/20',
+      shell:  'bg-[#f59e0b]/10 text-[#f59e0b] border-[#f59e0b]/20',
+      dotnet: 'bg-[#a78bfa]/10 text-[#a78bfa] border-[#a78bfa]/20',
     };
-    return map[type] ?? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 border-neutral-300 dark:border-neutral-700';
+    return map[type] ?? 'bg-[#1e1e1e] text-[#888] border-[#333]';
   };
 
   // @group Render : Page layout
   return (
-    <div>
+    <div className="space-y-3">
       <PageHeader
-        title="Cron Jobs"
-        subtitle="Schedule and manage automated tasks using PM2's cron feature"
+        title={t('cronJobs.title')}
+        subtitle={t('cronJobs.subtitle')}
         actions={
           <>
             <button
               onClick={fetchJobs}
               disabled={loading}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded border
-                         border-neutral-200 dark:border-neutral-700
-                         text-neutral-700 dark:text-neutral-300
-                         hover:bg-neutral-50 dark:hover:bg-neutral-800
-                         disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex items-center gap-1.5 border border-[#333] text-[#888] text-xs font-mono px-3 py-1 rounded-sm hover:border-[#555] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               <ArrowPathIcon className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
+              {t('common.refresh')}
             </button>
             <button
               onClick={handleCreate}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded
-                         bg-primary-600 hover:bg-primary-700 text-white transition-colors"
+              className="flex items-center gap-1.5 bg-[#e8e8e8] text-[#0a0a0a] text-xs font-mono font-semibold px-3 py-1 rounded-sm transition-colors hover:bg-white"
             >
               <PlusIcon className="h-3.5 w-3.5" />
-              Create Job
+              {t('cronJobs.createJob')}
             </button>
           </>
         }
       />
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {[
-          { label: 'Total',     value: jobs.length,                                               color: 'text-primary-600 dark:text-primary-400' },
-          { label: 'Enabled',   value: jobs.filter(j => j.config.enabled).length,                color: 'text-emerald-600 dark:text-emerald-400' },
-          { label: 'Running',   value: jobs.filter(j => j.isRunning).length,                     color: 'text-sky-600 dark:text-sky-400' },
-          { label: 'Scheduled', value: jobs.filter(j => j.config.enabled && !j.isRunning).length, color: 'text-amber-600 dark:text-amber-400' },
-        ].map(({ label, value, color }) => (
-          <div key={label} className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-4 py-3">
-            <p className={`text-xl font-bold leading-none ${color}`}>{value}</p>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">{label}</p>
+          { id: 'total',     label: t('cronJobs.total'),     value: jobs.length,                                                color: 'text-[#e8e8e8]' },
+          { id: 'enabled',   label: t('cronJobs.enabled'),   value: jobs.filter(j => j.config.enabled).length,                 color: 'text-[#22c55e]' },
+          { id: 'running',   label: t('cronJobs.running'),   value: jobs.filter(j => j.isRunning).length,                      color: 'text-[#22d3ee]' },
+          { id: 'scheduled', label: t('cronJobs.scheduled'), value: jobs.filter(j => j.config.enabled && !j.isRunning).length, color: 'text-[#f59e0b]' },
+        ].map(({ id, label, value, color }) => (
+          <div key={id} className="bg-[#111] border border-[#1e1e1e] rounded-sm px-3 py-2">
+            <p className={`text-[11px] font-mono font-bold leading-none ${color}`}>{value}</p>
+            <p className="text-[9px] font-mono text-[#555] uppercase tracking-[0.15em] mt-1">{label}</p>
           </div>
         ))}
       </div>
 
       {/* Jobs Table / Empty state */}
       {jobs.length === 0 ? (
-        <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-10 text-center">
-          <ClockIcon className="mx-auto h-8 w-8 text-neutral-300 dark:text-neutral-600 mb-3" />
-          <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">No cron jobs yet</p>
-          <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1 mb-4">
+        <div className="bg-[#111] border border-[#1e1e1e] rounded-sm p-10 text-center">
+          <ClockIcon className="mx-auto h-8 w-8 text-[#333] mb-3" />
+          <p className="text-[10px] font-mono text-[#555]">{t('cronJobs.noJobs')}</p>
+          <p className="text-[10px] font-mono text-[#444] mt-1 mb-4">
             Create your first scheduled task to automate your workflows
           </p>
           <button
             onClick={handleCreate}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded
-                       bg-primary-600 hover:bg-primary-700 text-white transition-colors"
+            className="inline-flex items-center gap-1.5 bg-[#e8e8e8] text-[#0a0a0a] text-xs font-mono font-semibold px-3 py-1 rounded-sm transition-colors hover:bg-white"
           >
             <PlusIcon className="h-3.5 w-3.5" />
             Create First Job
           </button>
         </div>
       ) : (
-        <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+        <div className="border border-[#1e1e1e] rounded-sm overflow-hidden">
           <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/60">
-                {['Name', 'Type', 'Schedule', 'Next Run', 'Status', 'Enabled', ''].map(h => (
-                  <th key={h} className="px-3 py-2.5 text-left text-[11px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider whitespace-nowrap">
-                    {h}
+              <tr className="bg-[#0d0d0d] border-b border-[#1e1e1e]">
+                {[
+                  { id: 'name',    label: t('common.name') },
+                  { id: 'type',    label: t('cronJobs.type') },
+                  { id: 'sched',   label: t('cronJobs.cronSchedule') },
+                  { id: 'next',    label: t('cronJobs.nextRun') },
+                  { id: 'status',  label: t('common.status') },
+                  { id: 'enabled', label: t('cronJobs.enabled') },
+                  { id: 'actions', label: '' },
+                ].map(({ id, label }) => (
+                  <th key={id} className="px-3 py-2.5 text-left text-[9px] font-mono text-[#444] uppercase tracking-[0.15em] whitespace-nowrap">
+                    {label}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
+            <tbody className="divide-y divide-[#1a1a1a]">
               {jobs.map((job) => (
-                <tr key={job.config.id} className="bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors">
+                <tr key={job.config.id} className="bg-[#0a0a0a] hover:bg-[#111] transition-colors">
                   {/* Name */}
                   <td className="px-3 py-2.5">
-                    <p className="font-semibold text-neutral-900 dark:text-neutral-100">{job.config.name}</p>
+                    <p className="text-[10px] font-mono font-semibold text-[#e8e8e8]">{job.config.name}</p>
                     {job.config.description && (
-                      <p className="text-neutral-400 dark:text-neutral-500 mt-0.5">{job.config.description}</p>
+                      <p className="text-[10px] font-mono text-[#555] mt-0.5">{job.config.description}</p>
                     )}
                   </td>
 
                   {/* Type */}
                   <td className="px-3 py-2.5">
-                    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[11px] font-medium ${scriptTypeBadge(job.config.scriptType)}`}>
+                    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm border text-[10px] font-mono font-medium ${scriptTypeBadge(job.config.scriptType)}`}>
                       <CodeBracketIcon className="h-3 w-3 shrink-0" />
                       {job.config.scriptType.toUpperCase()}
                     </span>
@@ -195,27 +199,27 @@ const CronJobsPage: React.FC = () => {
 
                   {/* Schedule */}
                   <td className="px-3 py-2.5">
-                    <code className="font-mono text-neutral-600 dark:text-neutral-400">{job.config.cronExpression}</code>
+                    <code className="font-mono text-[10px] text-[#888]">{job.config.cronExpression}</code>
                   </td>
 
                   {/* Next Run */}
-                  <td className="px-3 py-2.5 text-neutral-500 dark:text-neutral-400 whitespace-nowrap">
+                  <td className="px-3 py-2.5 text-[10px] font-mono text-[#888] whitespace-nowrap">
                     {job.nextExecution ? new Date(job.nextExecution).toLocaleString() : '—'}
                   </td>
 
                   {/* Status */}
                   <td className="px-3 py-2.5">
                     {job.isRunning ? (
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[11px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-400/30">
-                        <CheckCircleIcon className="h-3 w-3" /> Running
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm border text-[10px] font-mono font-medium bg-[#22c55e]/10 text-[#22c55e] border-[#22c55e]/20">
+                        <CheckCircleIcon className="h-3 w-3" /> {t('common.running')}
                       </span>
                     ) : job.config.enabled ? (
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[11px] font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 border-neutral-300 dark:border-neutral-700">
-                        Scheduled
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm border text-[10px] font-mono font-medium bg-[#1e1e1e] text-[#888] border-[#333]">
+                        {t('common.scheduled')}
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[11px] font-medium bg-red-500/10 text-red-600 dark:text-red-400 border-red-400/30">
-                        <XCircleIcon className="h-3 w-3" /> Disabled
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm border text-[10px] font-mono font-medium bg-[#ef4444]/10 text-[#ef4444] border-[#ef4444]/20">
+                        <XCircleIcon className="h-3 w-3" /> {t('cronJobs.disabled')}
                       </span>
                     )}
                   </td>
@@ -226,9 +230,9 @@ const CronJobsPage: React.FC = () => {
                       onClick={() => handleToggle(job.config.id)}
                       className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent
                                   transition-colors duration-200 cursor-pointer
-                                  ${job.config.enabled ? 'bg-emerald-500' : 'bg-neutral-300 dark:bg-neutral-600'}`}
+                                  ${job.config.enabled ? 'bg-[#22c55e]' : 'bg-[#333]'}`}
                     >
-                      <span className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow
+                      <span className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-[#e8e8e8] shadow
                                         transform transition-transform duration-200
                                         ${job.config.enabled ? 'translate-x-4' : 'translate-x-0'}`} />
                     </button>
@@ -241,7 +245,7 @@ const CronJobsPage: React.FC = () => {
                         <button
                           onClick={() => handleStop(job.config.id)}
                           title="Stop"
-                          className="p-1 rounded text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                          className="p-1 rounded-sm text-[#ef4444] hover:bg-[#ef4444]/10 transition-colors"
                         >
                           <StopIcon className="h-4 w-4" />
                         </button>
@@ -249,22 +253,22 @@ const CronJobsPage: React.FC = () => {
                         <button
                           onClick={() => handleStart(job.config.id)}
                           title="Start"
-                          className="p-1 rounded text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
+                          className="p-1 rounded-sm text-[#22c55e] hover:bg-[#22c55e]/10 transition-colors"
                         >
                           <PlayIcon className="h-4 w-4" />
                         </button>
                       )}
                       <button
                         onClick={() => handleEdit(job.config)}
-                        title="Edit"
-                        className="p-1 rounded text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-primary-600 transition-colors"
+                        title={t('common.edit')}
+                        className="p-1 rounded-sm text-[#555] hover:bg-[#1e1e1e] hover:text-[#888] transition-colors"
                       >
                         <PencilIcon className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => { setJobToDelete(job.config.id); setDeleteConfirmOpen(true); }}
-                        title="Delete"
-                        className="p-1 rounded text-neutral-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 transition-colors"
+                        title={t('common.delete')}
+                        className="p-1 rounded-sm text-[#555] hover:bg-[#ef4444]/10 hover:text-[#ef4444] transition-colors"
                       >
                         <TrashIcon className="h-4 w-4" />
                       </button>
@@ -286,8 +290,8 @@ const CronJobsPage: React.FC = () => {
       />
       <ConfirmationDialog
         isOpen={deleteConfirmOpen}
-        title="Delete Cron Job"
-        message="Are you sure you want to delete this cron job? This action cannot be undone."
+        title={t('cronJobs.deleteCronJobTitle')}
+        message={t('cronJobs.deleteCronJobMessage')}
         onConfirm={handleDelete}
         onCancel={() => { setDeleteConfirmOpen(false); setJobToDelete(null); }}
         type="danger"

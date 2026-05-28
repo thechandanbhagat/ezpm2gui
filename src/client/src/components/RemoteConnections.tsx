@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -40,6 +41,8 @@ import { RemoteConnection, PM2Process, SystemInfo } from '../types/remote';
 import { io } from 'socket.io-client';
 import LogStatusBar from './LogStatusBar';
 
+// @group Types : Component prop interfaces
+
 interface TabPanelProps {
   children?: React.ReactNode;
   index: number;
@@ -61,12 +64,10 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Client-side hybrid encryption helpers
+// @group Encryption : Client-side hybrid encryption helpers
 // Uses the server's RSA public key to wrap a one-time AES-256-GCM key,
-// then encrypts the plaintext with that AES key.  Nothing sensitive ever
+// then encrypts the plaintext with that AES key. Nothing sensitive ever
 // travels as plain text through the HTTP body.
-// ---------------------------------------------------------------------------
 
 interface EncryptedPayload {
   encryptedKey: string; // RSA-OAEP wrapped AES key, base64
@@ -81,7 +82,6 @@ async function fetchServerPublicKey(): Promise<CryptoKey> {
   const res = await fetch('/api/remote/public-key');
   if (!res.ok) throw new Error('Could not fetch server public key');
   const { publicKey } = await res.json();
-  // Strip PEM headers/newlines → DER bytes
   const pemBody = (publicKey as string)
     .replace('-----BEGIN PUBLIC KEY-----', '')
     .replace('-----END PUBLIC KEY-----', '')
@@ -97,7 +97,6 @@ async function fetchServerPublicKey(): Promise<CryptoKey> {
 }
 
 async function hybridEncrypt(publicKey: CryptoKey, plaintext: string): Promise<EncryptedPayload> {
-  // Generate a random AES-256-GCM key
   const aesKey = await window.crypto.subtle.generateKey(
     { name: 'AES-GCM', length: 256 },
     true,
@@ -105,14 +104,12 @@ async function hybridEncrypt(publicKey: CryptoKey, plaintext: string): Promise<E
   );
   const rawAes = await window.crypto.subtle.exportKey('raw', aesKey);
 
-  // Wrap the AES key with RSA-OAEP using the server's public key
   const encryptedKey = await window.crypto.subtle.encrypt(
     { name: 'RSA-OAEP' },
     publicKey,
     rawAes
   );
 
-  // Encrypt the plaintext with AES-GCM (WebCrypto appends 16-byte auth tag)
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
   const encryptedData = await window.crypto.subtle.encrypt(
     { name: 'AES-GCM', iv },
@@ -138,7 +135,132 @@ async function encryptFormFields(form: {
   };
 }
 
+// @group Constants : CLI design tokens for MUI sx props
+
+const CLI_MONO = 'JetBrains Mono, monospace';
+
+const sxTextField = {
+  '& .MuiInputBase-root': { fontFamily: CLI_MONO, fontSize: '0.625rem', backgroundColor: '#0d0d0d', borderRadius: '2px' },
+  '& .MuiOutlinedInput-notchedOutline': { borderColor: '#1e1e1e' },
+  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#333' },
+  '& .Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#555' },
+  '& input': { color: '#e8e8e8', fontFamily: CLI_MONO },
+  '& textarea': { color: '#e8e8e8', fontFamily: CLI_MONO },
+  '& .MuiInputLabel-root': { fontFamily: CLI_MONO, fontSize: '0.625rem', color: '#555' },
+  '& .MuiFormHelperText-root': { fontFamily: CLI_MONO, fontSize: '0.5625rem', color: '#555' },
+};
+
+const sxBtnPrimary = {
+  fontFamily: 'inherit',
+  fontSize: '0.625rem',
+  textTransform: 'none',
+  backgroundColor: '#e8e8e8',
+  color: '#0a0a0a',
+  borderRadius: '2px',
+  '&:hover': { backgroundColor: '#ccc' },
+  boxShadow: 'none',
+  '&:active': { boxShadow: 'none' },
+  py: 0.5,
+  px: 2,
+};
+
+const sxBtnOutlined = {
+  fontFamily: 'inherit',
+  fontSize: '0.625rem',
+  textTransform: 'none',
+  color: '#888',
+  borderColor: '#333',
+  borderRadius: '2px',
+  '&:hover': { borderColor: '#555', backgroundColor: 'transparent' },
+  py: 0.5,
+  px: 2,
+};
+
+const sxBtnDanger = {
+  fontFamily: 'inherit',
+  fontSize: '0.625rem',
+  textTransform: 'none',
+  color: '#ef4444',
+  borderColor: '#ef4444',
+  borderRadius: '2px',
+  borderWidth: 1,
+  borderStyle: 'solid',
+  backgroundColor: 'transparent',
+  '&:hover': { backgroundColor: '#1a0000' },
+  py: 0.5,
+  px: 2,
+};
+
+const sxBtnSuccess = {
+  fontFamily: 'inherit',
+  fontSize: '0.625rem',
+  textTransform: 'none',
+  color: '#22c55e',
+  borderColor: '#22c55e',
+  borderRadius: '2px',
+  borderWidth: 1,
+  borderStyle: 'solid',
+  backgroundColor: 'transparent',
+  '&:hover': { backgroundColor: '#001a0a' },
+  py: 0.5,
+  px: 2,
+};
+
+const sxTableCellHead = {
+  fontFamily: CLI_MONO,
+  fontSize: '0.5625rem',
+  color: '#444',
+  fontWeight: 700,
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.15em',
+  borderBottom: '1px solid #1e1e1e',
+  py: 1,
+  px: 2,
+};
+
+const sxTableCellBody = {
+  fontFamily: CLI_MONO,
+  fontSize: '0.625rem',
+  color: '#888',
+  borderBottom: '1px solid #111',
+  py: 1,
+  px: 2,
+};
+
+// @group Utilities : Status colour helpers
+
+const getStatusChipSx = (status: string) => {
+  const base = {
+    fontFamily: CLI_MONO,
+    fontSize: '0.5625rem',
+    height: 16,
+    borderRadius: '2px',
+    border: '1px solid',
+  };
+  switch (status) {
+    case 'online':          return { ...base, backgroundColor: '#0a1f0a', color: '#22c55e', borderColor: '#22c55e' };
+    case 'stopped':         return { ...base, backgroundColor: '#1a0000', color: '#ef4444', borderColor: '#ef4444' };
+    case 'stopping':        return { ...base, backgroundColor: '#1a1000', color: '#f59e0b', borderColor: '#f59e0b' };
+    case 'waiting restart': return { ...base, backgroundColor: '#0a0f1a', color: '#22d3ee', borderColor: '#22d3ee' };
+    case 'launching':       return { ...base, backgroundColor: '#0a0f1a', color: '#22d3ee', borderColor: '#22d3ee' };
+    default:                return { ...base, backgroundColor: '#1a1a1a', color: '#888',    borderColor: '#333'    };
+  }
+};
+
+const getConnectedChipSx = (connected: boolean) => ({
+  fontFamily: CLI_MONO,
+  fontSize: '0.5625rem',
+  height: 16,
+  borderRadius: '2px',
+  backgroundColor: connected ? '#0a1f0a' : '#1a1a1a',
+  color: connected ? '#22c55e' : '#555',
+  border: `1px solid ${connected ? '#22c55e' : '#333'}`,
+});
+
+// @group Component : RemoteConnections main component
+
 const RemoteConnections: React.FC = () => {
+  const { t } = useTranslation();
   const [connections, setConnections] = useState<RemoteConnection[]>([]);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingConnection, setEditingConnection] = useState<RemoteConnection | null>(null);
@@ -148,8 +270,8 @@ const RemoteConnections: React.FC = () => {
   const [loading, setLoading] = useState<{ [key: string]: boolean }>({});
   const [error, setError] = useState<string | null>(null);
   const [tabValue, setTabValue] = useState(0);
-  
-  // Multiple log windows support
+
+  // @group State : Multiple log windows support
   const [logWindows, setLogWindows] = useState<{ [key: string]: {
     connectionId: string;
     processName: string;
@@ -158,7 +280,8 @@ const RemoteConnections: React.FC = () => {
     logs: string[];
   } }>({});
   const [socket, setSocket] = useState<any>(null);
-  // New/Edit connection form state
+
+  // @group State : New/Edit connection form state
   const [connectionForm, setConnectionForm] = useState({
     name: '',
     host: '',
@@ -167,18 +290,20 @@ const RemoteConnections: React.FC = () => {
     password: '',
     privateKey: '',
     useSudo: false
-  });  useEffect(() => {
+  });
+
+  // @group Lifecycle : Socket and data initialisation
+  useEffect(() => {
     loadConnections();
-    
-    // Initialize Socket.IO connection
+
     const newSocket = io();
     setSocket(newSocket);
-      // Set up global socket event listeners for all log windows
+
     newSocket.on('remote-log-line', (data: any) => {
       console.log('Received remote-log-line:', data);
       const windowKey = `${data.connectionId}-${data.processId}`;
       console.log('Looking for window key:', windowKey);
-      
+
       setLogWindows(prev => {
         console.log('Current log windows:', Object.keys(prev));
         if (prev[windowKey]) {
@@ -199,15 +324,18 @@ const RemoteConnections: React.FC = () => {
 
     newSocket.on('remote-log-error', (data: any) => {
       console.error('Remote log error:', data);
-      setError(`Log streaming error: ${data.error}`);
+      setError(t('remoteConnections.logStreamingError', { error: data.error }));
     });
-    
+
     return () => {
       if (newSocket) {
         newSocket.disconnect();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // @group DataFetching : Connection and process data loaders
 
   const loadConnections = async () => {
     try {
@@ -218,42 +346,34 @@ const RemoteConnections: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to load connections:', error);
-      setError('Failed to load connections');
+      setError(t('remoteConnections.failedToLoadConnections'));
     }
   };
+
   const handleConnect = async (connectionId: string) => {
     setLoading(prev => ({ ...prev, [connectionId]: true }));
     try {
-      const response = await fetch(`/api/remote/${connectionId}/connect`, {
-        method: 'POST'
-      });
-      
+      const response = await fetch(`/api/remote/${connectionId}/connect`, { method: 'POST' });
+
       if (response.ok) {
         await loadProcesses(connectionId);
         await loadSystemInfo(connectionId);
         setConnections(prev =>
-          prev.map(conn =>
-            conn.id === connectionId
-              ? { ...conn, connected: true }
-              : conn
-          )
+          prev.map(conn => conn.id === connectionId ? { ...conn, connected: true } : conn)
         );
-        // Auto-expand so the user sees processes immediately after connecting
         setExpandedConnections(prev => new Set([...prev, connectionId]));
       } else {
-        // Try to parse as JSON, but handle non-JSON responses
         try {
           const errorData = await response.json();
-          setError(errorData.error || 'Failed to connect');
+          setError(errorData.error || t('remoteConnections.failedToConnect'));
         } catch (parseError) {
-          // If response isn't valid JSON, get text instead
           const errorText = await response.text();
-          setError(errorText || 'Failed to connect (Invalid server response)');
+          setError(errorText || t('remoteConnections.failedToConnectInvalidResponse'));
         }
       }
     } catch (error) {
       console.error('Connection failed:', error);
-      setError(`Connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setError(t('remoteConnections.connectionFailed', { message: error instanceof Error ? error.message : 'Unknown error' }));
     } finally {
       setLoading(prev => ({ ...prev, [connectionId]: false }));
     }
@@ -261,17 +381,11 @@ const RemoteConnections: React.FC = () => {
 
   const handleDisconnect = async (connectionId: string) => {
     try {
-      const response = await fetch(`/api/remote/${connectionId}/disconnect`, {
-        method: 'POST'
-      });
-      
+      const response = await fetch(`/api/remote/${connectionId}/disconnect`, { method: 'POST' });
+
       if (response.ok) {
-        setConnections(prev => 
-          prev.map(conn => 
-            conn.id === connectionId 
-              ? { ...conn, connected: false } 
-              : conn
-          )
+        setConnections(prev =>
+          prev.map(conn => conn.id === connectionId ? { ...conn, connected: false } : conn)
         );
         setProcesses(prev => {
           const newProcesses = { ...prev };
@@ -281,7 +395,7 @@ const RemoteConnections: React.FC = () => {
       }
     } catch (error) {
       console.error('Disconnect failed:', error);
-      setError('Disconnect failed');
+      setError(t('remoteConnections.disconnectFailed'));
     }
   };
 
@@ -294,17 +408,18 @@ const RemoteConnections: React.FC = () => {
         setProcesses(prev => ({ ...prev, [connectionId]: data }));
       } else {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        setError(`Failed to load processes: ${errorData.error || response.statusText}`);
+        setError(t('remoteConnections.failedToLoadProcesses', { error: errorData.error || response.statusText }));
         setProcesses(prev => ({ ...prev, [connectionId]: [] }));
       }
     } catch (error) {
       console.error('Failed to load processes:', error);
-      setError('Failed to load processes: network error');
+      setError(t('remoteConnections.failedToLoadProcessesNetwork'));
       setProcesses(prev => ({ ...prev, [connectionId]: [] }));
     } finally {
       setLoading(prev => ({ ...prev, [`${connectionId}-processes`]: false }));
     }
   };
+
   const loadSystemInfo = async (connectionId: string) => {
     try {
       const response = await fetch(`/api/remote/${connectionId}/system-info`);
@@ -315,36 +430,28 @@ const RemoteConnections: React.FC = () => {
     } catch (error) {
       console.error('Failed to load system info:', error);
     }
-  };  const openLiveLogs = async (connectionId: string, processName: string, processId?: number) => {
+  };
+
+  // @group LogHandlers : Live log window management
+
+  const openLiveLogs = async (connectionId: string, processName: string, processId?: number) => {
     try {
-      // Use process ID if available, otherwise fall back to name
       const processIdentifier = processId !== undefined ? processId.toString() : processName;
-      
-      // Create a unique key for this log window
       const windowKey = `${connectionId}-${processIdentifier}`;
-      
-      // Check if window is already open
+
       if (logWindows[windowKey]) {
         console.log('Log window already open for:', windowKey);
         return;
       }
-      
-      // Find connection name
+
       const connection = connections.find(c => c.id === connectionId);
       const connectionName = connection?.name || 'Unknown';
-      
-      // Initialize the log window
+
       setLogWindows(prev => ({
         ...prev,
-        [windowKey]: {
-          connectionId,
-          processName,
-          processId: processIdentifier,
-          connectionName,
-          logs: []
-        }
+        [windowKey]: { connectionId, processName, processId: processIdentifier, connectionName, logs: [] }
       }));
-        // First, get recent logs
+
       const response = await fetch(`/api/remote/${connectionId}/logs/${processIdentifier}`);
       if (response.ok) {
         const data = await response.json();
@@ -355,33 +462,26 @@ const RemoteConnections: React.FC = () => {
         if (data.stderr && data.stderr.length > 0) {
           recentLogs.push(...data.stderr.map((line: string) => `[STDERR] ${line}`));
         }
-        
-        // Update the specific window's logs
         setLogWindows(prev => ({
           ...prev,
-          [windowKey]: {
-            ...prev[windowKey],
-            logs: recentLogs
-          }
+          [windowKey]: { ...prev[windowKey], logs: recentLogs }
         }));
       }
-        // Subscribe to live logs via socket
+
       if (socket) {
         console.log('Emitting subscribe-remote-logs with:', { connectionId, processId: processIdentifier });
-        socket.emit('subscribe-remote-logs', { 
-          connectionId, 
-          processId: processIdentifier
-        });
-        
+        socket.emit('subscribe-remote-logs', { connectionId, processId: processIdentifier });
         console.log('Socket subscription sent, current log windows:', Object.keys(logWindows));
       } else {
         console.error('Socket not available for subscription');
       }
     } catch (error) {
       console.error('Failed to open live logs:', error);
-      setError('Failed to open live logs');
+      setError(t('remoteConnections.failedToOpenLiveLogs'));
     }
-  };  const closeLiveLogs = (windowKey: string) => {
+  };
+
+  const closeLiveLogs = (windowKey: string) => {
     const logWindow = logWindows[windowKey];
     if (socket && logWindow) {
       socket.emit('unsubscribe-remote-logs', {
@@ -389,8 +489,6 @@ const RemoteConnections: React.FC = () => {
         processId: logWindow.processId
       });
     }
-    
-    // Remove the log window
     setLogWindows(prev => {
       const newWindows = { ...prev };
       delete newWindows[windowKey];
@@ -401,65 +499,53 @@ const RemoteConnections: React.FC = () => {
   const clearLogs = (windowKey: string) => {
     setLogWindows(prev => ({
       ...prev,
-      [windowKey]: {
-        ...prev[windowKey],
-        logs: []
-      }
+      [windowKey]: { ...prev[windowKey], logs: [] }
     }));
   };
+
+  // @group ProcessHandlers : PM2 process action handlers
+
   const handleProcessAction = async (connectionId: string, processName: string, action: string) => {
     try {
       const response = await fetch(`/api/remote/${connectionId}/processes/${processName}/${action}`, {
         method: 'POST'
       });
-      
+
       if (response.ok) {
         await loadProcesses(connectionId);
       } else {
         const errorData = await response.json();
-        setError(errorData.error || `Failed to ${action} process`);
+        setError(errorData.error || t('remoteConnections.failedToProcessAction', { action }));
       }
     } catch (error) {
       console.error(`Process ${action} failed:`, error);
-      setError(`Process ${action} failed`);
+      setError(t('remoteConnections.processActionFailed', { action }));
     }
   };
+
+  // @group ConnectionCRUD : Add, edit, update, delete connection handlers
 
   const addConnection = async () => {
     try {
       const encrypted = await encryptFormFields(connectionForm);
-      const payload = {
-        ...connectionForm,
-        password: encrypted.password,
-        privateKey: encrypted.privateKey,
-      };
+      const payload = { ...connectionForm, password: encrypted.password, privateKey: encrypted.privateKey };
       const response = await fetch('/api/remote/connections', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
       if (response.ok) {
         await loadConnections();
         setOpenDialog(false);
-        setConnectionForm({
-          name: '',
-          host: '',
-          port: 22,
-          username: '',
-          password: '',
-          privateKey: '',
-          useSudo: false
-        });
+        setConnectionForm({ name: '', host: '', port: 22, username: '', password: '', privateKey: '', useSudo: false });
       } else {
         const errorData = await response.json();
-        setError(errorData.error || 'Failed to add connection');
+        setError(errorData.error || t('remoteConnections.failedToAddConnection'));
       }
     } catch (error) {
       console.error('Failed to add connection:', error);
-      setError('Failed to add connection');
+      setError(t('remoteConnections.failedToAddConnection'));
     }
   };
 
@@ -470,7 +556,7 @@ const RemoteConnections: React.FC = () => {
       host: connection.host,
       port: connection.port,
       username: connection.username,
-      password: '', // Don't pre-fill password for security
+      password: '',
       privateKey: connection.privateKey || '',
       useSudo: connection.useSudo || false
     });
@@ -482,16 +568,10 @@ const RemoteConnections: React.FC = () => {
 
     try {
       const encrypted = await encryptFormFields(connectionForm);
-      const payload = {
-        ...connectionForm,
-        password: encrypted.password,
-        privateKey: encrypted.privateKey,
-      };
+      const payload = { ...connectionForm, password: encrypted.password, privateKey: encrypted.privateKey };
       const response = await fetch(`/api/remote/connections/${editingConnection.id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
@@ -499,37 +579,21 @@ const RemoteConnections: React.FC = () => {
         await loadConnections();
         setOpenDialog(false);
         setEditingConnection(null);
-        setConnectionForm({
-          name: '',
-          host: '',
-          port: 22,
-          username: '',
-          password: '',
-          privateKey: '',
-          useSudo: false
-        });
+        setConnectionForm({ name: '', host: '', port: 22, username: '', password: '', privateKey: '', useSudo: false });
       } else {
         const errorData = await response.json();
-        setError(errorData.error || 'Failed to update connection');
+        setError(errorData.error || t('remoteConnections.failedToUpdateConnection'));
       }
     } catch (error) {
       console.error('Failed to update connection:', error);
-      setError('Failed to update connection');
+      setError(t('remoteConnections.failedToUpdateConnection'));
     }
   };
 
   const handleDialogClose = () => {
     setOpenDialog(false);
     setEditingConnection(null);
-    setConnectionForm({
-      name: '',
-      host: '',
-      port: 22,
-      username: '',
-      password: '',
-      privateKey: '',
-      useSudo: false
-    });
+    setConnectionForm({ name: '', host: '', port: 22, username: '', password: '', privateKey: '', useSudo: false });
   };
 
   const handleDialogSubmit = () => {
@@ -542,16 +606,13 @@ const RemoteConnections: React.FC = () => {
 
   const deleteConnection = async (connectionId: string) => {
     try {
-      const response = await fetch(`/api/remote/connections/${connectionId}`, {
-        method: 'DELETE'
-      });
-
+      const response = await fetch(`/api/remote/connections/${connectionId}`, { method: 'DELETE' });
       if (response.ok) {
         await loadConnections();
       }
     } catch (error) {
       console.error('Failed to delete connection:', error);
-      setError('Failed to delete connection');
+      setError(t('remoteConnections.failedToDeleteConnection'));
     }
   };
 
@@ -565,17 +626,6 @@ const RemoteConnections: React.FC = () => {
       }
       return newSet;
     });
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'online': return 'success';
-      case 'stopped': return 'error';
-      case 'stopping': return 'warning';
-      case 'waiting restart': return 'info';
-      case 'launching': return 'info';
-      default: return 'default';
-    }
   };
 
   const handleConnectAll = async () => {
@@ -592,63 +642,124 @@ const RemoteConnections: React.FC = () => {
     }
   };
 
+  // @group Render : Main component render
+
   return (
-    <Box>
-      {/* Page header */}
-      <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-200 dark:border-neutral-800">
+    <Box sx={{ backgroundColor: '#0a0a0a', minHeight: '100%' }}>
+
+      {/* @group Render > Header : Page header with actions */}
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#1e1e1e]">
         <div>
-          <h1 className="text-base font-semibold text-neutral-900 dark:text-neutral-100 leading-tight">Remote Connections</h1>
-          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">Manage SSH connections and remote PM2 processes</p>
+          <h1 className="font-mono text-xs font-semibold text-[#e8e8e8] leading-tight tracking-wide">
+            ▸ {t('remoteConnections.title').toUpperCase()}
+          </h1>
+          <p className="font-mono text-[0.625rem] text-[#555] mt-0.5">{t('remoteConnections.subtitle')}</p>
         </div>
         <Box sx={{ display: 'flex', gap: 1 }}>
           {connections.some(c => !c.connected) && (
-            <Button variant="outlined" size="small" startIcon={<PlayIcon />}
-              onClick={handleConnectAll} disabled={Object.values(loading).some(l => l)}>
-              Connect All
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<PlayIcon sx={{ fontSize: '0.75rem !important' }} />}
+              onClick={handleConnectAll}
+              disabled={Object.values(loading).some(l => l)}
+              sx={sxBtnSuccess}
+            >
+              {t('remoteConnections.connectAll')}
             </Button>
           )}
           {connections.some(c => c.connected) && (
-            <Button variant="outlined" size="small" startIcon={<StopIcon />}
-              onClick={handleDisconnectAll} disabled={Object.values(loading).some(l => l)}>
-              Disconnect All
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<StopIcon sx={{ fontSize: '0.75rem !important' }} />}
+              onClick={handleDisconnectAll}
+              disabled={Object.values(loading).some(l => l)}
+              sx={sxBtnDanger}
+            >
+              {t('remoteConnections.disconnectAll')}
             </Button>
           )}
-          <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={() => setOpenDialog(true)}>
-            Add Connection
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<AddIcon sx={{ fontSize: '0.75rem !important' }} />}
+            onClick={() => setOpenDialog(true)}
+            sx={sxBtnPrimary}
+          >
+            {t('remoteConnections.addConnection')}
           </Button>
         </Box>
       </div>
 
+      {/* @group Render > ErrorBanner : Error alert */}
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+        <Alert
+          severity="error"
+          onClose={() => setError(null)}
+          sx={{
+            mb: 2,
+            backgroundColor: '#1a0000',
+            color: '#ef4444',
+            border: '1px solid #3a0000',
+            borderRadius: '2px',
+            fontFamily: CLI_MONO,
+            fontSize: '0.625rem',
+            '& .MuiAlert-icon': { color: '#ef4444' },
+          }}
+        >
           {error}
         </Alert>
       )}
 
-      <Grid container spacing={1.5}>
+      {/* @group Render > ConnectionList : Connection cards */}
+      <Grid container spacing={1}>
         {connections.length === 0 ? (
           <Grid item xs={12}>
-            <Paper variant="outlined" sx={{ p: 3, textAlign: 'center' }}>
-              <Typography variant="body2" color="text.secondary">
-                No remote connections configured. Click "Add Connection" to get started.
+            <Paper
+              variant="outlined"
+              sx={{ p: 3, textAlign: 'center', backgroundColor: '#111', border: '1px solid #1e1e1e', borderRadius: '2px' }}
+            >
+              <Typography sx={{ fontFamily: CLI_MONO, fontSize: '0.625rem', color: '#555' }}>
+                {t('remoteConnections.noConnections')}
               </Typography>
             </Paper>
           </Grid>
         ) : connections.map((connection) => (
           <Grid item xs={12} key={connection.id}>
-            <Paper variant="outlined" sx={{ p: 0, overflow: 'hidden' }}>
+            <Paper
+              variant="outlined"
+              sx={{ p: 0, overflow: 'hidden', backgroundColor: '#111', border: '1px solid #1e1e1e', borderRadius: '2px' }}
+            >
               {/* Connection header row */}
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, py: 1, borderBottom: expandedConnections.has(connection.id) ? '1px solid' : 'none', borderColor: 'divider' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
-                  <Typography variant="body2" fontWeight={600} sx={{ whiteSpace: 'nowrap' }}>
+              <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                px: 2,
+                py: 1,
+                borderBottom: expandedConnections.has(connection.id) ? '1px solid #1e1e1e' : 'none',
+                backgroundColor: '#141414',
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
+                  {/* Status dot */}
+                  <span style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: '50%',
+                    backgroundColor: connection.connected ? '#22c55e' : '#555',
+                    flexShrink: 0,
+                    display: 'inline-block',
+                  }} />
+                  <Typography sx={{ fontFamily: CLI_MONO, fontSize: '0.6875rem', color: '#e8e8e8', fontWeight: 600, whiteSpace: 'nowrap' }}>
                     {connection.name}
                   </Typography>
                   <Chip
-                    label={connection.connected ? 'Connected' : 'Disconnected'}
-                    color={connection.connected ? 'success' : 'default'}
+                    label={connection.connected ? t('remoteConnections.connected') : t('remoteConnections.disconnected')}
                     size="small"
+                    sx={getConnectedChipSx(connection.connected)}
                   />
-                  <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
+                  <Typography sx={{ fontFamily: CLI_MONO, fontSize: '0.5625rem', color: '#555', whiteSpace: 'nowrap' }}>
                     {connection.username}@{connection.host}:{connection.port}
                   </Typography>
                 </Box>
@@ -656,114 +767,165 @@ const RemoteConnections: React.FC = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
                   {connection.connected ? (
                     <>
-                      <IconButton size="small"
+                      <IconButton
+                        size="small"
                         onClick={() => { loadProcesses(connection.id); loadSystemInfo(connection.id); }}
-                        disabled={loading[connection.id]}>
-                        <RefreshIcon fontSize="small" />
+                        disabled={loading[connection.id]}
+                        sx={{ color: '#555', '&:hover': { color: '#888', backgroundColor: 'transparent' } }}
+                      >
+                        <RefreshIcon sx={{ fontSize: '0.875rem' }} />
                       </IconButton>
-                      <IconButton size="small" onClick={() => toggleConnectionExpansion(connection.id)}>
-                        {expandedConnections.has(connection.id) ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+                      <IconButton
+                        size="small"
+                        onClick={() => toggleConnectionExpansion(connection.id)}
+                        sx={{ color: '#555', '&:hover': { color: '#888', backgroundColor: 'transparent' } }}
+                      >
+                        {expandedConnections.has(connection.id)
+                          ? <ExpandLessIcon sx={{ fontSize: '0.875rem' }} />
+                          : <ExpandMoreIcon sx={{ fontSize: '0.875rem' }} />}
                       </IconButton>
-                      <Button variant="outlined" size="small"
-                        onClick={() => handleDisconnect(connection.id)} disabled={loading[connection.id]}>
-                        Disconnect
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => handleDisconnect(connection.id)}
+                        disabled={loading[connection.id]}
+                        sx={sxBtnOutlined}
+                      >
+                        {t('remoteConnections.disconnect')}
                       </Button>
                     </>
                   ) : (
-                    <Button variant="contained" size="small"
-                      onClick={() => handleConnect(connection.id)} disabled={loading[connection.id]}
-                      startIcon={loading[connection.id] ? <CircularProgress size={12} /> : undefined}>
-                      Connect
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={() => handleConnect(connection.id)}
+                      disabled={loading[connection.id]}
+                      startIcon={loading[connection.id] ? <CircularProgress size={10} sx={{ color: '#0a0a0a' }} /> : undefined}
+                      sx={sxBtnPrimary}
+                    >
+                      {t('remoteConnections.connect')}
                     </Button>
                   )}
-                  <IconButton size="small" onClick={() => openEditDialog(connection)}>
-                    <EditIcon fontSize="small" />
+                  <IconButton
+                    size="small"
+                    onClick={() => openEditDialog(connection)}
+                    sx={{ color: '#555', '&:hover': { color: '#888', backgroundColor: 'transparent' } }}
+                  >
+                    <EditIcon sx={{ fontSize: '0.875rem' }} />
                   </IconButton>
-                  <IconButton size="small" color="error" onClick={() => deleteConnection(connection.id)}>
-                    <DeleteIcon fontSize="small" />
+                  <IconButton
+                    size="small"
+                    onClick={() => deleteConnection(connection.id)}
+                    sx={{ color: '#555', '&:hover': { color: '#ef4444', backgroundColor: 'transparent' } }}
+                  >
+                    <DeleteIcon sx={{ fontSize: '0.875rem' }} />
                   </IconButton>
                 </Box>
               </Box>
 
-              {/* Expanded panel */}
+              {/* @group Render > ExpandedPanel : Processes and system info tabs */}
               <Collapse in={expandedConnections.has(connection.id) && connection.connected}>
-                <Box>
-                  <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)}
-                    sx={{ px: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
-                    <Tab label="Processes" />
-                    <Tab label="System Info" />
+                <Box sx={{ backgroundColor: '#111' }}>
+                  <Tabs
+                    value={tabValue}
+                    onChange={(_, v) => setTabValue(v)}
+                    TabIndicatorProps={{ style: { backgroundColor: '#22c55e', height: 1 } }}
+                    sx={{ minHeight: 28, borderBottom: '1px solid #1e1e1e', backgroundColor: '#0d0d0d' }}
+                  >
+                    <Tab
+                      label={t('remoteConnections.tabProcesses')}
+                      sx={{ minHeight: 28, fontSize: '0.625rem', textTransform: 'none', fontFamily: CLI_MONO, color: '#555', py: 0, px: 2, '&.Mui-selected': { color: '#e8e8e8' } }}
+                    />
+                    <Tab
+                      label={t('remoteConnections.tabSystemInfo')}
+                      sx={{ minHeight: 28, fontSize: '0.625rem', textTransform: 'none', fontFamily: CLI_MONO, color: '#555', py: 0, px: 2, '&.Mui-selected': { color: '#e8e8e8' } }}
+                    />
                   </Tabs>
 
                   {/* Processes tab */}
                   <TabPanel value={tabValue} index={0}>
                     {loading[`${connection.id}-processes`] ? (
                       <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
-                        <CircularProgress size={20} />
+                        <CircularProgress size={16} sx={{ color: '#22c55e' }} />
                       </Box>
                     ) : processes[connection.id] === undefined ? (
-                      <Typography variant="body2" color="text.secondary">
-                        Click refresh to load processes.
+                      <Typography sx={{ fontFamily: CLI_MONO, fontSize: '0.625rem', color: '#555' }}>
+                        {t('remoteConnections.clickRefreshToLoad')}
                       </Typography>
                     ) : processes[connection.id].length === 0 ? (
-                      <Typography variant="body2" color="text.secondary">
-                        No PM2 processes running on this server.
+                      <Typography sx={{ fontFamily: CLI_MONO, fontSize: '0.625rem', color: '#555' }}>
+                        {t('remoteConnections.noPm2Processes')}
                       </Typography>
                     ) : (
-                      <Table size="small">
-                        <TableHead>
+                      <Table size="small" sx={{ backgroundColor: '#111' }}>
+                        <TableHead sx={{ backgroundColor: '#0d0d0d' }}>
                           <TableRow>
-                            <TableCell>Name</TableCell>
-                            <TableCell>Status</TableCell>
-                            <TableCell>CPU</TableCell>
-                            <TableCell>Memory</TableCell>
-                            <TableCell>Uptime</TableCell>
-                            <TableCell>Actions</TableCell>
+                            <TableCell sx={sxTableCellHead}>{t('remoteConnections.colName')}</TableCell>
+                            <TableCell sx={sxTableCellHead}>{t('remoteConnections.colStatus')}</TableCell>
+                            <TableCell sx={sxTableCellHead}>{t('remoteConnections.colCpu')}</TableCell>
+                            <TableCell sx={sxTableCellHead}>{t('remoteConnections.colMemory')}</TableCell>
+                            <TableCell sx={sxTableCellHead}>{t('remoteConnections.colUptime')}</TableCell>
+                            <TableCell sx={sxTableCellHead}>{t('remoteConnections.colActions')}</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
                           {processes[connection.id].map((process) => (
-                            <TableRow key={process.name}>
-                              <TableCell>
-                                <Typography variant="body2" fontWeight={500}>{process.name}</Typography>
+                            <TableRow key={process.name} sx={{ '&:hover': { backgroundColor: '#141414' } }}>
+                              <TableCell sx={sxTableCellBody}>
+                                <Typography sx={{ fontFamily: CLI_MONO, fontSize: '0.625rem', color: '#e8e8e8', fontWeight: 500 }}>
+                                  {process.name}
+                                </Typography>
                               </TableCell>
-                              <TableCell>
-                                <Chip label={process.status} color={getStatusColor(process.status) as any} size="small" />
+                              <TableCell sx={sxTableCellBody}>
+                                <Chip
+                                  label={process.status}
+                                  size="small"
+                                  sx={getStatusChipSx(process.status)}
+                                />
                               </TableCell>
-                              <TableCell><Typography variant="body2">{process.cpu}%</Typography></TableCell>
-                              <TableCell><Typography variant="body2">{process.memory}</Typography></TableCell>
-                              <TableCell><Typography variant="body2">{process.uptime}</Typography></TableCell>
-                              <TableCell>
+                              <TableCell sx={sxTableCellBody}>{process.cpu}%</TableCell>
+                              <TableCell sx={sxTableCellBody}>{process.memory}</TableCell>
+                              <TableCell sx={sxTableCellBody}>{process.uptime}</TableCell>
+                              <TableCell sx={{ ...sxTableCellBody, whiteSpace: 'nowrap' }}>
                                 {process.status === 'online' ? (
                                   <Button
                                     size="small"
-                                    variant="outlined"
-                                    color="error"
-                                    startIcon={<StopIcon fontSize="small" />}
+                                    startIcon={<StopIcon sx={{ fontSize: '0.75rem !important' }} />}
                                     onClick={() => handleProcessAction(connection.id, process.name, 'stop')}
-                                    sx={{ mr: 0.5 }}
+                                    sx={{ ...sxBtnDanger, mr: 0.5 }}
                                   >
-                                    Stop
+                                    {t('actions.stop')}
                                   </Button>
                                 ) : (
                                   <Button
                                     size="small"
-                                    variant="outlined"
-                                    color="success"
-                                    startIcon={<PlayIcon fontSize="small" />}
+                                    startIcon={<PlayIcon sx={{ fontSize: '0.75rem !important' }} />}
                                     onClick={() => handleProcessAction(connection.id, process.name, 'start')}
-                                    sx={{ mr: 0.5 }}
+                                    sx={{ ...sxBtnSuccess, mr: 0.5 }}
                                   >
-                                    Start
+                                    {t('actions.start')}
                                   </Button>
                                 )}
-                                <IconButton size="small" onClick={() => handleProcessAction(connection.id, process.name, 'restart')}>
-                                  <RefreshIcon fontSize="small" />
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleProcessAction(connection.id, process.name, 'restart')}
+                                  sx={{ color: '#555', '&:hover': { color: '#f59e0b', backgroundColor: 'transparent' } }}
+                                >
+                                  <RefreshIcon sx={{ fontSize: '0.875rem' }} />
                                 </IconButton>
-                                <IconButton size="small" color="error" onClick={() => handleProcessAction(connection.id, process.name, 'delete')}>
-                                  <DeleteIcon fontSize="small" />
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleProcessAction(connection.id, process.name, 'delete')}
+                                  sx={{ color: '#555', '&:hover': { color: '#ef4444', backgroundColor: 'transparent' } }}
+                                >
+                                  <DeleteIcon sx={{ fontSize: '0.875rem' }} />
                                 </IconButton>
-                                <IconButton size="small" color="primary" onClick={() => openLiveLogs(connection.id, process.name, process.pm_id)}>
-                                  <VisibilityIcon fontSize="small" />
+                                <IconButton
+                                  size="small"
+                                  onClick={() => openLiveLogs(connection.id, process.name, process.pm_id)}
+                                  sx={{ color: '#555', '&:hover': { color: '#22d3ee', backgroundColor: 'transparent' } }}
+                                >
+                                  <VisibilityIcon sx={{ fontSize: '0.875rem' }} />
                                 </IconButton>
                               </TableCell>
                             </TableRow>
@@ -778,36 +940,42 @@ const RemoteConnections: React.FC = () => {
                     {systemInfo[connection.id] ? (
                       <Grid container spacing={2}>
                         <Grid item xs={12} md={6}>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>System Information</Typography>
+                          <Typography sx={{ fontFamily: CLI_MONO, fontSize: '0.5625rem', color: '#444', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', mb: 1, display: 'block' }}>
+                            {t('remoteConnections.systemInformation')}
+                          </Typography>
                           {[
-                            ['Hostname',     systemInfo[connection.id].hostname],
-                            ['Platform',     systemInfo[connection.id].platform],
-                            ['Architecture', systemInfo[connection.id].arch],
-                            ['Node.js',      systemInfo[connection.id].nodeVersion],
+                            [t('remoteConnections.hostname'),     systemInfo[connection.id].hostname],
+                            [t('remoteConnections.platform'),     systemInfo[connection.id].platform],
+                            [t('remoteConnections.architecture'), systemInfo[connection.id].arch],
+                            [t('remoteConnections.nodeJs'),      systemInfo[connection.id].nodeVersion],
                           ].map(([label, value]) => (
-                            <Box key={label} sx={{ display: 'flex', gap: 1, mb: 0.5 }}>
-                              <Typography variant="caption" color="text.secondary" sx={{ minWidth: 90 }}>{label}:</Typography>
-                              <Typography variant="caption">{value}</Typography>
+                            <Box key={label} sx={{ display: 'flex', gap: 1.5, mb: 0.5 }}>
+                              <Typography sx={{ fontFamily: CLI_MONO, fontSize: '0.5625rem', color: '#555', minWidth: 90 }}>{label}:</Typography>
+                              <Typography sx={{ fontFamily: CLI_MONO, fontSize: '0.5625rem', color: '#888' }}>{value}</Typography>
                             </Box>
                           ))}
                         </Grid>
                         <Grid item xs={12} md={6}>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>Resources</Typography>
+                          <Typography sx={{ fontFamily: CLI_MONO, fontSize: '0.5625rem', color: '#444', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', mb: 1, display: 'block' }}>
+                            {t('remoteConnections.resources')}
+                          </Typography>
                           {[
-                            ['Total Memory', systemInfo[connection.id].totalMemory],
-                            ['Free Memory',  systemInfo[connection.id].freeMemory],
-                            ['CPU Count',    systemInfo[connection.id].cpuCount],
-                            ['Load Average', systemInfo[connection.id].loadAverage?.join(', ')],
+                            [t('remoteConnections.totalMemory'), systemInfo[connection.id].totalMemory],
+                            [t('remoteConnections.freeMemory'),  systemInfo[connection.id].freeMemory],
+                            [t('remoteConnections.cpuCount'),    systemInfo[connection.id].cpuCount],
+                            [t('remoteConnections.loadAverage'), systemInfo[connection.id].loadAverage?.join(', ')],
                           ].map(([label, value]) => (
-                            <Box key={label} sx={{ display: 'flex', gap: 1, mb: 0.5 }}>
-                              <Typography variant="caption" color="text.secondary" sx={{ minWidth: 90 }}>{label}:</Typography>
-                              <Typography variant="caption">{value}</Typography>
+                            <Box key={label} sx={{ display: 'flex', gap: 1.5, mb: 0.5 }}>
+                              <Typography sx={{ fontFamily: CLI_MONO, fontSize: '0.5625rem', color: '#555', minWidth: 90 }}>{label}:</Typography>
+                              <Typography sx={{ fontFamily: CLI_MONO, fontSize: '0.5625rem', color: '#888' }}>{value}</Typography>
                             </Box>
                           ))}
                         </Grid>
                       </Grid>
                     ) : (
-                      <Typography variant="body2" color="text.secondary">No system info available.</Typography>
+                      <Typography sx={{ fontFamily: CLI_MONO, fontSize: '0.625rem', color: '#555' }}>
+                        {t('remoteConnections.noSystemInfo')}
+                      </Typography>
                     )}
                   </TabPanel>
                 </Box>
@@ -817,84 +985,119 @@ const RemoteConnections: React.FC = () => {
         ))}
       </Grid>
 
-      {/* Add/Edit Connection Dialog */}
-      <Dialog open={openDialog} onClose={handleDialogClose} maxWidth="md" fullWidth>
-        <DialogTitle>{editingConnection ? 'Edit Remote Connection' : 'Add Remote Connection'}</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
+      {/* @group Render > Dialog : Add/Edit Connection Dialog */}
+      <Dialog
+        open={openDialog}
+        onClose={handleDialogClose}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{ sx: { backgroundColor: '#111', border: '1px solid #1e1e1e', borderRadius: '2px', backgroundImage: 'none' } }}
+      >
+        <DialogTitle sx={{ fontFamily: CLI_MONO, fontSize: '0.75rem', color: '#e8e8e8', fontWeight: 600, borderBottom: '1px solid #1e1e1e', py: 1.5 }}>
+          {editingConnection ? t('remoteConnections.editRemoteConnection') : t('remoteConnections.addRemoteConnection')}
+        </DialogTitle>
+        <DialogContent sx={{ backgroundColor: '#111', pt: '16px !important' }}>
+          <Grid container spacing={2}>
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Connection Name"
+                label={t('remoteConnections.connectionName')}
                 value={connectionForm.name}
                 onChange={(e) => setConnectionForm(prev => ({ ...prev, name: e.target.value }))}
+                size="small"
+                sx={sxTextField}
               />
             </Grid>
             <Grid item xs={12} md={8}>
               <TextField
                 fullWidth
-                label="Host"
+                label={t('remoteConnections.host')}
                 value={connectionForm.host}
                 onChange={(e) => setConnectionForm(prev => ({ ...prev, host: e.target.value }))}
+                size="small"
+                sx={sxTextField}
               />
             </Grid>
             <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
-                label="Port"
+                label={t('remoteConnections.port')}
                 type="number"
                 value={connectionForm.port}
                 onChange={(e) => setConnectionForm(prev => ({ ...prev, port: parseInt(e.target.value) }))}
+                size="small"
+                sx={sxTextField}
               />
             </Grid>
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Username"
+                label={t('remoteConnections.username')}
                 value={connectionForm.username}
                 onChange={(e) => setConnectionForm(prev => ({ ...prev, username: e.target.value }))}
+                size="small"
+                sx={sxTextField}
               />
             </Grid>
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Password"
+                label={t('remoteConnections.password')}
                 type="password"
                 value={connectionForm.password}
                 onChange={(e) => setConnectionForm(prev => ({ ...prev, password: e.target.value }))}
-                placeholder={editingConnection ? "Leave blank to keep existing password" : ""}
-                helperText={editingConnection ? "Leave blank to keep current password" : ""}
+                placeholder={editingConnection ? t('remoteConnections.passwordPlaceholder') : ''}
+                helperText={editingConnection ? t('remoteConnections.leaveBlankCurrent') : ''}
+                size="small"
+                sx={sxTextField}
               />
             </Grid>
-            <Grid item xs={12}>              <TextField
+            <Grid item xs={12}>
+              <TextField
                 fullWidth
-                label="Private Key (optional)"
+                label={t('remoteConnections.privateKey')}
                 multiline
                 rows={4}
                 value={connectionForm.privateKey}
                 onChange={(e) => setConnectionForm(prev => ({ ...prev, privateKey: e.target.value }))}
                 placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"
+                sx={sxTextField}
               />
-            </Grid>            <Grid item xs={12}>
+            </Grid>
+            <Grid item xs={12}>
               <FormControlLabel
                 control={
                   <Checkbox
                     checked={connectionForm.useSudo}
                     onChange={(e) => setConnectionForm(prev => ({ ...prev, useSudo: e.target.checked }))}
+                    size="small"
+                    sx={{
+                      color: '#333',
+                      '&.Mui-checked': { color: '#22c55e' },
+                      '& .MuiSvgIcon-root': { fontSize: '0.875rem' },
+                    }}
                   />
                 }
-                label="Use sudo for privileged commands (requires password)"
+                label={
+                  <Typography sx={{ fontFamily: CLI_MONO, fontSize: '0.625rem', color: '#888' }}>
+                    {t('remoteConnections.useSudo')}
+                  </Typography>
+                }
               />
             </Grid>
           </Grid>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDialogClose}>Cancel</Button>
-          <Button onClick={handleDialogSubmit} variant="contained">
-            {editingConnection ? 'Update Connection' : 'Add Connection'}
+        <DialogActions sx={{ borderTop: '1px solid #1e1e1e', px: 2, py: 1.5, backgroundColor: '#111', gap: 1 }}>
+          <Button onClick={handleDialogClose} size="small" sx={sxBtnOutlined}>
+            {t('common.cancel')}
+          </Button>
+          <Button onClick={handleDialogSubmit} size="small" sx={sxBtnPrimary}>
+            {editingConnection ? t('remoteConnections.updateConnection') : t('remoteConnections.addConnection')}
           </Button>
         </DialogActions>
-      </Dialog>      {/* VS Code-style log status bar — renders all active log sessions as tabs */}
+      </Dialog>
+
+      {/* @group Render > LogStatusBar : VS Code-style log status bar */}
       <LogStatusBar
         logWindows={logWindows}
         onClose={closeLiveLogs}
@@ -905,4 +1108,3 @@ const RemoteConnections: React.FC = () => {
 };
 
 export default RemoteConnections;
-

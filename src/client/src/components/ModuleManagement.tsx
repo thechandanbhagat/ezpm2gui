@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ArrowPathIcon,
   PlusIcon,
@@ -81,18 +82,20 @@ const MODULE_SCHEMAS: Record<string, ConfigField[]> = {
 // @group Utilities : Map status string to badge colours
 const statusBadge = (status: string): string => {
   const s = status.toLowerCase();
-  if (s.includes('online') || s.includes('enabled'))  return 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300';
-  if (s.includes('error')  || s.includes('disabled')) return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300';
-  return 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300';
+  if (s.includes('online') || s.includes('enabled'))
+    return 'text-[9px] font-mono text-[#22c55e] border border-[#22c55e]/30 bg-[#022c00] px-1.5 py-0.5 rounded-sm';
+  if (s.includes('error') || s.includes('disabled'))
+    return 'text-[9px] font-mono text-[#ef4444] border border-[#ef4444]/30 bg-[#1a0000] px-1.5 py-0.5 rounded-sm';
+  return 'text-[9px] font-mono text-[#f59e0b] border border-[#f59e0b]/30 bg-[#1a0e00] px-1.5 py-0.5 rounded-sm';
 };
 
 // @group Utilities : Map category to a colour accent
 const categoryColor: Record<string, string> = {
-  Logging:       'text-sky-500 bg-sky-500/10',
-  Monitoring:    'text-emerald-500 bg-emerald-500/10',
-  Deployment:    'text-violet-500 bg-violet-500/10',
-  Notifications: 'text-amber-500 bg-amber-500/10',
-  Utilities:     'text-neutral-400 bg-neutral-500/10',
+  Logging:       'text-[#22d3ee] border border-[#22d3ee]/20 bg-[#001a1f]',
+  Monitoring:    'text-[#22c55e] border border-[#22c55e]/20 bg-[#022c00]',
+  Deployment:    'text-[#a78bfa] border border-[#a78bfa]/20 bg-[#16003a]',
+  Notifications: 'text-[#f59e0b] border border-[#f59e0b]/20 bg-[#1a0e00]',
+  Utilities:     'text-[#888] border border-[#333] bg-[#1a1a1a]',
 };
 
 // @group ConfigPanel : Slide-over panel for configuring a single installed module
@@ -158,24 +161,19 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ moduleName, onClose, onNotify
   return (
     // Backdrop
     <div className="fixed inset-0 z-50 flex justify-end">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
 
       {/* Panel */}
       <div className="relative z-10 flex flex-col w-full max-w-md h-full
-                      bg-white dark:bg-neutral-900
-                      border-l border-neutral-200 dark:border-neutral-800
-                      shadow-2xl overflow-hidden">
+                      bg-[#111] border-l border-[#1e1e1e] shadow-2xl overflow-hidden">
 
         {/* Panel header */}
-        <div className="flex items-center justify-between px-4 py-3
-                        border-b border-neutral-200 dark:border-neutral-800 shrink-0">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[#1e1e1e] shrink-0">
           <div>
-            <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-              Configure Module
-            </h2>
-            <p className="text-xs text-neutral-400 font-mono mt-0.5">{moduleName}</p>
+            <p className="text-[9px] uppercase tracking-[0.2em] text-[#555] mb-0.5">▸ CONFIGURE MODULE</p>
+            <p className="text-[11px] font-mono font-bold text-[#e8e8e8]">{moduleName}</p>
           </div>
-          <button onClick={onClose} className="text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors">
+          <button onClick={onClose} className="text-[#444] hover:text-[#888] p-1 rounded-sm hover:bg-[#1a1a1a] transition-colors">
             <XMarkIcon className="h-4 w-4" />
           </button>
         </div>
@@ -183,39 +181,39 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ moduleName, onClose, onNotify
         {/* Panel body */}
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
           {loading ? (
-            <div className="flex items-center justify-center h-24 gap-2 text-xs text-neutral-400">
-              <svg className="h-4 w-4 animate-spin text-primary-500" viewBox="0 0 24 24" fill="none">
+            <div className="flex items-center justify-center h-24 gap-2 text-xs font-mono text-[#555]">
+              <svg className="h-4 w-4 animate-spin text-[#888]" viewBox="0 0 24 24" fill="none">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
               </svg>
-              Loading…
+              loading…
             </div>
           ) : (
             <>
               {/* Schema-based fields */}
               {schema.length > 0 && (
                 <div className="space-y-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400">Settings</p>
+                  <p className="text-[9px] uppercase tracking-[0.2em] text-[#555]">▸ SETTINGS</p>
                   {schema.map(field => {
                     const val = config[field.key] ?? field.default;
                     return (
                       <div key={field.key}>
-                        <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
+                        <label className="block text-[10px] font-mono text-[#888] mb-1">
                           {field.label}
                         </label>
                         {field.type === 'boolean' ? (
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => setField(field.key, val === 'true' ? 'false' : 'true')}
-                              className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent
+                              className={`relative inline-flex h-5 w-9 shrink-0 rounded-sm border-2 border-transparent
                                           transition-colors duration-200 focus:outline-none cursor-pointer
-                                          ${val === 'true' ? 'bg-primary-600' : 'bg-neutral-300 dark:bg-neutral-600'}`}
+                                          ${val === 'true' ? 'bg-[#22c55e]' : 'bg-[#2a2a2a]'}`}
                             >
-                              <span className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow
+                              <span className={`pointer-events-none inline-block h-4 w-4 rounded-sm bg-[#0a0a0a] shadow
                                                transform transition-transform duration-200
                                                ${val === 'true' ? 'translate-x-4' : 'translate-x-0'}`} />
                             </button>
-                            <span className="text-xs text-neutral-500">{val === 'true' ? 'Enabled' : 'Disabled'}</span>
+                            <span className="text-[10px] font-mono text-[#555]">{val === 'true' ? 'enabled' : 'disabled'}</span>
                           </div>
                         ) : (
                           <input
@@ -223,16 +221,12 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ moduleName, onClose, onNotify
                             value={val}
                             onChange={e => setField(field.key, e.target.value)}
                             placeholder={field.default}
-                            className="w-full h-8 px-3 text-xs rounded border
-                                       bg-white dark:bg-neutral-800
-                                       border-neutral-200 dark:border-neutral-700
-                                       text-neutral-900 dark:text-neutral-100
-                                       placeholder-neutral-400 dark:placeholder-neutral-500
-                                       focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            className="w-full h-8 px-3 bg-[#0d0d0d] border border-[#1e1e1e] text-[#e8e8e8] font-mono text-xs rounded-sm
+                                       placeholder-[#333] focus:outline-none focus:border-[#333]"
                           />
                         )}
                         {field.description && (
-                          <p className="mt-0.5 text-[11px] text-neutral-400">{field.description}</p>
+                          <p className="mt-0.5 text-[10px] font-mono text-[#444]">{field.description}</p>
                         )}
                       </div>
                     );
@@ -243,19 +237,19 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ moduleName, onClose, onNotify
               {/* Free-form extra pairs */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400">
-                    {schema.length > 0 ? 'Additional Keys' : 'Configuration Keys'}
+                  <p className="text-[9px] uppercase tracking-[0.2em] text-[#555]">
+                    ▸ {schema.length > 0 ? 'ADDITIONAL KEYS' : 'CONFIGURATION KEYS'}
                   </p>
                   <button
                     onClick={() => setExtras(p => [...p, { key: '', value: '' }])}
-                    className="text-[10px] font-medium text-primary-600 dark:text-primary-400 hover:underline"
+                    className="text-[10px] font-mono text-[#888] hover:text-[#e8e8e8] transition-colors"
                   >
-                    + Add key
+                    + add key
                   </button>
                 </div>
 
                 {extras.length === 0 && schema.length > 0 ? (
-                  <p className="text-[11px] text-neutral-400 italic">No additional keys</p>
+                  <p className="text-[10px] font-mono text-[#444] italic">no additional keys</p>
                 ) : (
                   extras.map((e, i) => (
                     <div key={i} className="flex items-center gap-1.5">
@@ -264,28 +258,20 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ moduleName, onClose, onNotify
                         value={e.key}
                         onChange={ev => setExtra(i, 'key', ev.target.value)}
                         placeholder="key"
-                        className="w-32 h-7 px-2 text-xs rounded border font-mono
-                                   bg-white dark:bg-neutral-800
-                                   border-neutral-200 dark:border-neutral-700
-                                   text-neutral-900 dark:text-neutral-100
-                                   placeholder-neutral-400 dark:placeholder-neutral-500
-                                   focus:outline-none focus:ring-1 focus:ring-primary-500"
+                        className="w-32 h-7 px-2 bg-[#0d0d0d] border border-[#1e1e1e] text-[#e8e8e8] font-mono text-xs rounded-sm
+                                   placeholder-[#333] focus:outline-none focus:border-[#333]"
                       />
                       <input
                         type="text"
                         value={e.value}
                         onChange={ev => setExtra(i, 'value', ev.target.value)}
                         placeholder="value"
-                        className="flex-1 h-7 px-2 text-xs rounded border
-                                   bg-white dark:bg-neutral-800
-                                   border-neutral-200 dark:border-neutral-700
-                                   text-neutral-900 dark:text-neutral-100
-                                   placeholder-neutral-400 dark:placeholder-neutral-500
-                                   focus:outline-none focus:ring-1 focus:ring-primary-500"
+                        className="flex-1 h-7 px-2 bg-[#0d0d0d] border border-[#1e1e1e] text-[#e8e8e8] font-mono text-xs rounded-sm
+                                   placeholder-[#333] focus:outline-none focus:border-[#333]"
                       />
                       <button
                         onClick={() => setExtras(p => p.filter((_, idx) => idx !== i))}
-                        className="shrink-0 text-neutral-400 hover:text-red-500 transition-colors"
+                        className="shrink-0 text-[#444] hover:text-[#ef4444] transition-colors"
                       >
                         <XMarkIcon className="h-3.5 w-3.5" />
                       </button>
@@ -295,8 +281,8 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ moduleName, onClose, onNotify
               </div>
 
               {schema.length === 0 && extras.length === 0 && (
-                <p className="text-xs text-neutral-400 italic text-center py-4">
-                  No configuration found. Use "+ Add key" to add custom settings.
+                <p className="text-[10px] font-mono text-[#444] italic text-center py-4">
+                  no configuration found — use "+ add key" to add custom settings
                 </p>
               )}
             </>
@@ -304,23 +290,18 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ moduleName, onClose, onNotify
         </div>
 
         {/* Panel footer */}
-        <div className="flex justify-end gap-2 px-4 py-3
-                        border-t border-neutral-200 dark:border-neutral-800 shrink-0">
+        <div className="flex justify-end gap-2 px-4 py-3 border-t border-[#1e1e1e] shrink-0">
           <button
             onClick={onClose}
-            className="h-7 px-3 text-xs font-medium rounded border
-                       border-neutral-200 dark:border-neutral-700
-                       text-neutral-600 dark:text-neutral-400
-                       hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+            className="h-7 px-3 text-xs font-mono border border-[#1e1e1e] text-[#555] hover:text-[#888] hover:border-[#333] rounded-sm transition-colors"
           >
-            Cancel
+            cancel
           </button>
           <button
             onClick={handleSave}
             disabled={saving || loading}
-            className="h-7 px-3 text-xs font-medium rounded
-                       bg-primary-600 hover:bg-primary-700 text-white
-                       disabled:opacity-50 transition-colors flex items-center gap-1.5"
+            className="h-7 px-3 bg-[#e8e8e8] text-[#0a0a0a] text-xs font-mono font-semibold rounded-sm
+                       disabled:opacity-40 transition-colors flex items-center gap-1.5 hover:bg-[#ccc]"
           >
             {saving ? (
               <>
@@ -328,9 +309,9 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ moduleName, onClose, onNotify
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                 </svg>
-                Saving…
+                saving…
               </>
-            ) : 'Save'}
+            ) : 'save'}
           </button>
         </div>
       </div>
@@ -340,6 +321,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ moduleName, onClose, onNotify
 
 // @group ModuleManagement : Install, uninstall, configure, and browse PM2 modules
 const ModuleManagement: React.FC<{ onNotify: NotifyFn }> = ({ onNotify }) => {
+  const { t } = useTranslation();
   const [modules,         setModules]         = useState<Module[]>([]);
   const [loading,         setLoading]         = useState(true);
   const [dialogOpen,      setDialogOpen]      = useState(false);
@@ -353,17 +335,18 @@ const ModuleManagement: React.FC<{ onNotify: NotifyFn }> = ({ onNotify }) => {
       const res = await axios.get('/api/modules');
       setModules(res.data);
     } catch (err: any) {
-      onNotify(err.response?.data?.error || 'Failed to fetch modules', 'error');
+      onNotify(err.response?.data?.error || t('errors.failedToFetchModules'), 'error');
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onNotify]);
 
   useEffect(() => { fetchModules(); }, [fetchModules]);
 
   // @group Handlers : Install a module by name
   const handleInstall = async () => {
-    if (!newModuleName.trim()) { onNotify('Module name is required', 'warn'); return; }
+    if (!newModuleName.trim()) { onNotify(t('errors.moduleNameRequired'), 'warn'); return; }
     try {
       setInstalling(true);
       await axios.post('/api/modules/install', { moduleName: newModuleName.trim() });
@@ -407,30 +390,26 @@ const ModuleManagement: React.FC<{ onNotify: NotifyFn }> = ({ onNotify }) => {
     <div>
       {/* Header */}
       <PageHeader
-        title="PM2 Modules"
-        subtitle="Install, configure and manage PM2 plugin modules"
+        title={t('modules.title')}
+        subtitle={t('modules.subtitle')}
         actions={
           <div className="flex items-center gap-2">
             <button
               onClick={fetchModules}
               disabled={loading}
-              className="h-7 px-3 text-xs font-medium rounded border
-                         border-neutral-200 dark:border-neutral-700
-                         text-neutral-600 dark:text-neutral-400
-                         hover:bg-neutral-100 dark:hover:bg-neutral-800
-                         disabled:opacity-50 transition-colors flex items-center gap-1.5"
+              className="h-7 px-3 text-xs font-mono border border-[#1e1e1e] text-[#555] hover:text-[#888] hover:border-[#333]
+                         rounded-sm disabled:opacity-40 transition-colors flex items-center gap-1.5"
             >
               <ArrowPathIcon className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
+              {t('common.refresh')}
             </button>
             <button
               onClick={() => setDialogOpen(true)}
-              className="h-7 px-3 text-xs font-medium rounded
-                         bg-primary-600 hover:bg-primary-700 text-white
-                         transition-colors flex items-center gap-1.5"
+              className="h-7 px-3 bg-[#e8e8e8] text-[#0a0a0a] text-xs font-mono font-semibold rounded-sm
+                         hover:bg-[#ccc] transition-colors flex items-center gap-1.5"
             >
               <PlusIcon className="h-3.5 w-3.5" />
-              Install Module
+              install module
             </button>
           </div>
         }
@@ -438,46 +417,42 @@ const ModuleManagement: React.FC<{ onNotify: NotifyFn }> = ({ onNotify }) => {
 
       {/* ── Installed Modules ── */}
       <section className="mb-6">
-        <h2 className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-widest mb-2">
-          Installed
-        </h2>
+        <p className="text-[9px] uppercase tracking-[0.2em] text-[#555] mb-2">▸ INSTALLED</p>
 
-        <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+        <div className="border border-[#1e1e1e] rounded-sm overflow-hidden bg-[#111]">
           {loading ? (
-            <div className="flex items-center justify-center h-24 gap-2 text-xs text-neutral-400">
-              <svg className="h-4 w-4 animate-spin text-primary-500" viewBox="0 0 24 24" fill="none">
+            <div className="flex items-center justify-center h-24 gap-2 text-xs font-mono text-[#555]">
+              <svg className="h-4 w-4 animate-spin text-[#888]" viewBox="0 0 24 24" fill="none">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
               </svg>
-              Loading modules…
+              loading modules…
             </div>
           ) : modules.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-24 gap-1 text-xs text-neutral-400 dark:text-neutral-500">
+            <div className="flex flex-col items-center justify-center h-24 gap-1 text-[#555]">
               <PuzzlePieceIcon className="h-5 w-5 opacity-40" />
-              <span>No PM2 modules installed</span>
+              <span className="text-[10px] font-mono">no PM2 modules installed</span>
             </div>
           ) : (
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-neutral-200 dark:border-neutral-800
-                               bg-neutral-50 dark:bg-neutral-900/60 text-neutral-500 dark:text-neutral-400">
-                  <th className="px-3 py-2 text-left font-medium">Name</th>
-                  <th className="px-3 py-2 text-left font-medium">Version</th>
-                  <th className="px-3 py-2 text-left font-medium">Status</th>
-                  <th className="px-3 py-2 text-right font-medium">Actions</th>
+                <tr className="border-b border-[#1e1e1e] bg-[#0d0d0d] text-[#555]">
+                  <th className="px-3 py-2 text-left text-[9px] font-mono uppercase tracking-[0.15em]">Name</th>
+                  <th className="px-3 py-2 text-left text-[9px] font-mono uppercase tracking-[0.15em]">Version</th>
+                  <th className="px-3 py-2 text-left text-[9px] font-mono uppercase tracking-[0.15em]">Status</th>
+                  <th className="px-3 py-2 text-right text-[9px] font-mono uppercase tracking-[0.15em]">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {modules.map((mod, i) => (
                   <tr
                     key={mod.name}
-                    className={`border-b last:border-0 border-neutral-100 dark:border-neutral-800
-                                ${i % 2 === 0 ? '' : 'bg-neutral-50/50 dark:bg-neutral-900/30'}`}
+                    className={`border-b last:border-0 border-[#1a1a1a] ${i % 2 === 0 ? '' : 'bg-[#0d0d0d]/50'}`}
                   >
-                    <td className="px-3 py-2 font-mono font-medium text-neutral-900 dark:text-neutral-100">{mod.name}</td>
-                    <td className="px-3 py-2 text-neutral-500 dark:text-neutral-400">{mod.version}</td>
+                    <td className="px-3 py-2 font-mono font-bold text-[11px] text-[#e8e8e8]">{mod.name}</td>
+                    <td className="px-3 py-2 font-mono text-[10px] text-[#555]">{mod.version}</td>
                     <td className="px-3 py-2">
-                      <span className={`inline-block text-[10px] font-semibold px-1.5 py-0.5 rounded ${statusBadge(mod.status)}`}>
+                      <span className={`inline-block ${statusBadge(mod.status)}`}>
                         {mod.status}
                       </span>
                     </td>
@@ -486,18 +461,16 @@ const ModuleManagement: React.FC<{ onNotify: NotifyFn }> = ({ onNotify }) => {
                         <button
                           onClick={() => setConfigModule(mod.name)}
                           title="Configure"
-                          className="inline-flex items-center justify-center h-6 w-6 rounded
-                                     text-neutral-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20
-                                     transition-colors"
+                          className="inline-flex items-center justify-center h-6 w-6 rounded-sm
+                                     text-[#444] hover:text-[#888] hover:bg-[#1a1a1a] transition-colors"
                         >
                           <Cog6ToothIcon className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={() => handleUninstall(mod.name)}
                           title="Uninstall"
-                          className="inline-flex items-center justify-center h-6 w-6 rounded
-                                     text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20
-                                     transition-colors"
+                          className="inline-flex items-center justify-center h-6 w-6 rounded-sm
+                                     text-[#444] hover:text-[#ef4444] hover:bg-[#1a0000] transition-colors"
                         >
                           <TrashIcon className="h-3.5 w-3.5" />
                         </button>
@@ -513,9 +486,7 @@ const ModuleManagement: React.FC<{ onNotify: NotifyFn }> = ({ onNotify }) => {
 
       {/* ── Available Modules Catalog ── */}
       <section>
-        <h2 className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-widest mb-2">
-          Available Modules
-        </h2>
+        <p className="text-[9px] uppercase tracking-[0.2em] text-[#555] mb-2">▸ AVAILABLE MODULES</p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {KNOWN_MODULES.map(mod => {
@@ -523,27 +494,26 @@ const ModuleManagement: React.FC<{ onNotify: NotifyFn }> = ({ onNotify }) => {
             return (
               <div
                 key={mod.name}
-                className="flex items-start gap-3 rounded-lg border border-neutral-200 dark:border-neutral-800
-                           bg-white dark:bg-neutral-900/40 px-3 py-2.5
-                           hover:border-primary-300 dark:hover:border-primary-700/60 transition-colors"
+                className="flex items-start gap-3 bg-[#0d0d0d] border border-[#1e1e1e] rounded-sm p-3
+                           hover:border-[#333] transition-colors"
               >
-                <div className="shrink-0 mt-0.5 h-7 w-7 rounded flex items-center justify-center bg-neutral-100 dark:bg-neutral-800">
-                  <PuzzlePieceIcon className="h-4 w-4 text-neutral-400" />
+                <div className="shrink-0 mt-0.5 h-7 w-7 rounded-sm flex items-center justify-center bg-[#1a1a1a]">
+                  <PuzzlePieceIcon className="h-4 w-4 text-[#444]" />
                 </div>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="font-mono text-xs font-semibold text-neutral-900 dark:text-neutral-100">{mod.name}</span>
-                    <span className={`text-[10px] font-semibold px-1.5 py-px rounded ${categoryColor[mod.category] ?? categoryColor.Utilities}`}>
+                    <span className="text-[11px] font-mono font-bold text-[#e8e8e8]">{mod.name}</span>
+                    <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded-sm ${categoryColor[mod.category] ?? categoryColor.Utilities}`}>
                       {mod.category}
                     </span>
                     {isInstalled && (
-                      <span className="text-[10px] font-semibold px-1.5 py-px rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                        Installed
+                      <span className="text-[9px] font-mono text-[#22c55e] border border-[#22c55e]/30 bg-[#022c00] px-1.5 py-0.5 rounded-sm">
+                        installed
                       </span>
                     )}
                   </div>
-                  <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5 leading-relaxed">{mod.description}</p>
+                  <p className="text-[10px] font-mono text-[#555] mt-0.5 leading-relaxed">{mod.description}</p>
                 </div>
 
                 <div className="flex flex-col gap-1 shrink-0 mt-0.5">
@@ -551,11 +521,9 @@ const ModuleManagement: React.FC<{ onNotify: NotifyFn }> = ({ onNotify }) => {
                     <button
                       onClick={() => setConfigModule(mod.name)}
                       title="Configure"
-                      className="h-7 w-7 flex items-center justify-center rounded
-                                 border border-primary-300 dark:border-primary-700
-                                 text-primary-600 dark:text-primary-400
-                                 hover:bg-primary-50 dark:hover:bg-primary-900/20
-                                 transition-colors"
+                      className="h-7 w-7 flex items-center justify-center rounded-sm
+                                 border border-[#1e1e1e] text-[#555]
+                                 hover:text-[#888] hover:border-[#333] transition-colors"
                     >
                       <Cog6ToothIcon className="h-3.5 w-3.5" />
                     </button>
@@ -563,11 +531,9 @@ const ModuleManagement: React.FC<{ onNotify: NotifyFn }> = ({ onNotify }) => {
                     <button
                       onClick={() => handleQuickInstall(mod.name)}
                       title="Install"
-                      className="h-7 w-7 flex items-center justify-center rounded
-                                 border border-primary-300 dark:border-primary-700
-                                 text-primary-600 dark:text-primary-400
-                                 hover:bg-primary-50 dark:hover:bg-primary-900/20
-                                 transition-colors"
+                      className="h-7 w-7 flex items-center justify-center rounded-sm
+                                 border border-[#1e1e1e] text-[#555]
+                                 hover:text-[#888] hover:border-[#333] transition-colors"
                     >
                       <ArrowDownTrayIcon className="h-3.5 w-3.5" />
                     </button>
@@ -581,18 +547,17 @@ const ModuleManagement: React.FC<{ onNotify: NotifyFn }> = ({ onNotify }) => {
 
       {/* ── Install Dialog ── */}
       {dialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-xl border border-neutral-200 dark:border-neutral-700
-                          bg-white dark:bg-neutral-900 shadow-xl">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-200 dark:border-neutral-800">
-              <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Install PM2 Module</h3>
-              <button onClick={() => setDialogOpen(false)} className="text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
+          <div className="w-full max-w-sm bg-[#111] border border-[#1e1e1e] rounded-sm shadow-2xl">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[#1e1e1e]">
+              <p className="font-mono text-xs text-[#e8e8e8] font-semibold">▸ INSTALL PM2 MODULE</p>
+              <button onClick={() => setDialogOpen(false)} className="text-[#444] hover:text-[#888] p-1 rounded-sm hover:bg-[#1a1a1a] transition-colors">
                 <XMarkIcon className="h-4 w-4" />
               </button>
             </div>
 
             <div className="px-4 py-4">
-              <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Module Name</label>
+              <label className="block text-[10px] font-mono text-[#555] mb-1">Module Name</label>
               <input
                 autoFocus
                 type="text"
@@ -600,32 +565,24 @@ const ModuleManagement: React.FC<{ onNotify: NotifyFn }> = ({ onNotify }) => {
                 onChange={e => setNewModuleName(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleInstall()}
                 placeholder="e.g. pm2-logrotate"
-                className="w-full h-8 px-3 text-xs rounded border
-                           bg-white dark:bg-neutral-800
-                           border-neutral-200 dark:border-neutral-700
-                           text-neutral-900 dark:text-neutral-100
-                           placeholder-neutral-400 dark:placeholder-neutral-500
-                           focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="w-full h-8 px-3 bg-[#0d0d0d] border border-[#1e1e1e] text-[#e8e8e8] font-mono text-xs rounded-sm
+                           placeholder-[#333] focus:outline-none focus:border-[#333]"
               />
-              <p className="mt-1.5 text-[11px] text-neutral-400">Enter any npm-published PM2 module name.</p>
+              <p className="mt-1.5 text-[10px] font-mono text-[#444]">enter any npm-published PM2 module name</p>
             </div>
 
-            <div className="flex justify-end gap-2 px-4 py-3 border-t border-neutral-200 dark:border-neutral-800">
+            <div className="flex justify-end gap-2 px-4 py-3 border-t border-[#1e1e1e]">
               <button
                 onClick={() => setDialogOpen(false)}
-                className="h-7 px-3 text-xs font-medium rounded border
-                           border-neutral-200 dark:border-neutral-700
-                           text-neutral-600 dark:text-neutral-400
-                           hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                className="h-7 px-3 text-xs font-mono border border-[#1e1e1e] text-[#555] hover:text-[#888] hover:border-[#333] rounded-sm transition-colors"
               >
-                Cancel
+                cancel
               </button>
               <button
                 onClick={handleInstall}
                 disabled={installing}
-                className="h-7 px-3 text-xs font-medium rounded
-                           bg-primary-600 hover:bg-primary-700 text-white
-                           disabled:opacity-50 transition-colors flex items-center gap-1.5"
+                className="h-7 px-3 bg-[#e8e8e8] text-[#0a0a0a] text-xs font-mono font-semibold rounded-sm
+                           disabled:opacity-40 transition-colors flex items-center gap-1.5 hover:bg-[#ccc]"
               >
                 {installing ? (
                   <>
@@ -633,10 +590,10 @@ const ModuleManagement: React.FC<{ onNotify: NotifyFn }> = ({ onNotify }) => {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                     </svg>
-                    Installing…
+                    installing…
                   </>
                 ) : (
-                  <><ArrowDownTrayIcon className="h-3.5 w-3.5" />Install</>
+                  <><ArrowDownTrayIcon className="h-3.5 w-3.5" />install</>
                 )}
               </button>
             </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import {
   Chart as ChartJS,
@@ -16,6 +17,9 @@ import {
   ChartBarIcon,
   SignalIcon,
   ClockIcon,
+  PlayIcon,
+  StopIcon,
+  TrashIcon,
 } from '@heroicons/react/24/outline';
 import PageHeader from './PageHeader';
 import { PM2Process, SystemMetricsData } from '../types/pm2';
@@ -77,26 +81,30 @@ const Sparkline = ({
   width = 120,
   height = 30,
   max,
+  fluid = false,
 }: {
   values: number[];
   color: string;
   width?: number;
   height?: number;
   max?: number;
+  fluid?: boolean;
 }) => {
+  const W_vb = 200; // fixed viewBox coordinate space
+  const H_vb = height;
   if (values.length < 2) {
+    const style = fluid
+      ? { display: 'block', width: '100%', height }
+      : { display: 'inline-block', width, height, lineHeight: `${height}px` };
     return (
-      <span
-        style={{ display: 'inline-block', width, height, lineHeight: `${height}px` }}
-        className="text-center text-neutral-300 dark:text-neutral-700 text-xs"
-      >
+      <span style={style} className="text-center text-[#555] text-[9px] font-mono">
         —
       </span>
     );
   }
   const pad  = 2;
-  const W    = width - pad * 2;
-  const H    = height - pad * 2;
+  const W    = W_vb - pad * 2;
+  const H    = H_vb - pad * 2;
   const yMax = max ?? Math.max(...values, 0.01);
   const norm = (v: number) => pad + H - (v / yMax) * H;
 
@@ -111,8 +119,12 @@ const Sparkline = ({
     `${pad},${pad + H}`,
   ].join(' ');
 
+  const svgProps = fluid
+    ? { width: '100%', height, viewBox: `0 0 ${W_vb} ${H_vb}`, preserveAspectRatio: 'none' as const, style: { display: 'block' } }
+    : { width, height, style: { display: 'inline-block', verticalAlign: 'middle' } };
+
   return (
-    <svg width={width} height={height} style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+    <svg {...svgProps}>
       <polygon points={fillPts} fill={color} fillOpacity={0.12} stroke="none" />
       <polyline
         points={pts}
@@ -140,12 +152,28 @@ interface MetricsPageProps {
 
 // @group MetricsPage : Main component
 const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
+  const { t } = useTranslation();
   const [tab, setTab] = useState<'live' | 'history'>('live');
 
   // @group LiveState
   const [selectedLiveProc, setSelectedLiveProc] = useState<string>('');
   const liveBufferRef = useRef<Map<string, LivePoint[]>>(new Map());
   const [, setLiveRender] = useState(0); // bump to force re-render on buffer update
+  const [actionLoading, setActionLoading] = useState<{ [pmId: number]: boolean }>({});
+
+  const handleProcessAction = useCallback(async (
+    e: React.MouseEvent, proc: PM2Process, action: 'start' | 'stop' | 'restart' | 'delete'
+  ) => {
+    e.stopPropagation();
+    setActionLoading(prev => ({ ...prev, [proc.pm_id]: true }));
+    try {
+      await axios.post(`/api/process/${proc.pm_id}/${action}`);
+    } catch (err) {
+      console.error(`Failed to ${action} process:`, err);
+    } finally {
+      setActionLoading(prev => ({ ...prev, [proc.pm_id]: false }));
+    }
+  }, []);
 
   // @group HistoryState
   const [connections,       setConnections]       = useState<ConnectionInfo[]>([]);
@@ -266,15 +294,15 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
     },
     scales: {
       x: {
-        ticks: { font: { size: 10 }, maxTicksLimit: 8, maxRotation: 0, color: '#9ca3af' },
-        grid: { color: 'rgba(156,163,175,0.1)' },
+        ticks: { font: { size: 10, family: 'monospace' }, maxTicksLimit: 8, maxRotation: 0, color: '#555' },
+        grid: { color: '#1e1e1e' },
       },
       y: {
         min: 0,
         ...(yMax !== undefined ? { max: yMax } : {}),
-        ticks: { font: { size: 10 }, color: '#9ca3af' },
-        grid: { color: 'rgba(156,163,175,0.1)' },
-        title: { display: true, text: yLabel, font: { size: 10 }, color: '#9ca3af' },
+        ticks: { font: { size: 10, family: 'monospace' }, color: '#555' },
+        grid: { color: '#1e1e1e' },
+        title: { display: true, text: yLabel, font: { size: 10, family: 'monospace' }, color: '#555' },
       },
     },
   });
@@ -293,8 +321,8 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
     labels: liveLabels,
     datasets: [{
       data: liveCpuData,
-      borderColor: '#6366f1',
-      backgroundColor: 'rgba(99,102,241,0.08)',
+      borderColor: '#22c55e',
+      backgroundColor: 'rgba(34,197,94,0.08)',
       borderWidth: 1.5,
       pointRadius: livePoints.length > 60 ? 0 : 2,
       tension: 0.3,
@@ -326,8 +354,8 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
     labels: histLabels,
     datasets: [{
       data: histCpuData,
-      borderColor: '#6366f1',
-      backgroundColor: 'rgba(99,102,241,0.08)',
+      borderColor: '#22c55e',
+      backgroundColor: 'rgba(34,197,94,0.08)',
       borderWidth: 1.5,
       pointRadius: histMetrics.length > 60 ? 0 : 2,
       tension: 0.3,
@@ -351,11 +379,11 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
   const StatCard = ({
     label, value, unit, color,
   }: { label: string; value: number; unit: string; color: string }) => (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-xs text-neutral-500 dark:text-neutral-400">{label}</span>
-      <span className={`text-sm font-semibold ${color}`}>
+    <div className="bg-[#111] border border-[#1e1e1e] rounded-sm px-2.5 py-1.5 flex flex-col gap-0.5">
+      <span className="text-[9px] font-mono text-[#555] uppercase tracking-[0.15em]">{label}</span>
+      <span className={`text-[11px] font-mono font-bold ${color}`}>
         {value.toFixed(2)}
-        <span className="text-xs font-normal text-neutral-400 ml-0.5">{unit}</span>
+        <span className="text-[9px] font-normal text-[#555] ml-0.5">{unit}</span>
       </span>
     </div>
   );
@@ -364,10 +392,10 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
   const TabButton = ({ id, label, icon: Icon }: { id: 'live' | 'history'; label: string; icon: React.ElementType }) => (
     <button
       onClick={() => setTab(id)}
-      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border-b-2 transition-colors ${
+      className={`flex items-center gap-1.5 px-3 py-1.5 font-mono text-[10px] border-b-2 transition-colors ${
         tab === id
-          ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-          : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200'
+          ? 'border-[#22c55e] text-[#e8e8e8]'
+          : 'border-transparent text-[#555] hover:text-[#888]'
       }`}
     >
       <Icon className="h-3.5 w-3.5" />
@@ -375,219 +403,256 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
     </button>
   );
 
-  const selectCls = `text-xs px-2 py-1.5 rounded border border-neutral-200 dark:border-neutral-700
-    bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100
-    focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:opacity-50`;
+  // @group SelectStyles : CLI-styled select element class
+  const selectCls = `font-mono text-[10px] px-2 py-1.5 rounded-sm border border-[#1e1e1e]
+    bg-[#111] text-[#e8e8e8]
+    focus:outline-none focus:ring-1 focus:ring-[#22c55e] disabled:opacity-40`;
 
   // @group LiveCurrentProcess : current live process being viewed
   const currentProc = processes.find(p => p.name === selectedLiveProc);
 
+  // @group SplitPane : Draggable divider state for live tab (left % of total width, default 3:2 = 60%)
+  const [splitPct, setSplitPct] = useState(60);
+  const splitContainerRef = useRef<HTMLDivElement>(null);
+  const isDragging = useRef(false);
+
+  const onDividerPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    isDragging.current = true;
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  };
+
+  const onDividerPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging.current || !splitContainerRef.current) return;
+    const rect = splitContainerRef.current.getBoundingClientRect();
+    const pct = ((e.clientX - rect.left) / rect.width) * 100;
+    setSplitPct(Math.min(75, Math.max(25, pct)));
+  };
+
+  const onDividerPointerUp = () => { isDragging.current = false; };
+
   return (
     <div>
       <PageHeader
-        title="Metrics"
-        subtitle="Real-time and historical process metrics"
+        title={t('metricsPage.title')}
+        subtitle={t('metricsPage.subtitle')}
         actions={
           tab === 'history' ? (
             <button
               onClick={fetchHistory}
               disabled={histLoading}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium
-                bg-primary-600 hover:bg-primary-700 text-white disabled:opacity-50 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm font-mono text-[10px]
+                bg-[#111] border border-[#1e1e1e] text-[#888] hover:text-[#e8e8e8] hover:border-[#333]
+                disabled:opacity-40 transition-colors"
             >
               <ArrowPathIcon className={`h-3.5 w-3.5 ${histLoading ? 'animate-spin' : ''}`} />
-              Refresh
+              {t('common.refresh')}
             </button>
           ) : undefined
         }
       />
 
       {/* ── Tabs ── */}
-      <div className="flex gap-0 border-b border-neutral-200 dark:border-neutral-800 mb-4">
-        <TabButton id="live"    label="Live"    icon={SignalIcon} />
-        <TabButton id="history" label="History" icon={ClockIcon} />
+      <div className="flex gap-0 bg-[#111] border border-[#1e1e1e] rounded-sm mb-4 w-fit">
+        <TabButton id="live"    label={t('metricsPage.live')}    icon={SignalIcon} />
+        <TabButton id="history" label={t('metricsPage.history')} icon={ClockIcon} />
       </div>
 
       {/* ════════════════════ LIVE TAB ════════════════════ */}
       {tab === 'live' && (
-        <div className="space-y-4">
-          {/* Process selector + current status bar */}
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="flex flex-col gap-0.5">
-              <label className="text-xs text-neutral-500 dark:text-neutral-400">Process</label>
-              <select
-                value={selectedLiveProc}
-                onChange={e => setSelectedLiveProc(e.target.value)}
-                className={selectCls}
-              >
-                {processes.length === 0
-                  ? <option value="">No processes running</option>
-                  : processes.map(p => (
-                      <option key={p.pm_id} value={p.name}>{p.name}</option>
-                    ))
-                }
-              </select>
-            </div>
-
-            {currentProc && (
-              <div className="flex items-center gap-3 text-xs">
-                <span className={`px-2 py-0.5 rounded-full font-medium ${
-                  currentProc.pm2_env.status === 'online'
-                    ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
-                    : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500'
-                }`}>
-                  {currentProc.pm2_env.status}
-                </span>
-                <span className="text-neutral-500 dark:text-neutral-400">
-                  CPU: <span className="font-semibold text-indigo-500">{currentProc.monit.cpu.toFixed(1)}%</span>
-                </span>
-                <span className="text-neutral-500 dark:text-neutral-400">
-                  Mem: <span className="font-semibold text-cyan-500">{fmtMem(currentProc.monit.memory)}</span>
-                </span>
-                <span className="text-neutral-400 dark:text-neutral-600">
-                  {livePoints.length} pts · updates every 3s
-                </span>
-              </div>
-            )}
+        processes.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <ChartBarIcon className="h-10 w-10 text-[#333] mb-3" />
+            <p className="text-[10px] font-mono text-[#555]">No processes found</p>
+            <p className="text-[10px] font-mono text-[#444] mt-1">
+              Make sure PM2 is running and connected
+            </p>
           </div>
+        ) : (
+          <div
+            ref={splitContainerRef}
+            className="flex min-h-0"
+            onPointerMove={onDividerPointerMove}
+            onPointerUp={onDividerPointerUp}
+          >
 
-          {processes.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <ChartBarIcon className="h-10 w-10 text-neutral-300 dark:text-neutral-700 mb-3" />
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">No processes found</p>
-              <p className="text-xs text-neutral-400 dark:text-neutral-600 mt-1">
-                Make sure PM2 is running and connected
-              </p>
+            {/* ── Left: Process list ── */}
+            <div
+              className="shrink-0 border border-[#1e1e1e] bg-[#0d0d0d] border-r border-r-[#1e1e1e] overflow-hidden flex flex-col rounded-sm"
+              style={{ width: `${splitPct}%` }}
+            >
+              <div className="px-3 py-2 border-b border-[#1e1e1e] shrink-0">
+                <p className="text-[10px] font-mono text-[#555] uppercase tracking-[0.15em]">Processes</p>
+              </div>
+              <div className="overflow-y-auto flex-1">
+                {processes.map(proc => {
+                  const procBuf = liveBufferRef.current.get(proc.name) ?? [];
+                  const isSelected = proc.name === selectedLiveProc;
+                  return (
+                    <div
+                      key={proc.pm_id}
+                      onClick={() => setSelectedLiveProc(proc.name)}
+                      className={`cursor-pointer px-3 py-2 flex flex-col gap-1.5 border-b border-[#1e1e1e] transition-colors ${
+                        isSelected
+                          ? 'bg-[#111] border-l-2 border-l-[#22c55e]'
+                          : 'hover:bg-[#111]'
+                      }`}
+                    >
+                      {/* Name + status dot + action buttons */}
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${
+                          proc.pm2_env.status === 'online' ? 'bg-[#22c55e]' :
+                          proc.pm2_env.status === 'errored' ? 'bg-[#ef4444]' : 'bg-[#444]'
+                        }`} />
+                        <span className="text-[11px] font-mono text-[#e8e8e8] truncate flex-1 min-w-0">
+                          {proc.name}
+                        </span>
+
+                        {/* Action buttons — icon-only, no bg */}
+                        <div className="shrink-0 flex items-center gap-0.5">
+                          {actionLoading[proc.pm_id] ? (
+                            <ArrowPathIcon className="h-3 w-3 animate-spin text-[#555]" />
+                          ) : proc.pm2_env.status === 'online' ? (
+                            <>
+                              <button
+                                onClick={e => handleProcessAction(e, proc, 'restart')}
+                                title="Restart"
+                                className="h-5 w-5 flex items-center justify-center text-[#444] hover:text-[#f59e0b] transition-colors"
+                              >
+                                <ArrowPathIcon className="h-3 w-3" />
+                              </button>
+                              <button
+                                onClick={e => handleProcessAction(e, proc, 'stop')}
+                                title="Stop"
+                                className="h-5 w-5 flex items-center justify-center text-[#444] hover:text-[#ef4444] transition-colors"
+                              >
+                                <StopIcon className="h-3 w-3" />
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              onClick={e => handleProcessAction(e, proc, 'start')}
+                              title="Start"
+                              className="h-5 w-5 flex items-center justify-center text-[#444] hover:text-[#22c55e] transition-colors"
+                            >
+                              <PlayIcon className="h-3 w-3" />
+                            </button>
+                          )}
+                          <button
+                            onClick={e => handleProcessAction(e, proc, 'delete')}
+                            title="Delete"
+                            className="h-5 w-5 flex items-center justify-center text-[#444] hover:text-[#888] transition-colors"
+                          >
+                            <TrashIcon className="h-3 w-3" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* CPU + MEM sparklines in one row */}
+                      <div className="flex items-center gap-2 pointer-events-none">
+                        <span className="text-[9px] font-mono text-[#555] shrink-0">CPU</span>
+                        <span className={`text-[9px] font-mono tabular-nums shrink-0 ${
+                          proc.monit.cpu >= 80 ? 'text-[#ef4444]' :
+                          proc.monit.cpu >= 50 ? 'text-[#f59e0b]' : 'text-[#22c55e]'
+                        }`}>{proc.monit.cpu.toFixed(1)}%</span>
+                        <div className="flex-1 min-w-0">
+                          <Sparkline values={procBuf.map(p => p.cpu)} color={isSelected ? '#22c55e' : '#333'} max={100} height={20} fluid />
+                        </div>
+                        <span className="text-[9px] font-mono text-[#555] shrink-0">MEM</span>
+                        <span className="text-[9px] font-mono tabular-nums shrink-0 text-[#22d3ee]">{fmtMem(proc.monit.memory)}</span>
+                        <div className="flex-1 min-w-0">
+                          <Sparkline values={procBuf.map(p => p.memMb)} color={isSelected ? '#22d3ee' : '#333'} height={20} fluid />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          ) : (
-            <>
-              {/* ── Live CPU Chart ── */}
-              <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
-                <div className="flex items-center justify-between mb-3">
+
+            {/* ── Drag divider ── */}
+            <div
+              onPointerDown={onDividerPointerDown}
+              className="w-1 shrink-0 bg-[#1a1a1a] hover:bg-[#333] cursor-col-resize transition-colors select-none"
+            />
+
+            {/* ── Right: Charts ── */}
+            <div className="flex flex-col gap-3 min-w-0 flex-1 bg-[#0a0a0a] pl-3">
+              {/* Selected process status bar */}
+              {currentProc && (
+                <div className="flex items-center gap-3 font-mono text-[10px] px-1">
+                  <span className="text-[#e8e8e8]">{currentProc.name}</span>
+                  <span className={`px-1.5 py-0.5 rounded-sm font-mono text-[9px] ${
+                    currentProc.pm2_env.status === 'online'
+                      ? 'bg-[#0d1f0d] text-[#22c55e] border border-[#22c55e]/30'
+                      : 'bg-[#111] text-[#555] border border-[#1e1e1e]'
+                  }`}>
+                    {currentProc.pm2_env.status}
+                  </span>
+                  <span className="text-[#555]">
+                    CPU: <span className={`font-mono ${
+                      currentProc.monit.cpu >= 80 ? 'text-[#ef4444]' :
+                      currentProc.monit.cpu >= 50 ? 'text-[#f59e0b]' : 'text-[#22c55e]'
+                    }`}>{currentProc.monit.cpu.toFixed(1)}%</span>
+                  </span>
+                  <span className="text-[#555]">
+                    Mem: <span className="font-mono text-[#22d3ee]">{fmtMem(currentProc.monit.memory)}</span>
+                  </span>
+                  <span className="text-[#444] ml-auto font-mono">
+                    {livePoints.length} pts · updates every 3s
+                  </span>
+                </div>
+              )}
+
+              {/* Row 1: CPU Chart */}
+              <div className="bg-[#111] border border-[#1e1e1e] rounded-sm p-3 flex-1">
+                <div className="flex items-center justify-between mb-2">
                   <div>
-                    <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">CPU Usage</p>
-                    <p className="text-xs text-neutral-400">rolling {livePoints.length} pts</p>
+                    <p className="text-[10px] font-mono text-[#888]">CPU Usage</p>
+                    <p className="text-[9px] font-mono text-[#444]">rolling {livePoints.length} pts</p>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <StatCard label="Min" value={liveCpuStats.min} unit="%" color="text-emerald-500" />
-                    <StatCard label="Avg" value={liveCpuStats.avg} unit="%" color="text-primary-400" />
-                    <StatCard label="Max" value={liveCpuStats.max} unit="%" color="text-rose-400" />
+                  <div className="flex items-center gap-2">
+                    <StatCard label="Min" value={liveCpuStats.min} unit="%" color="text-[#22c55e]" />
+                    <StatCard label="Avg" value={liveCpuStats.avg} unit="%" color="text-[#e8e8e8]" />
+                    <StatCard label="Max" value={liveCpuStats.max} unit="%" color="text-[#ef4444]" />
                   </div>
                 </div>
-                <div className="h-40">
+                <div className="h-36">
                   {livePoints.length > 0
                     ? <Line data={liveCpuChart} options={chartOptions('%', 100)} />
-                    : <div className="h-full flex items-center justify-center text-xs text-neutral-400">
+                    : <div className="h-full flex items-center justify-center text-[10px] font-mono text-[#555]">
                         Waiting for data...
                       </div>
                   }
                 </div>
               </div>
 
-              {/* ── Live Memory Chart ── */}
-              <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
-                <div className="flex items-center justify-between mb-3">
+              {/* Row 2: Memory Chart */}
+              <div className="bg-[#111] border border-[#1e1e1e] rounded-sm p-3 flex-1">
+                <div className="flex items-center justify-between mb-2">
                   <div>
-                    <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Memory Usage</p>
-                    <p className="text-xs text-neutral-400">rolling {livePoints.length} pts</p>
+                    <p className="text-[10px] font-mono text-[#888]">Memory Usage</p>
+                    <p className="text-[9px] font-mono text-[#444]">rolling {livePoints.length} pts</p>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <StatCard label="Min" value={liveMemStats.min} unit="MB" color="text-emerald-500" />
-                    <StatCard label="Avg" value={liveMemStats.avg} unit="MB" color="text-cyan-400" />
-                    <StatCard label="Max" value={liveMemStats.max} unit="MB" color="text-rose-400" />
+                  <div className="flex items-center gap-2">
+                    <StatCard label="Min" value={liveMemStats.min} unit="MB" color="text-[#22c55e]" />
+                    <StatCard label="Avg" value={liveMemStats.avg} unit="MB" color="text-[#22d3ee]" />
+                    <StatCard label="Max" value={liveMemStats.max} unit="MB" color="text-[#ef4444]" />
                   </div>
                 </div>
-                <div className="h-40">
+                <div className="h-36">
                   {livePoints.length > 0
                     ? <Line data={liveMemChart} options={chartOptions('MB')} />
-                    : <div className="h-full flex items-center justify-center text-xs text-neutral-400">
+                    : <div className="h-full flex items-center justify-center text-[10px] font-mono text-[#555]">
                         Waiting for data...
                       </div>
                   }
                 </div>
               </div>
+            </div>
 
-              {/* ── All processes snapshot table ── */}
-              <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 overflow-hidden">
-                <div className="px-4 py-2.5 border-b border-neutral-100 dark:border-neutral-800">
-                  <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
-                    All Processes — Live Snapshot
-                  </p>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="text-left text-neutral-500 dark:text-neutral-400 border-b border-neutral-100 dark:border-neutral-800">
-                        <th className="px-4 py-2 font-medium">Name</th>
-                        <th className="px-4 py-2 font-medium">Status</th>
-                        <th className="px-4 py-2 font-medium">CPU</th>
-                        <th className="px-4 py-2 font-medium">CPU (1h)</th>
-                        <th className="px-4 py-2 font-medium">Memory</th>
-                        <th className="px-4 py-2 font-medium">Mem (1h)</th>
-                        <th className="px-4 py-2 font-medium">Restarts</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                      {processes.map(proc => (
-                        <tr
-                          key={proc.pm_id}
-                          onClick={() => setSelectedLiveProc(proc.name)}
-                          className={`cursor-pointer transition-colors ${
-                            proc.name === selectedLiveProc
-                              ? 'bg-primary-50 dark:bg-primary-900/20'
-                              : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
-                          }`}
-                        >
-                          <td className="px-4 py-1.5 font-medium text-neutral-800 dark:text-neutral-200">
-                            {proc.name}
-                          </td>
-                          <td className="px-4 py-1.5">
-                            <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${
-                              proc.pm2_env.status === 'online'
-                                ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
-                                : proc.pm2_env.status === 'errored'
-                                ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400'
-                                : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500'
-                            }`}>
-                              {proc.pm2_env.status}
-                            </span>
-                          </td>
-                          <td className="px-4 py-1.5 tabular-nums">
-                            <span className={
-                              proc.monit.cpu > 80 ? 'text-rose-500' :
-                              proc.monit.cpu > 50 ? 'text-amber-500' : 'text-emerald-500'
-                            }>
-                              {proc.monit.cpu.toFixed(1)}%
-                            </span>
-                          </td>
-                          <td className="px-2 py-1">
-                            <Sparkline
-                              values={(liveBufferRef.current.get(proc.name) ?? []).map(p => p.cpu)}
-                              color="#6366f1"
-                              max={100}
-                            />
-                          </td>
-                          <td className="px-4 py-1.5 text-cyan-600 dark:text-cyan-400 tabular-nums">
-                            {fmtMem(proc.monit.memory)}
-                          </td>
-                          <td className="px-2 py-1">
-                            <Sparkline
-                              values={(liveBufferRef.current.get(proc.name) ?? []).map(p => p.memMb)}
-                              color="#22d3ee"
-                            />
-                          </td>
-                          <td className="px-4 py-1.5 text-neutral-500 dark:text-neutral-400 tabular-nums">
-                            {proc.pm2_env.restart_time}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
+          </div>
+        )
       )}
 
       {/* ════════════════════ HISTORY TAB ════════════════════ */}
@@ -596,7 +661,7 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
           {/* Controls */}
           <div className="flex flex-wrap items-end gap-3">
             <div className="flex flex-col gap-0.5">
-              <label className="text-xs text-neutral-500 dark:text-neutral-400">Connection</label>
+              <label className="text-[9px] font-mono text-[#555] uppercase tracking-[0.12em]">Connection</label>
               <select
                 value={selectedConn}
                 onChange={e => setSelectedConn(e.target.value)}
@@ -610,7 +675,7 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
             </div>
 
             <div className="flex flex-col gap-0.5">
-              <label className="text-xs text-neutral-500 dark:text-neutral-400">Process</label>
+              <label className="text-[9px] font-mono text-[#555] uppercase tracking-[0.12em]">Process</label>
               <select
                 value={selectedHistProc}
                 onChange={e => setSelectedHistProc(e.target.value)}
@@ -625,16 +690,16 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
             </div>
 
             <div className="flex flex-col gap-0.5">
-              <label className="text-xs text-neutral-500 dark:text-neutral-400">Range</label>
+              <label className="text-[9px] font-mono text-[#555] uppercase tracking-[0.12em]">Range</label>
               <div className="flex gap-1">
                 {TIME_RANGES.map((r, i) => (
                   <button
                     key={r.label}
                     onClick={() => setRangeIdx(i)}
-                    className={`text-xs px-2 py-1 rounded transition-colors ${
+                    className={`font-mono text-[10px] px-2 py-1 rounded-sm transition-colors ${
                       rangeIdx === i
-                        ? 'bg-primary-600 text-white'
-                        : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+                        ? 'bg-[#1a2e1a] border border-[#22c55e]/40 text-[#22c55e]'
+                        : 'bg-[#111] border border-[#1e1e1e] text-[#555] hover:text-[#888] hover:border-[#333]'
                     }`}
                   >
                     {r.label}
@@ -644,13 +709,13 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
             </div>
 
             <div className="flex flex-col gap-0.5 ml-auto">
-              <label className="text-xs text-neutral-500 dark:text-neutral-400">Auto-refresh (30s)</label>
+              <label className="text-[9px] font-mono text-[#555] uppercase tracking-[0.12em]">Auto-refresh (30s)</label>
               <button
                 onClick={() => setAutoRefresh(v => !v)}
-                className={`self-start text-xs px-3 py-1.5 rounded border transition-colors ${
+                className={`self-start font-mono text-[10px] px-3 py-1.5 rounded-sm border transition-colors ${
                   autoRefresh
-                    ? 'bg-emerald-600 border-emerald-600 text-white'
-                    : 'border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:border-neutral-400'
+                    ? 'bg-[#0d1f0d] border-[#22c55e]/40 text-[#22c55e]'
+                    : 'border-[#1e1e1e] text-[#555] hover:text-[#888] hover:border-[#333]'
                 }`}
               >
                 {autoRefresh ? 'On' : 'Off'}
@@ -661,15 +726,15 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
           {/* Empty states */}
           {!selectedConn && (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <ChartBarIcon className="h-10 w-10 text-neutral-300 dark:text-neutral-700 mb-3" />
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+              <ChartBarIcon className="h-10 w-10 text-[#333] mb-3" />
+              <p className="text-[10px] font-mono text-[#555]">
                 Select a connection to view recorded history
               </p>
-              <p className="text-xs text-neutral-400 dark:text-neutral-600 mt-1">
+              <p className="text-[10px] font-mono text-[#444] mt-1">
                 Metrics are recorded every 30 seconds while a remote server is connected
               </p>
               {connections.length === 0 && (
-                <p className="text-xs text-amber-500 mt-3">
+                <p className="text-[10px] font-mono text-[#f59e0b] mt-3">
                   No data yet — connect a remote server and wait for the first poll cycle
                 </p>
               )}
@@ -678,7 +743,7 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
 
           {selectedConn && !selectedHistProc && (
             <div className="flex items-center justify-center py-12">
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+              <p className="text-[10px] font-mono text-[#555]">
                 No processes recorded for this connection yet
               </p>
             </div>
@@ -688,22 +753,22 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
           {selectedConn && selectedHistProc && (
             <>
               {/* History CPU Chart */}
-              <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
+              <div className="bg-[#111] border border-[#1e1e1e] rounded-sm p-3">
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">CPU Usage</p>
-                    <p className="text-xs text-neutral-400">{histMetrics.length} data points</p>
+                    <p className="text-[10px] font-mono text-[#888]">CPU Usage</p>
+                    <p className="text-[9px] font-mono text-[#444]">{histMetrics.length} data points</p>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <StatCard label="Min" value={histCpuStats.min} unit="%" color="text-emerald-500" />
-                    <StatCard label="Avg" value={histCpuStats.avg} unit="%" color="text-primary-400" />
-                    <StatCard label="Max" value={histCpuStats.max} unit="%" color="text-rose-400" />
+                  <div className="flex items-center gap-2">
+                    <StatCard label="Min" value={histCpuStats.min} unit="%" color="text-[#22c55e]" />
+                    <StatCard label="Avg" value={histCpuStats.avg} unit="%" color="text-[#e8e8e8]" />
+                    <StatCard label="Max" value={histCpuStats.max} unit="%" color="text-[#ef4444]" />
                   </div>
                 </div>
                 <div className="h-40">
                   {histMetrics.length > 0
                     ? <Line data={histCpuChart} options={chartOptions('%', 100)} />
-                    : <div className="h-full flex items-center justify-center text-xs text-neutral-400">
+                    : <div className="h-full flex items-center justify-center text-[10px] font-mono text-[#555]">
                         No data for selected range
                       </div>
                   }
@@ -711,22 +776,22 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
               </div>
 
               {/* History Memory Chart */}
-              <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
+              <div className="bg-[#111] border border-[#1e1e1e] rounded-sm p-3">
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Memory Usage</p>
-                    <p className="text-xs text-neutral-400">{histMetrics.length} data points</p>
+                    <p className="text-[10px] font-mono text-[#888]">Memory Usage</p>
+                    <p className="text-[9px] font-mono text-[#444]">{histMetrics.length} data points</p>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <StatCard label="Min" value={histMemStats.min} unit="MB" color="text-emerald-500" />
-                    <StatCard label="Avg" value={histMemStats.avg} unit="MB" color="text-cyan-400" />
-                    <StatCard label="Max" value={histMemStats.max} unit="MB" color="text-rose-400" />
+                  <div className="flex items-center gap-2">
+                    <StatCard label="Min" value={histMemStats.min} unit="MB" color="text-[#22c55e]" />
+                    <StatCard label="Avg" value={histMemStats.avg} unit="MB" color="text-[#22d3ee]" />
+                    <StatCard label="Max" value={histMemStats.max} unit="MB" color="text-[#ef4444]" />
                   </div>
                 </div>
                 <div className="h-40">
                   {histMetrics.length > 0
                     ? <Line data={histMemChart} options={chartOptions('MB')} />
-                    : <div className="h-full flex items-center justify-center text-xs text-neutral-400">
+                    : <div className="h-full flex items-center justify-center text-[10px] font-mono text-[#555]">
                         No data for selected range
                       </div>
                   }
@@ -734,37 +799,37 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
               </div>
 
               {/* Raw table */}
-              <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 overflow-hidden">
-                <div className="px-4 py-2.5 border-b border-neutral-100 dark:border-neutral-800">
-                  <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
+              <div className="bg-[#111] border border-[#1e1e1e] rounded-sm overflow-hidden">
+                <div className="px-3 py-2 border-b border-[#1e1e1e]">
+                  <p className="text-[10px] font-mono text-[#888]">
                     Recent Samples (last 20)
                   </p>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-xs">
+                  <table className="w-full">
                     <thead>
-                      <tr className="text-left text-neutral-500 dark:text-neutral-400 border-b border-neutral-100 dark:border-neutral-800">
-                        <th className="px-4 py-2 font-medium">Time</th>
-                        <th className="px-4 py-2 font-medium">CPU</th>
-                        <th className="px-4 py-2 font-medium">Memory</th>
-                        <th className="px-4 py-2 font-medium">Memory (bytes)</th>
+                      <tr className="text-left border-b border-[#1e1e1e]">
+                        <th className="px-3 py-2 font-mono text-[9px] text-[#555] uppercase tracking-[0.12em] font-normal">Time</th>
+                        <th className="px-3 py-2 font-mono text-[9px] text-[#555] uppercase tracking-[0.12em] font-normal">CPU</th>
+                        <th className="px-3 py-2 font-mono text-[9px] text-[#555] uppercase tracking-[0.12em] font-normal">Memory</th>
+                        <th className="px-3 py-2 font-mono text-[9px] text-[#555] uppercase tracking-[0.12em] font-normal">Memory (bytes)</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                    <tbody className="divide-y divide-[#1a1a1a]">
                       {[...histMetrics].reverse().slice(0, 20).map(m => (
-                        <tr key={m.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
-                          <td className="px-4 py-1.5 text-neutral-600 dark:text-neutral-400 tabular-nums">
+                        <tr key={m.id} className="hover:bg-[#141414] transition-colors">
+                          <td className="px-3 py-1.5 font-mono text-[10px] text-[#555] tabular-nums">
                             {new Date(m.timestamp).toLocaleString()}
                           </td>
-                          <td className="px-4 py-1.5 tabular-nums">
-                            <span className={m.cpu > 80 ? 'text-rose-500' : m.cpu > 50 ? 'text-amber-500' : 'text-emerald-500'}>
+                          <td className="px-3 py-1.5 font-mono text-[10px] tabular-nums">
+                            <span className={m.cpu >= 80 ? 'text-[#ef4444]' : m.cpu >= 50 ? 'text-[#f59e0b]' : 'text-[#22c55e]'}>
                               {m.cpu.toFixed(2)}%
                             </span>
                           </td>
-                          <td className="px-4 py-1.5 text-cyan-600 dark:text-cyan-400 tabular-nums">
+                          <td className="px-3 py-1.5 font-mono text-[10px] text-[#22d3ee] tabular-nums">
                             {m.memory_mb.toFixed(2)} MB
                           </td>
-                          <td className="px-4 py-1.5 text-neutral-500 dark:text-neutral-500 tabular-nums">
+                          <td className="px-3 py-1.5 font-mono text-[10px] text-[#444] tabular-nums">
                             {m.memory_bytes.toLocaleString()}
                           </td>
                         </tr>

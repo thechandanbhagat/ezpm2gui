@@ -9,6 +9,7 @@ import {
   ArrowTopRightOnSquareIcon,
 } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 // @group Types
 interface ChangeItem {
@@ -38,7 +39,7 @@ const RELEASES: Release[] = [
         description:
           'Protect the app with a 4-digit PIN. The lock screen shows a numeric keypad that auto-submits on the 4th digit. Keyboard entry is also supported.',
         icon: KeyIcon,
-        color: 'text-violet-500',
+        color: 'text-[#a78bfa]',
         tag: 'New',
       },
       {
@@ -46,7 +47,7 @@ const RELEASES: Release[] = [
         description:
           'Optionally require a password before the app is accessible. Set, change, or remove password protection from the Security section in Settings.',
         icon: ShieldCheckIcon,
-        color: 'text-blue-500',
+        color: 'text-[#22d3ee]',
         tag: 'New',
       },
       {
@@ -54,7 +55,7 @@ const RELEASES: Release[] = [
         description:
           'A lock button in the top navbar lets you manually lock the app at any time. Reopening the tab restores your unlocked session automatically.',
         icon: LockClosedIcon,
-        color: 'text-primary-500',
+        color: 'text-[#e8e8e8]',
         tag: 'New',
       },
       {
@@ -62,7 +63,7 @@ const RELEASES: Release[] = [
         description:
           'Once unlocked, the session stays unlocked through page refreshes within the same browser tab — no need to re-enter credentials on every reload.',
         icon: LockOpenIcon,
-        color: 'text-green-500',
+        color: 'text-[#22c55e]',
         tag: 'New',
       },
       {
@@ -70,7 +71,7 @@ const RELEASES: Release[] = [
         description:
           'Configure an inactivity timeout (in minutes) from Settings > Security. The app automatically locks after the specified idle period. Set to 0 to disable.',
         icon: ClockIcon,
-        color: 'text-orange-500',
+        color: 'text-[#f59e0b]',
         tag: 'New',
       },
       {
@@ -78,35 +79,31 @@ const RELEASES: Release[] = [
         description:
           'When both PIN and password are configured, the lock screen shows a toggle so you can choose which method to use. Defaults to PIN for convenience.',
         icon: SparklesIcon,
-        color: 'text-pink-500',
+        color: 'text-[#a78bfa]',
         tag: 'Improved',
       },
     ],
   },
 ];
 
-// @group Helpers
+// @group Helpers : Tag badge styles
 const TAG_STYLES: Record<ChangeItem['tag'], string> = {
-  New:      'bg-green-500/10 text-green-500 border border-green-500/20',
-  Improved: 'bg-blue-500/10 text-blue-500 border border-blue-500/20',
-  Fix:      'bg-orange-500/10 text-orange-500 border border-orange-500/20',
+  New:      'text-[9px] font-mono text-[#22c55e] border border-[#22c55e]/30 bg-[#022c00] px-1.5 py-0.5 rounded-sm',
+  Improved: 'text-[9px] font-mono text-[#22d3ee] border border-[#22d3ee]/30 bg-[#001a1f] px-1.5 py-0.5 rounded-sm',
+  Fix:      'text-[9px] font-mono text-[#f59e0b] border border-[#f59e0b]/30 bg-[#1a0e00] px-1.5 py-0.5 rounded-sm',
 };
 
 // @group Component : What's New changelog page
 const WhatsNew: React.FC = () => {
+  const { t } = useTranslation();
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
 
       {/* ── Page header ── */}
       <div className="mb-8">
-        <div className="flex items-center gap-2 mb-1">
-          <SparklesIcon className="h-5 w-5 text-primary-500" />
-          <h1 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">
-            What's New
-          </h1>
-        </div>
-        <p className="text-xs text-neutral-500 dark:text-neutral-500">
-          Latest updates and improvements to EZ PM2 GUI
+        <p className="text-[9px] uppercase tracking-[0.2em] text-[#555] mb-1">▸ WHAT'S NEW</p>
+        <p className="text-[10px] font-mono text-[#555]">
+          {t('whatsNew.pageSubtitle')}
         </p>
       </div>
 
@@ -115,20 +112,20 @@ const WhatsNew: React.FC = () => {
         <div key={release.version} className="mb-10">
 
           {/* Version header */}
-          <div className="flex items-center gap-3 mb-4">
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary-600 text-white tracking-wide">
+          <div className="flex items-center gap-3 mb-3">
+            <span className="font-mono text-[9px] font-bold px-2 py-0.5 border border-[#a78bfa]/30 text-[#a78bfa] bg-[#16003a] rounded-sm">
               v{release.version}
             </span>
-            <span className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">
+            <span className="text-[11px] font-mono font-bold text-[#888] uppercase tracking-[0.1em]">
               {release.headline}
             </span>
-            <span className="ml-auto text-xs text-neutral-400 dark:text-neutral-600">
+            <span className="ml-auto text-[10px] font-mono text-[#444]">
               {release.date}
             </span>
           </div>
 
           {/* Divider */}
-          <div className="h-px bg-neutral-200 dark:bg-neutral-800 mb-4" />
+          <div className="h-px bg-[#1e1e1e] mb-4" />
 
           {/* Change cards grid */}
           <div className="grid gap-3 sm:grid-cols-2">
@@ -137,26 +134,23 @@ const WhatsNew: React.FC = () => {
               return (
                 <div
                   key={change.title}
-                  className="rounded-lg border border-neutral-200 dark:border-neutral-800
-                             bg-white dark:bg-neutral-900 p-4
-                             hover:border-neutral-300 dark:hover:border-neutral-700
-                             transition-colors duration-150"
+                  className="border border-[#1e1e1e] bg-[#111] rounded-sm p-3
+                             hover:border-[#333] transition-colors"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="mt-0.5 shrink-0 w-8 h-8 rounded-md bg-neutral-100 dark:bg-neutral-800
-                                    flex items-center justify-center">
-                      <Icon className={`h-4 w-4 ${change.color}`} />
+                    <div className="mt-0.5 shrink-0 w-7 h-7 flex items-center justify-center bg-[#1a1a1a] rounded-sm">
+                      <Icon className={`h-3.5 w-3.5 ${change.color}`} />
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">
+                        <span className="text-[11px] font-mono font-semibold text-[#e8e8e8]">
                           {change.title}
                         </span>
-                        <span className={`shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${TAG_STYLES[change.tag]}`}>
+                        <span className={`shrink-0 ${TAG_STYLES[change.tag]}`}>
                           {change.tag}
                         </span>
                       </div>
-                      <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                      <p className="text-[10px] font-mono text-[#555] leading-relaxed mt-0.5">
                         {change.description}
                       </p>
                     </div>
@@ -169,23 +163,21 @@ const WhatsNew: React.FC = () => {
       ))}
 
       {/* ── Footer CTA ── */}
-      <div className="mt-6 rounded-lg border border-neutral-200 dark:border-neutral-800
-                      bg-neutral-50 dark:bg-neutral-900/50 p-4 flex items-center justify-between">
+      <div className="mt-6 border border-[#1e1e1e] bg-[#0d0d0d] rounded-sm p-4 flex items-center justify-between">
         <div>
-          <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 mb-0.5">
-            Configure Security
+          <p className="text-[11px] font-mono font-bold text-[#e8e8e8] mb-0.5">
+            {t('whatsNew.configureSecurity')}
           </p>
-          <p className="text-xs text-neutral-500 dark:text-neutral-500">
-            Set up PIN and password protection from Settings.
+          <p className="text-[10px] font-mono text-[#555]">
+            {t('whatsNew.configureSecurityDesc')}
           </p>
         </div>
         <Link
           to="/settings"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md
-                     bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium
-                     transition-colors duration-150"
+          className="flex items-center gap-1.5 bg-[#e8e8e8] text-[#0a0a0a] font-mono text-xs font-semibold px-3 py-1.5 rounded-sm
+                     hover:bg-[#ccc] transition-colors"
         >
-          Open Settings
+          {t('whatsNew.openSettings')}
           <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
         </Link>
       </div>
