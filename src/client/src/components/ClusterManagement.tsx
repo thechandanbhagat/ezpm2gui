@@ -9,7 +9,6 @@ import {
   BoltIcon,
 } from '@heroicons/react/24/outline';
 import { PM2Process } from '../types/pm2';
-import PageHeader from './PageHeader';
 
 // @group Types : Cluster management types
 interface ClusterProcess {
@@ -91,39 +90,40 @@ const ClusterManagement: React.FC<ClusterManagementProps> = ({ processes, onRefr
 
   const proc = clusterProcesses[0];
 
-  // @group Render : Cluster management layout
+  // @group Render : CLI-styled cluster management layout
   return (
-    <div>
-      <PageHeader
-        title={t('cluster.title')}
-        subtitle={t('cluster.subtitle')}
-      />
+    <div className="space-y-3">
+
+      {/* Page header */}
+      <div>
+        <p className="text-[9px] font-mono uppercase tracking-[0.2em] text-[#555] mb-1">pm2 / cluster</p>
+        <h1 className="text-sm font-mono font-bold text-[#e8e8e8]">▸ CLUSTER MANAGEMENT</h1>
+        <p className="text-[10px] font-mono text-[#555] mt-0.5">{t('cluster.subtitle')}</p>
+      </div>
 
       {/* Toast notifications */}
       {error && (
-        <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 px-3 py-2 text-xs text-red-700 dark:text-red-400">
-          <span className="flex-1">{error}</span>
-          <button onClick={() => setError('')} className="text-red-400 hover:text-red-600">✕</button>
+        <div className="flex items-center gap-2 border border-[#ef4444]/30 bg-[#1a0000] px-3 py-2 rounded-sm">
+          <span className="flex-1 text-[10px] font-mono text-[#ef4444]">{error}</span>
+          <button onClick={() => setError('')} className="text-[#ef4444] hover:text-[#f87171] text-xs font-mono">✕</button>
         </div>
       )}
       {success && (
-        <div className="mb-4 flex items-center gap-2 rounded-lg border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2 text-xs text-emerald-700 dark:text-emerald-400">
-          <span className="flex-1">{success}</span>
-          <button onClick={() => setSuccess('')} className="text-emerald-400 hover:text-emerald-600">✕</button>
+        <div className="flex items-center gap-2 border border-[#22c55e]/30 bg-[#001a00] px-3 py-2 rounded-sm">
+          <span className="flex-1 text-[10px] font-mono text-[#22c55e]">{success}</span>
+          <button onClick={() => setSuccess('')} className="text-[#22c55e] hover:text-[#4ade80] text-xs font-mono">✕</button>
         </div>
       )}
 
       {/* Process selector */}
-      <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4 mb-4">
-        <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-3">{t('cluster.selectProcess')}</p>
+      <div className="bg-[#111] border border-[#1e1e1e] rounded-sm p-3">
+        <p className="text-[9px] font-mono text-[#555] uppercase tracking-[0.2em] mb-2 block">
+          {t('cluster.selectProcess')}
+        </p>
         <select
           value={selectedProcess}
           onChange={e => setSelectedProcess(e.target.value)}
-          className="w-full sm:w-72 h-8 px-3 text-xs rounded border
-                     bg-white dark:bg-neutral-800
-                     border-neutral-200 dark:border-neutral-700
-                     text-neutral-900 dark:text-neutral-100
-                     focus:outline-none focus:ring-1 focus:ring-primary-500"
+          className="bg-[#0d0d0d] border border-[#1e1e1e] text-[#e8e8e8] font-mono text-xs rounded-sm px-2.5 py-1.5 focus:border-[#555] focus:outline-none w-full sm:w-72"
         >
           <option value="">{t('cluster.choosePlaceholder')}</option>
           {processes.map(p => (
@@ -132,46 +132,47 @@ const ClusterManagement: React.FC<ClusterManagementProps> = ({ processes, onRefr
         </select>
       </div>
 
+      {/* Body states */}
       {loading ? (
         <div className="flex justify-center py-10">
-          <ArrowPathIcon className="h-5 w-5 animate-spin text-neutral-400" />
+          <ArrowPathIcon className="h-4 w-4 animate-spin text-[#555]" />
         </div>
       ) : !selectedProcess ? (
-        <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-8 text-center">
-          <ServerStackIcon className="mx-auto h-8 w-8 text-neutral-300 dark:text-neutral-600 mb-2" />
-          <p className="text-xs text-neutral-400 dark:text-neutral-500">{t('cluster.selectHint')}</p>
+        <div className="bg-[#111] border border-[#1e1e1e] rounded-sm p-8 text-center">
+          <ServerStackIcon className="mx-auto h-7 w-7 text-[#333] mb-2" />
+          <p className="text-[10px] font-mono text-[#555]">{t('cluster.selectHint')}</p>
         </div>
       ) : proc ? (
-        <div className="grid grid-cols-1 gap-4">
+        <div className="space-y-3">
 
           {/* Current Status */}
-          <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 overflow-hidden">
-            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-neutral-100 dark:border-neutral-800">
-              <CpuChipIcon className="h-3.5 w-3.5 text-neutral-400" />
-              <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">{t('cluster.currentStatus')}</p>
+          <div className="bg-[#111] border border-[#1e1e1e] rounded-sm overflow-hidden">
+            <div className="flex items-center gap-2 px-3 py-2 border-b border-[#1e1e1e]">
+              <CpuChipIcon className="h-3.5 w-3.5 text-[#555]" />
+              <p className="text-[9px] font-mono text-[#555] uppercase tracking-[0.2em]">{t('cluster.currentStatus')}</p>
             </div>
-            <table className="w-full text-xs">
+            <table className="w-full">
               <thead>
-                <tr className="bg-neutral-50 dark:bg-neutral-800/60 border-b border-neutral-100 dark:border-neutral-800">
+                <tr className="border-b border-[#1e1e1e]">
                   {[t('common.id'), t('common.name'), t('cluster.instances'), t('cluster.execModeHeader'), t('common.mode')].map(h => (
-                    <th key={h} className="px-4 py-2 text-left text-[11px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{h}</th>
+                    <th key={h} className="px-3 py-2 text-left text-[9px] font-mono text-[#555] uppercase tracking-[0.15em]">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {clusterProcesses.map(p => (
-                  <tr key={p.pm_id} className="text-neutral-700 dark:text-neutral-300">
-                    <td className="px-4 py-2.5">{p.pm_id}</td>
-                    <td className="px-4 py-2.5 font-medium">{p.name}</td>
-                    <td className="px-4 py-2.5">{p.instances}</td>
-                    <td className="px-4 py-2.5 font-mono">{p.exec_mode}</td>
-                    <td className="px-4 py-2.5">
-                      <span className={`inline-flex px-1.5 py-0.5 rounded border text-[11px] font-medium ${
+                  <tr key={p.pm_id}>
+                    <td className="px-3 py-2.5 text-[10px] font-mono text-[#888]">{p.pm_id}</td>
+                    <td className="px-3 py-2.5 text-[11px] font-mono font-bold text-[#e8e8e8]">{p.name}</td>
+                    <td className="px-3 py-2.5 text-[10px] font-mono text-[#22d3ee]">{p.instances}</td>
+                    <td className="px-3 py-2.5 text-[10px] font-mono text-[#888]">{p.exec_mode}</td>
+                    <td className="px-3 py-2.5">
+                      <span className={`inline-flex px-1.5 py-0.5 rounded-sm border text-[9px] font-mono ${
                         p.isCluster
-                          ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400 border-primary-400/30'
-                          : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 border-neutral-300 dark:border-neutral-700'
+                          ? 'text-[#a78bfa] border-[#a78bfa]/30 bg-[#16003a]'
+                          : 'text-[#888] border-[#1e1e1e] bg-[#0d0d0d]'
                       }`}>
-                        {p.isCluster ? 'Cluster' : 'Fork'}
+                        {p.isCluster ? 'cluster' : 'fork'}
                       </span>
                     </td>
                   </tr>
@@ -181,88 +182,84 @@ const ClusterManagement: React.FC<ClusterManagementProps> = ({ processes, onRefr
           </div>
 
           {/* Scale Instances */}
-          <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
+          <div className="bg-[#111] border border-[#1e1e1e] rounded-sm p-3">
             <div className="flex items-center gap-2 mb-3">
-              <ArrowsPointingOutIcon className="h-3.5 w-3.5 text-neutral-400" />
-              <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">{t('cluster.scaleInstances')}</p>
+              <ArrowsPointingOutIcon className="h-3.5 w-3.5 text-[#555]" />
+              <p className="text-[9px] font-mono text-[#555] uppercase tracking-[0.2em]">{t('cluster.scaleInstances')}</p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setInstancesInput(v => Math.max(0, v - 1))}
+                className="border border-[#1e1e1e] text-[#888] font-mono text-xs px-2 py-0.5 rounded-sm hover:border-[#333]"
+              >
+                −
+              </button>
               <input
                 type="number"
                 min={0}
                 value={instancesInput}
                 onChange={e => setInstancesInput(Number(e.target.value))}
-                className="w-24 h-8 px-3 text-xs rounded border
-                           bg-white dark:bg-neutral-800
-                           border-neutral-200 dark:border-neutral-700
-                           text-neutral-900 dark:text-neutral-100
-                           focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="bg-[#0d0d0d] border border-[#1e1e1e] text-[#e8e8e8] font-mono text-xs rounded-sm px-2.5 py-1.5 focus:border-[#555] focus:outline-none w-20 text-center"
               />
+              <button
+                onClick={() => setInstancesInput(v => v + 1)}
+                className="border border-[#1e1e1e] text-[#888] font-mono text-xs px-2 py-0.5 rounded-sm hover:border-[#333]"
+              >
+                +
+              </button>
               <button
                 onClick={handleScaleProcess}
                 disabled={loading}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded
-                           bg-primary-600 hover:bg-primary-700 text-white transition-colors
-                           disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-1.5 border border-[#1e1e1e] text-[#888] font-mono text-xs px-3 py-1.5 rounded-sm hover:border-[#333] hover:text-[#e8e8e8] disabled:opacity-40 disabled:cursor-not-allowed ml-1"
               >
-                <ArrowsPointingOutIcon className="h-3.5 w-3.5" />
+                <ArrowsPointingOutIcon className="h-3 w-3" />
                 {t('cluster.scale')}
               </button>
             </div>
           </div>
 
           {/* Execution Mode */}
-          <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
+          <div className="bg-[#111] border border-[#1e1e1e] rounded-sm p-3">
             <div className="flex items-center gap-2 mb-3">
-              <ServerStackIcon className="h-3.5 w-3.5 text-neutral-400" />
-              <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">{t('cluster.executionMode')}</p>
+              <ServerStackIcon className="h-3.5 w-3.5 text-[#555]" />
+              <p className="text-[9px] font-mono text-[#555] uppercase tracking-[0.2em]">{t('cluster.executionMode')}</p>
             </div>
             <div className="flex items-center gap-2 mb-3">
               <button
                 onClick={() => handleChangeExecMode('fork')}
-                disabled={!proc.isCluster}
-                className="px-3 py-1.5 text-xs font-medium rounded border transition-colors
-                           border-neutral-200 dark:border-neutral-700
-                           text-neutral-700 dark:text-neutral-300
-                           hover:bg-neutral-50 dark:hover:bg-neutral-800
-                           disabled:opacity-40 disabled:cursor-not-allowed"
+                disabled={!proc.isCluster || loading}
+                className="border border-[#1e1e1e] text-[#888] font-mono text-xs px-3 py-1.5 rounded-sm hover:border-[#333] hover:text-[#e8e8e8] disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {t('cluster.switchToFork')}
               </button>
               <button
                 onClick={() => handleChangeExecMode('cluster')}
-                disabled={proc.isCluster}
-                className="px-3 py-1.5 text-xs font-medium rounded border transition-colors
-                           border-neutral-200 dark:border-neutral-700
-                           text-neutral-700 dark:text-neutral-300
-                           hover:bg-neutral-50 dark:hover:bg-neutral-800
-                           disabled:opacity-40 disabled:cursor-not-allowed"
+                disabled={proc.isCluster || loading}
+                className="border border-[#1e1e1e] text-[#888] font-mono text-xs px-3 py-1.5 rounded-sm hover:border-[#333] hover:text-[#e8e8e8] disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {t('cluster.switchToCluster')}
               </button>
             </div>
-            <p className="text-xs text-neutral-400 dark:text-neutral-500">
+            <p className="text-[10px] font-mono text-[#555]">
               {t('cluster.clusterModeDesc')}
             </p>
           </div>
 
           {/* Zero-Downtime Reload */}
-          <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
+          <div className="bg-[#111] border border-[#1e1e1e] rounded-sm p-3">
             <div className="flex items-center gap-2 mb-1.5">
-              <BoltIcon className="h-3.5 w-3.5 text-amber-400" />
-              <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">{t('cluster.zeroDowntimeReload')}</p>
+              <BoltIcon className="h-3.5 w-3.5 text-[#f59e0b]" />
+              <p className="text-[9px] font-mono text-[#555] uppercase tracking-[0.2em]">{t('cluster.zeroDowntimeReload')}</p>
             </div>
-            <p className="text-xs text-neutral-400 dark:text-neutral-500 mb-3">
+            <p className="text-[10px] font-mono text-[#555] mb-3">
               {t('cluster.reloadDesc')}
             </p>
             <button
               onClick={handleReloadProcess}
               disabled={loading}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded
-                         bg-amber-500 hover:bg-amber-600 text-white transition-colors
-                         disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-1.5 border border-[#f59e0b]/30 text-[#f59e0b] font-mono text-xs px-3 py-1.5 rounded-sm hover:border-[#f59e0b]/60 hover:bg-[#1a0e00] disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <BoltIcon className="h-3.5 w-3.5" />
+              <BoltIcon className="h-3 w-3" />
               {t('cluster.gracefulReload')}
             </button>
           </div>

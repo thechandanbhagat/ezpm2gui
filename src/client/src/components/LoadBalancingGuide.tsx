@@ -1,117 +1,162 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Box, Paper, Typography, Grid, Card, CardContent,
-  List, ListItem, ListItemIcon, ListItemText,
-  Accordion, AccordionSummary, AccordionDetails, Button
-} from '@mui/material';
-import {
-  BubbleChart as BubbleChartIcon, Speed as SpeedIcon,
-  DeviceHub as DeviceHubIcon, ExpandMore as ExpandMoreIcon,
-  Code as CodeIcon, Update as UpdateIcon, Settings as SettingsIcon
-} from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import PageHeader from './PageHeader';
 
 // @group LoadBalancingGuide : PM2 load balancing reference guide
 const LoadBalancingGuide: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState<string | false>('panel1');
-  const toggle = (panel: string) => (_: React.SyntheticEvent, open: boolean) =>
-    setExpanded(open ? panel : false);
 
-  // @group Render : Guide layout with accordions
+  const toggle = (panel: string) =>
+    setExpanded(prev => (prev === panel ? false : panel));
+
+  // @group Render : CLI-styled static guide with collapsible sections
   return (
-    <Box>
-      <PageHeader
-        title={t('loadBalancing.title')}
-        subtitle={t('loadBalancing.subtitle')}
-        actions={
-          <Button variant="outlined" onClick={() => navigate('/cluster')}>
-            {t('loadBalancing.goToCluster')}
-          </Button>
-        }
-      />
+    <div className="space-y-3">
 
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <Accordion expanded={expanded === 'panel1'} onChange={toggle('panel1')} disableGutters elevation={0}>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{t('loadBalancing.whatIsTitle')}</Typography>
-          </AccordionSummary>
-          <AccordionDetails sx={{ pt: 0 }}>
-            <Typography variant="body2" color="text.secondary" paragraph>
+      {/* Page header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-[9px] font-mono uppercase tracking-[0.2em] text-[#555] mb-1">pm2 / docs</p>
+          <h1 className="text-sm font-mono font-bold text-[#e8e8e8]">▸ LOAD BALANCING GUIDE</h1>
+          <p className="text-[10px] font-mono text-[#555] mt-0.5">{t('loadBalancing.subtitle')}</p>
+        </div>
+        <button
+          onClick={() => navigate('/cluster')}
+          className="border border-[#1e1e1e] text-[#555] font-mono text-xs px-3 py-1 rounded-sm hover:border-[#333] hover:text-[#888]"
+        >
+          {t('loadBalancing.goToCluster')}
+        </button>
+      </div>
+
+      {/* Section: What is Load Balancing */}
+      <div className="bg-[#111] border border-[#1e1e1e] rounded-sm overflow-hidden">
+        <button
+          onClick={() => toggle('panel1')}
+          className="w-full flex items-center justify-between px-4 py-3 text-left"
+        >
+          <span className="text-[11px] font-mono font-bold text-[#e8e8e8] uppercase tracking-[0.05em]">
+            {t('loadBalancing.whatIsTitle')}
+          </span>
+          <span className="text-[#555] font-mono text-xs">{expanded === 'panel1' ? '▾' : '▸'}</span>
+        </button>
+        {expanded === 'panel1' && (
+          <div className="px-4 pb-4 border-t border-[#1e1e1e]">
+            <p className="text-[10px] font-mono text-[#888] leading-relaxed mt-3 mb-3">
               {t('loadBalancing.whatIsDesc')}
-            </Typography>
-            <List dense disablePadding>
+            </p>
+            <ul className="space-y-1.5">
               {[
-                [SpeedIcon,      t('loadBalancing.benefit1')],
-                [DeviceHubIcon,  t('loadBalancing.benefit2')],
-                [UpdateIcon,     t('loadBalancing.benefit3')],
-              ].map(([Icon, text]: any, i) => (
-                <ListItem key={i} sx={{ py: 0.25, px: 0 }}>
-                  <ListItemIcon sx={{ minWidth: 32 }}><Icon fontSize="small" /></ListItemIcon>
-                  <ListItemText primary={<Typography variant="body2">{text}</Typography>} />
-                </ListItem>
+                { symbol: '▸', text: t('loadBalancing.benefit1'), color: 'text-[#22c55e]' },
+                { symbol: '▸', text: t('loadBalancing.benefit2'), color: 'text-[#22d3ee]' },
+                { symbol: '▸', text: t('loadBalancing.benefit3'), color: 'text-[#a78bfa]' },
+              ].map(({ symbol, text, color }) => (
+                <li key={text} className="flex items-start gap-2">
+                  <span className={`text-[9px] font-mono mt-0.5 ${color}`}>{symbol}</span>
+                  <span className="text-[10px] font-mono text-[#888] leading-relaxed">{text}</span>
+                </li>
               ))}
-            </List>
-          </AccordionDetails>
-        </Accordion>
+            </ul>
+          </div>
+        )}
+      </div>
 
-        <Accordion expanded={expanded === 'panel2'} onChange={toggle('panel2')} disableGutters elevation={0}>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{t('loadBalancing.settingUpTitle')}</Typography>
-          </AccordionSummary>
-          <AccordionDetails sx={{ pt: 0 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+      {/* Section: Setting Up */}
+      <div className="bg-[#111] border border-[#1e1e1e] rounded-sm overflow-hidden">
+        <button
+          onClick={() => toggle('panel2')}
+          className="w-full flex items-center justify-between px-4 py-3 text-left"
+        >
+          <span className="text-[11px] font-mono font-bold text-[#e8e8e8] uppercase tracking-[0.05em]">
+            {t('loadBalancing.settingUpTitle')}
+          </span>
+          <span className="text-[#555] font-mono text-xs">{expanded === 'panel2' ? '▾' : '▸'}</span>
+        </button>
+        {expanded === 'panel2' && (
+          <div className="px-4 pb-4 border-t border-[#1e1e1e]">
+            <p className="text-[10px] font-mono text-[#888] leading-relaxed mt-3 mb-3">
               {t('loadBalancing.settingUpDesc')}
-            </Typography>
-            <Grid container spacing={2}>
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {[
-                { title: t('loadBalancing.multipleInstances'), desc: 'Set instances > 1 to create workers. Use -1 to match CPU core count.', code: '"instances": 4  // or -1 for max' },
-                { title: t('loadBalancing.clusterMode'),       desc: 'Allow all instances to share the same server port.', code: '"exec_mode": "cluster"' },
+                {
+                  title: t('loadBalancing.multipleInstances'),
+                  desc: 'Set instances > 1 to create workers. Use -1 to match CPU core count.',
+                  code: '"instances": 4  // or -1 for max',
+                },
+                {
+                  title: t('loadBalancing.clusterMode'),
+                  desc: 'Allow all instances to share the same server port.',
+                  code: '"exec_mode": "cluster"',
+                },
               ].map(({ title, desc, code }) => (
-                <Grid item xs={12} md={6} key={title}>
-                  <Card variant="outlined">
-                    <CardContent sx={{ pb: '12px !important' }}>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>{title}</Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>{desc}</Typography>
-                      <Box sx={{ p: 1, borderRadius: 1, bgcolor: 'action.hover', fontFamily: 'monospace', fontSize: '0.8125rem' }}>
-                        {code}
-                      </Box>
-                    </CardContent>
-                  </Card>
-                </Grid>
+                <div key={title} className="bg-[#141414] border border-[#1e1e1e] rounded-sm p-3">
+                  <p className="text-[11px] font-mono font-bold text-[#e8e8e8] uppercase tracking-[0.05em] mb-1">{title}</p>
+                  <p className="text-[10px] font-mono text-[#888] leading-relaxed mb-2">{desc}</p>
+                  <pre className="bg-[#0a0a0a] border border-[#1e1e1e] font-mono text-[10px] text-[#22d3ee] p-3 rounded-sm whitespace-pre-wrap">
+                    {code}
+                  </pre>
+                </div>
               ))}
-            </Grid>
-          </AccordionDetails>
-        </Accordion>
+            </div>
+          </div>
+        )}
+      </div>
 
-        <Accordion expanded={expanded === 'panel3'} onChange={toggle('panel3')} disableGutters elevation={0}>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{t('loadBalancing.bestPractices')}</Typography>
-          </AccordionSummary>
-          <AccordionDetails sx={{ pt: 0 }}>
-            <List dense disablePadding>
+      {/* Section: Best Practices */}
+      <div className="bg-[#111] border border-[#1e1e1e] rounded-sm overflow-hidden">
+        <button
+          onClick={() => toggle('panel3')}
+          className="w-full flex items-center justify-between px-4 py-3 text-left"
+        >
+          <span className="text-[11px] font-mono font-bold text-[#e8e8e8] uppercase tracking-[0.05em]">
+            {t('loadBalancing.bestPractices')}
+          </span>
+          <span className="text-[#555] font-mono text-xs">{expanded === 'panel3' ? '▾' : '▸'}</span>
+        </button>
+        {expanded === 'panel3' && (
+          <div className="px-4 pb-4 border-t border-[#1e1e1e]">
+            <ul className="space-y-3 mt-3">
               {[
-                [SettingsIcon,      'Instances',       'Match CPU cores for CPU-bound apps. I/O-bound apps can use more.'],
-                [CodeIcon,          'Stateless Design','Keep app stateless or use Redis for shared session storage.'],
-                [BubbleChartIcon,   'Memory Limits',   'Set max_memory_restart to automatically cycle processes with leaks.'],
-                [UpdateIcon,        'Zero-downtime',   'Use pm2 reload (not restart) to update without dropping connections.'],
-              ].map(([Icon, primary, secondary]: any) => (
-                <ListItem key={primary} sx={{ py: 0.5, px: 0 }}>
-                  <ListItemIcon sx={{ minWidth: 32 }}><Icon fontSize="small" /></ListItemIcon>
-                  <ListItemText
-                    primary={<Typography variant="body2" sx={{ fontWeight: 500 }}>{primary}</Typography>}
-                    secondary={<Typography variant="caption" color="text.secondary">{secondary}</Typography>}
-                  />
-                </ListItem>
+                {
+                  primary: 'Instances',
+                  secondary: 'Match CPU cores for CPU-bound apps. I/O-bound apps can use more.',
+                },
+                {
+                  primary: 'Stateless Design',
+                  secondary: 'Keep app stateless or use Redis for shared session storage.',
+                },
+                {
+                  primary: 'Memory Limits',
+                  secondary: 'Set max_memory_restart to automatically cycle processes with leaks.',
+                },
+                {
+                  primary: 'Zero-downtime',
+                  secondary: 'Use pm2 reload (not restart) to update without dropping connections.',
+                },
+              ].map(({ primary, secondary }) => (
+                <li key={primary} className="flex items-start gap-3">
+                  <span className="text-[9px] font-mono text-[#f59e0b] mt-0.5">▸</span>
+                  <div>
+                    <p className="text-[10px] font-mono font-bold text-[#e8e8e8]">{primary}</p>
+                    <p className="text-[10px] font-mono text-[#888] leading-relaxed">{secondary}</p>
+                  </div>
+                </li>
               ))}
-            </List>
-          </AccordionDetails>
-        </Accordion>
-      </Paper>
-    </Box>
+            </ul>
+
+            {/* Tip callout */}
+            <div className="bg-[#1a0e00] border border-[#f59e0b]/20 rounded-sm p-3 mt-4">
+              <p className="text-[10px] font-mono text-[#f59e0b] leading-relaxed">
+                Tip: Use <span className="text-[#e8e8e8]">pm2 reload</span> for zero-downtime deployments in cluster mode. This gracefully cycles workers one at a time, keeping your service online.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+    </div>
   );
 };
 
