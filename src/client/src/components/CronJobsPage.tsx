@@ -141,7 +141,7 @@ const CronJobsPage: React.FC = () => {
           { id: 'scheduled', label: t('cronJobs.scheduled'), value: jobs.filter(j => j.config.enabled && !j.isRunning).length, color: 'text-amber-600 dark:text-amber-400' },
         ].map(({ id, label, value, color }) => (
           <div key={id} className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-4 py-3">
-            <p className={`text-xl font-bold leading-none ${color}`}>{value}</p>
+            <p className={`text-base font-bold leading-none ${color}`}>{value}</p>
             <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">{label}</p>
           </div>
         ))}
@@ -151,7 +151,7 @@ const CronJobsPage: React.FC = () => {
       {jobs.length === 0 ? (
         <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-10 text-center">
           <ClockIcon className="mx-auto h-8 w-8 text-neutral-300 dark:text-neutral-600 mb-3" />
-          <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">{t('cronJobs.noJobs')}</p>
+          <p className="text-xs font-medium text-neutral-600 dark:text-neutral-400">{t('cronJobs.noJobs')}</p>
           <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1 mb-4">
             Create your first scheduled task to automate your workflows
           </p>

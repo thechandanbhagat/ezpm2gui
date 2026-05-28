@@ -266,6 +266,7 @@ const App: React.FC = () => {
       socket.off('connect');
       socket.off('disconnect');
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enqueueNotification]);
 
   // Filter processes when search, status, or namespace filter changes
@@ -311,6 +312,7 @@ const App: React.FC = () => {
     fetchRemoteProcesses();
     const interval = setInterval(fetchRemoteProcesses, 3000);
     return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeServerId, enqueueNotification]);
 
   // @group ServerSwitcher : Refresh remote connections list periodically so status dots stay current

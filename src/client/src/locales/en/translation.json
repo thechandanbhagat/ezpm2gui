@@ -402,7 +402,18 @@
     "loadAverage": "Load Average",
     "noSystemInfo": "No system info available.",
     "tabProcesses": "Processes",
-    "tabSystemInfo": "System Info"
+    "tabSystemInfo": "System Info",
+    "logStreamingError": "Log streaming error: {{error}}",
+    "failedToLoadConnections": "Failed to load connections",
+    "failedToConnectInvalidResponse": "Failed to connect (Invalid server response)",
+    "failedToLoadProcesses": "Failed to load processes: {{error}}",
+    "failedToLoadProcessesNetwork": "Failed to load processes: network error",
+    "failedToOpenLiveLogs": "Failed to open live logs",
+    "failedToProcessAction": "Failed to {{action}} process",
+    "processActionFailed": "Process {{action}} failed",
+    "failedToAddConnection": "Failed to add connection",
+    "failedToUpdateConnection": "Failed to update connection",
+    "failedToDeleteConnection": "Failed to delete connection"
   },
   "remoteEnhancedLogs": {
     "title": "Enhanced Logs",

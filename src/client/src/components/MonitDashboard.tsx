@@ -69,7 +69,7 @@ const MonitDashboard: React.FC<MonitDashboardProps> = ({ processes, onRefresh })
   const statCard = (label: string, value: string | number, sub: string) => (
     <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg p-3">
       <p className="text-xs text-neutral-500 dark:text-neutral-400 uppercase tracking-wide font-medium mb-1">{label}</p>
-      <p className="text-xl font-bold text-neutral-900 dark:text-neutral-100 leading-tight">{value}</p>
+      <p className="text-base font-bold text-neutral-900 dark:text-neutral-100 leading-tight">{value}</p>
       <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{sub}</p>
     </div>
   );
@@ -103,7 +103,7 @@ const MonitDashboard: React.FC<MonitDashboardProps> = ({ processes, onRefresh })
       {/* Process Table */}
       <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-xs">
             <thead className="bg-neutral-50 dark:bg-neutral-800/50 border-b border-neutral-200 dark:border-neutral-800">
               <tr>
                 {[
