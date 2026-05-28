@@ -6,6 +6,21 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.10.0] - 2026-05-28
+
+### Added
+- **Full i18n / multi-language support** — entire UI is now internationalised using `i18next` + `react-i18next`. Every page, component, dialog, toast, tooltip, and navbar label is driven by translation keys.
+- **English (en) locale** — complete `translation.json` covering all UI strings; serves as the fallback language.
+- **Nepali (ne) locale** — full Nepali translation for all UI strings; first non-English language shipped.
+- **Language Switcher component** — `LanguageSwitcher.tsx` added to the navbar; selected language persists via `localStorage` (`ezpm2gui-language` key).
+- **Contributor translation guide** — `CONTRIBUTING_TRANSLATIONS.md` added to the repository so the community can add new locales.
+
+### Changed
+- All hardcoded English strings across Dashboard, System Metrics, Monitoring, Metrics, Log Viewer, Deploy, Cluster, Modules, Cron Jobs, Settings, Remote Connections, and utility dialogs replaced with `t('key')` calls.
+- Chinese (zh) locale removed from active language list (translation file retained for future contribution).
+
+---
+
 ## [1.9.0] - 2025-07-11
 
 ### Added

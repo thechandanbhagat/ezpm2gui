@@ -59,6 +59,7 @@ A modern web-based graphical user interface for the PM2 process manager, built w
 - **Remote Server Management** - Connect and manage PM2 on remote servers via SSH
 - **End-to-end encrypted credentials** *(v1.9.0)* - Remote server passwords encrypted in-browser with RSA-OAEP + AES-256-GCM before transmission
 - **Advanced Monitoring Dashboard** - Real-time performance charts with health scoring
+- **Multi-language support** *(v1.10.0)* - Full i18n with English and Nepali locales; language switcher in the navbar; community-extensible
 - **Tailwind CSS UI** - Sleek, compact, and responsive design with consistent dark/light theming
 - **Fully typed with TypeScript** - Robust and maintainable codebase
 
@@ -66,6 +67,13 @@ A modern web-based graphical user interface for the PM2 process manager, built w
 
 ### Process Monitoring
 Monitor all your PM2 processes in real-time with detailed information on CPU usage, memory consumption, uptime, and status. The intuitive interface makes it easy to identify issues at a glance.
+
+### Multi-Language Support
+EZ PM2 GUI ships with full internationalisation (i18n) powered by `i18next` and `react-i18next`:
+- Every page, component, dialog, toast, and tooltip is fully translated
+- **English** (default) and **Nepali** locales included out of the box
+- Language switcher in the navbar; selection persists across sessions
+- Community-extensible — add a new locale by following `CONTRIBUTING_TRANSLATIONS.md`
 
 ### Remote Server Management
 Connect to and manage PM2 processes on remote servers via secure SSH connections:
