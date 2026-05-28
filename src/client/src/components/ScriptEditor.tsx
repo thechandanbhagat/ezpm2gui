@@ -1,12 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Box,
-  Typography,
-  Paper,
-} from '@mui/material';
-import { useTheme } from '@mui/material/styles';
 
+// @group Types : ScriptEditor props
 interface ScriptEditorProps {
   value: string;
   onChange: (value: string) => void;
@@ -14,21 +9,11 @@ interface ScriptEditorProps {
   placeholder?: string;
 }
 
-const ScriptEditor: React.FC<ScriptEditorProps> = ({
-  value,
-  onChange,
-  scriptType,
-  placeholder,
-}) => {
-  const theme = useTheme();
-  const { t } = useTranslation();
-
-  const getPlaceholder = () => {
-    if (placeholder) return placeholder;
-    
-    switch (scriptType) {
-      case 'node':
-        return `// Node.js script
+// @group Helpers : Default placeholder per script type
+const getDefaultPlaceholder = (scriptType: ScriptEditorProps['scriptType']): string => {
+  switch (scriptType) {
+    case 'node':
+      return `// Node.js script
 console.log('Hello from cron job!');
 console.log('Current time:', new Date().toISOString());
 
@@ -37,9 +22,9 @@ console.log('Environment:', process.env.NODE_ENV);
 
 // Exit with success code
 process.exit(0);`;
-      
-      case 'python':
-        return `# Python script
+
+    case 'python':
+      return `# Python script
 import sys
 from datetime import datetime
 
@@ -51,9 +36,9 @@ print(f'Arguments: {sys.argv[1:]}')
 
 # Exit with success code
 sys.exit(0)`;
-      
-      case 'shell':
-        return `#!/bin/bash
+
+    case 'shell':
+      return `#!/bin/bash
 # Shell script
 
 echo "Hello from cron job!"
@@ -63,9 +48,9 @@ echo "Working directory: $(pwd)"
 
 # Exit with success code
 exit 0`;
-      
-      case 'dotnet':
-        return `// C# script
+
+    case 'dotnet':
+      return `// C# script
 using System;
 
 class Program
@@ -74,59 +59,57 @@ class Program
     {
         Console.WriteLine("Hello from cron job!");
         Console.WriteLine($"Current time: {DateTime.Now}");
-        
+
         // Access command line arguments
         Console.WriteLine($"Arguments: {string.Join(", ", args)}");
-        
+
         Environment.Exit(0);
     }
 }`;
-      
-      default:
-        return 'Write your script here...';
-    }
-  };
 
+    default:
+      return 'Write your script here...';
+  }
+};
+
+// @group ScriptEditor : CLI-styled code editor textarea
+const ScriptEditor: React.FC<ScriptEditorProps> = ({
+  value,
+  onChange,
+  scriptType,
+  placeholder,
+}) => {
+  const { t } = useTranslation();
+
+  const resolvedPlaceholder = placeholder ?? getDefaultPlaceholder(scriptType);
+
+  // @group Render : Hardcoded dark CLI aesthetic — no dark: variants
   return (
-    <Box>
-      <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+    <div>
+      {/* @group Toolbar : Label row */}
+      <div className="mb-1 font-mono text-[10px] font-semibold text-[#888] uppercase tracking-widest">
         {t('scriptEditor.title')}
-      </Typography>
-      <Paper
-        sx={{
-          p: 0,
-          backgroundColor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#f5f5f5',
-          border: `1px solid ${theme.palette.divider}`,
-          borderRadius: 1,
-        }}
-      >
+      </div>
+
+      {/* @group EditorContainer : Dark bordered panel */}
+      <div className="bg-[#0a0a0a] border border-[#1e1e1e] rounded-sm overflow-hidden">
         <textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder={getPlaceholder()}
-          style={{
-            width: '100%',
-            minHeight: '300px',
-            padding: '12px',
-            fontFamily: "'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace",
-            fontSize: '13px',
-            lineHeight: '1.6',
-            backgroundColor: 'transparent',
-            color: theme.palette.text.primary,
-            border: 'none',
-            outline: 'none',
-            resize: 'vertical',
-            whiteSpace: 'pre',
-            overflowWrap: 'normal',
-            overflowX: 'auto',
-          }}
+          placeholder={resolvedPlaceholder}
           spellCheck={false}
+          className="w-full font-mono text-[10px] leading-relaxed text-[#e8e8e8]
+                     bg-[#0a0a0a] placeholder-[#333] border-none outline-none
+                     resize-y p-3 min-h-[300px] whitespace-pre overflow-x-auto"
+          style={{ overflowWrap: 'normal' }}
         />
-      </Paper>
-      <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+      </div>
+
+      {/* @group Footer : Tip text */}
+      <div className="mt-1 font-mono text-[10px] text-[#555]">
         {t('scriptEditor.tip')}
-      </Typography>
-    </Box>
+      </div>
+    </div>
   );
 };
 
