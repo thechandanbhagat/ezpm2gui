@@ -375,7 +375,7 @@ const DeployApplication: React.FC = () => {
           <SectionHeader>{t('deploy.sectionRuntime')}</SectionHeader>
           <div className="ml-6 space-y-3">
             <div className="flex items-start gap-8">
-              <InlineField label="instances">
+              <InlineField label={t('deploy.instances')}>
                 <PromptInput
                   type="number"
                   name="instances"
