@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import {
   Box,
@@ -118,6 +119,7 @@ const groupFiles = (files: LogFile[]): LogFileGroup[] => {
 
 // @group LogFileBrowser : Browse and view rotated PM2 log files grouped by date
 const LogFileBrowser: React.FC<LogFileBrowserProps> = ({ processId, processName, connectionId }) => {
+  const { t } = useTranslation();
   const [files, setFiles]         = useState<LogFile[]>([]);
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState('');
@@ -246,7 +248,7 @@ const LogFileBrowser: React.FC<LogFileBrowserProps> = ({ processId, processName,
     return (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 6, justifyContent: 'center' }}>
         <CircularProgress size={20} />
-        <Typography variant="body2" color="text.secondary">Scanning log directory…</Typography>
+        <Typography variant="body2" color="text.secondary">{t('logPanel.scanningDir')}</Typography>
       </Box>
     );
   }
@@ -283,16 +285,16 @@ const LogFileBrowser: React.FC<LogFileBrowserProps> = ({ processId, processName,
           {groups.length} date{groups.length !== 1 ? 's' : ''} · {files.length} file{files.length !== 1 ? 's' : ''}
         </Typography>
         <FormControl size="small" sx={{ minWidth: 130 }}>
-          <InputLabel>Lines to load</InputLabel>
+          <InputLabel>{t('logPanel.linesToLoad')}</InputLabel>
           <Select
-            label="Lines to load"
+            label={t('logPanel.linesToLoad')}
             value={lines}
             onChange={(e: SelectChangeEvent<number>) => setLines(Number(e.target.value))}
           >
             {LINE_OPTIONS.map(o => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
           </Select>
         </FormControl>
-        <Tooltip title="Refresh file list">
+        <Tooltip title={t('common.refresh')}>
           <IconButton size="small" onClick={fetchFiles}><RefreshIcon fontSize="small" /></IconButton>
         </Tooltip>
       </Box>
@@ -433,7 +435,7 @@ const LogFileBrowser: React.FC<LogFileBrowserProps> = ({ processId, processName,
                                 startIcon={<DownloadIcon fontSize="small" />}
                                 onClick={() => download(activeFile)}
                               >
-                                Download full file
+                                {t('logPanel.downloadFullFile')}
                               </Button>
                             )}
                           </Box>

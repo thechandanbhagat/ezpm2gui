@@ -1,32 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import {
-  Box,
-  Paper,
-  Typography,
-  Switch,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  Button,
-  Divider,
-  Snackbar,
-  Alert,
-  SelectChangeEvent,
-  Chip,
-  CircularProgress,
-  LinearProgress,
-} from '@mui/material';
-import TuneIcon         from '@mui/icons-material/Tune';
-import PaletteIcon      from '@mui/icons-material/Palette';
-import TerminalIcon     from '@mui/icons-material/Terminal';
-import DeleteSweepIcon  from '@mui/icons-material/DeleteSweep';
-import CheckCircleIcon  from '@mui/icons-material/CheckCircle';
-import RestartAltIcon   from '@mui/icons-material/RestartAlt';
-import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
-import LockIcon         from '@mui/icons-material/Lock';
-import LockOpenIcon     from '@mui/icons-material/LockOpen';
 import PageHeader from './PageHeader';
+import { useTranslation } from 'react-i18next';
 
 // @group Types : Settings page types
 type SectionId = 'general' | 'appearance' | 'pm2' | 'advanced' | 'updates' | 'security';
@@ -48,18 +22,8 @@ interface InstallLine {
 interface Section {
   id: SectionId;
   label: string;
-  icon: React.ReactNode;
+  icon: string;
 }
-
-// @group Constants : Sidebar section definitions
-const SECTIONS: Section[] = [
-  { id: 'general',    label: 'General',    icon: <TuneIcon    sx={{ fontSize: 16 }} /> },
-  { id: 'appearance', label: 'Appearance', icon: <PaletteIcon sx={{ fontSize: 16 }} /> },
-  { id: 'pm2',        label: 'PM2',        icon: <TerminalIcon sx={{ fontSize: 16 }} /> },
-  { id: 'advanced',   label: 'Advanced',   icon: <DeleteSweepIcon sx={{ fontSize: 16 }} /> },
-  { id: 'updates',    label: 'Updates',    icon: <SystemUpdateAltIcon sx={{ fontSize: 16 }} /> },
-  { id: 'security',   label: 'Security',   icon: <LockIcon sx={{ fontSize: 16 }} /> },
-];
 
 // @group Utilities : Load setting from localStorage with fallback
 const load = (key: string, fallback: string) =>
@@ -74,36 +38,77 @@ const SettingRow: React.FC<{
   last?: boolean;
 }> = ({ label, description, control, last }) => (
   <>
-    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1.5, gap: 3 }}>
-      <Box sx={{ minWidth: 0 }}>
-        <Typography variant="body2" sx={{ fontWeight: 500 }}>{label}</Typography>
+    <div className="flex items-center justify-between py-3 gap-6">
+      <div className="min-w-0">
+        <span className="text-[10px] font-mono text-[#e8e8e8] block">{label}</span>
         {description && (
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25 }}>
-            {description}
-          </Typography>
+          <span className="text-[9px] font-mono text-[#555] block mt-0.5">{description}</span>
         )}
-      </Box>
-      <Box sx={{ flexShrink: 0 }}>{control}</Box>
-    </Box>
-    {!last && <Divider />}
+      </div>
+      <div className="shrink-0">{control}</div>
+    </div>
+    {!last && <div className="border-t border-[#111]" />}
   </>
 );
 
 // @group Components : Section wrapper card
 // Defined outside Settings to keep a stable reference across re-renders (prevents focus loss)
 const SectionCard: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-  <Paper variant="outlined" sx={{ mb: 2 }}>
-    <Box sx={{ px: 2, py: 1.25, borderBottom: 1, borderColor: 'divider', bgcolor: 'action.hover' }}>
-      <Typography variant="subtitle2" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.6875rem' }}>
-        {title}
-      </Typography>
-    </Box>
-    <Box sx={{ px: 2 }}>{children}</Box>
-  </Paper>
+  <div className="bg-[#111] border border-[#1e1e1e] rounded-sm mb-3">
+    <div className="px-4 py-2.5 border-b border-[#1a1a1a] flex items-center gap-2">
+      <span className="text-[9px] font-mono font-bold text-[#555] uppercase tracking-[0.15em]">{title}</span>
+    </div>
+    <div className="px-4">{children}</div>
+  </div>
+);
+
+// @group Components : CLI toggle switch
+const CliToggle: React.FC<{ checked: boolean; onChange: (v: boolean) => void }> = ({ checked, onChange }) => (
+  <button
+    type="button"
+    role="switch"
+    aria-checked={checked}
+    onClick={() => onChange(!checked)}
+    className={[
+      'relative inline-flex h-4 w-7 shrink-0 cursor-pointer rounded-sm transition-colors duration-150',
+      checked ? 'bg-[#22c55e]' : 'bg-[#1a1a1a] border border-[#333]',
+    ].join(' ')}
+  >
+    <span
+      className={[
+        'pointer-events-none inline-block h-3 w-3 rounded-sm bg-[#0a0a0a] shadow transition-transform duration-150 mt-0.5',
+        checked ? 'translate-x-3.5' : 'translate-x-0.5',
+      ].join(' ')}
+    />
+  </button>
+);
+
+// @group Components : CLI status badge
+const StatusBadge: React.FC<{ active: boolean; labelOn: string; labelOff: string }> = ({ active, labelOn, labelOff }) => (
+  <span
+    className={[
+      'inline-flex items-center gap-1 px-2 py-0.5 rounded-sm font-mono text-[9px] border',
+      active
+        ? 'border-[#22c55e]/40 text-[#22c55e] bg-[#22c55e]/5'
+        : 'border-[#333] text-[#555] bg-transparent',
+    ].join(' ')}
+  >
+    {active ? labelOn : labelOff}
+  </span>
 );
 
 // @group Settings : Main Settings page component
 const Settings: React.FC = () => {
+  const { t } = useTranslation();
+
+  const SECTIONS: Section[] = [
+    { id: 'general',    label: t('settings.sections.general'),    icon: '⚙' },
+    { id: 'appearance', label: t('settings.sections.appearance'), icon: '◈' },
+    { id: 'pm2',        label: t('settings.sections.pm2'),        icon: '▶' },
+    { id: 'advanced',   label: t('settings.sections.advanced'),   icon: '⚠' },
+    { id: 'updates',    label: t('settings.sections.updates'),    icon: '↑' },
+    { id: 'security',   label: t('settings.sections.security'),   icon: '⊙' },
+  ];
 
   // @group State : Active sidebar section — allow external deep-link via ?section=security
   const [activeSection, setActiveSection] = useState<SectionId>(() => {
@@ -151,11 +156,11 @@ const Settings: React.FC = () => {
     setSecError(null);
     setSecSuccess(null);
     if (!/^\d{4}$/.test(pinNew)) {
-      setSecError('PIN must be exactly 4 digits');
+      setSecError(t('settings.messages.pinMustBe4Digits'));
       return;
     }
     if (pinNew !== pinConfirm) {
-      setSecError('PINs do not match');
+      setSecError(t('settings.messages.pinsDoNotMatch'));
       return;
     }
     setPinSaving(true);
@@ -170,12 +175,12 @@ const Settings: React.FC = () => {
         setPinSet(true);
         setPinNew('');
         setPinConfirm('');
-        setSecSuccess(pinSet ? 'PIN changed successfully' : 'PIN protection enabled');
+        setSecSuccess(pinSet ? t('settings.messages.pinChanged') : t('settings.messages.pinEnabled'));
       } else {
-        setSecError(json.error || 'Failed to save PIN');
+        setSecError(json.error || t('settings.messages.failedSavePin'));
       }
     } catch {
-      setSecError('Network error — could not reach the server');
+      setSecError(t('settings.messages.networkError'));
     } finally {
       setPinSaving(false);
     }
@@ -186,7 +191,7 @@ const Settings: React.FC = () => {
     setSecError(null);
     setSecSuccess(null);
     if (!pinRemovePassword) {
-      setSecError('Enter your current password to remove the PIN');
+      setSecError(t('settings.messages.enterPasswordToRemovePin'));
       return;
     }
     setPinRemoving(true);
@@ -200,12 +205,12 @@ const Settings: React.FC = () => {
       if (json.success) {
         setPinSet(false);
         setPinRemovePassword('');
-        setSecSuccess('PIN protection removed');
+        setSecSuccess(t('settings.messages.pinRemoved'));
       } else {
-        setSecError(json.error || 'Failed to remove PIN');
+        setSecError(json.error || t('settings.messages.failedRemovePin'));
       }
     } catch {
-      setSecError('Network error — could not reach the server');
+      setSecError(t('settings.messages.networkError'));
     } finally {
       setPinRemoving(false);
     }
@@ -238,12 +243,12 @@ const Settings: React.FC = () => {
         setSecNewPassword('');
         setSecConfirmPassword('');
         setSecCurrentPassword('');
-        setSecSuccess(secPasswordSet ? 'Password changed successfully' : 'Password protection enabled');
+        setSecSuccess(secPasswordSet ? t('settings.messages.passwordChanged') : t('settings.messages.passwordEnabled'));
       } else {
-        setSecError(json.error || 'Failed to save password');
+        setSecError(json.error || t('settings.messages.failedSavePassword'));
       }
     } catch {
-      setSecError('Network error — could not reach the server');
+      setSecError(t('settings.messages.networkError'));
     } finally {
       setSecSaving(false);
     }
@@ -254,7 +259,7 @@ const Settings: React.FC = () => {
     setSecError(null);
     setSecSuccess(null);
     if (!secRemovePassword) {
-      setSecError('Enter your current password to remove protection');
+      setSecError(t('settings.messages.enterPasswordToRemove'));
       return;
     }
     setSecRemoving(true);
@@ -268,12 +273,12 @@ const Settings: React.FC = () => {
       if (json.success) {
         setSecPasswordSet(false);
         setSecRemovePassword('');
-        setSecSuccess('Password protection removed');
+        setSecSuccess(t('settings.messages.passwordRemoved'));
       } else {
-        setSecError(json.error || 'Failed to remove password');
+        setSecError(json.error || t('settings.messages.failedRemovePassword'));
       }
     } catch {
-      setSecError('Network error — could not reach the server');
+      setSecError(t('settings.messages.networkError'));
     } finally {
       setSecRemoving(false);
     }
@@ -293,14 +298,14 @@ const Settings: React.FC = () => {
       const json = await res.json();
       if (json.success) {
         setAutoLockMinutes(json.autoLockMinutes);
-        setSecSuccess(json.autoLockMinutes === 0 ? 'Auto-lock disabled' : `Auto-lock set to ${json.autoLockMinutes} minute${json.autoLockMinutes !== 1 ? 's' : ''}`);
+        setSecSuccess(json.autoLockMinutes === 0 ? t('settings.messages.autoLockDisabled') : `Auto-lock set to ${json.autoLockMinutes} minute${json.autoLockMinutes !== 1 ? 's' : ''}`);
         // Notify App.tsx so the inactivity timer updates immediately
         window.dispatchEvent(new CustomEvent('ezpm2_autolock_changed', { detail: { autoLockMinutes: json.autoLockMinutes } }));
       } else {
-        setSecError(json.error || 'Failed to save auto-lock setting');
+        setSecError(json.error || t('settings.messages.failedSaveAutolock'));
       }
     } catch {
-      setSecError('Network error — could not reach the server');
+      setSecError(t('settings.messages.networkError'));
     } finally {
       setAutoLockSaving(false);
     }
@@ -329,16 +334,16 @@ const Settings: React.FC = () => {
   const [compactMode,      setCompactMode]      = useState<boolean>(load('compactMode', 'false') === 'true');
   const [showTimestamps,   setShowTimestamps]   = useState<boolean>(load('showTimestamps', 'true') === 'true');
   const [toastOpen,        setToastOpen]        = useState<boolean>(false);
-  const [toastMsg,         setToastMsg]         = useState<string>('Settings saved');
+  const [toastMsg,         setToastMsg]         = useState<string>('');
 
   // @group Handlers : Persist a key and show toast
-  const save = useCallback((key: string, value: string, msg = 'Saved') => {
+  const save = useCallback((key: string, value: string, msg?: string) => {
     localStorage.setItem(key, value);
-    setToastMsg(msg);
+    setToastMsg(msg ?? t('settings.messages.saved'));
     setToastOpen(true);
-  }, []);
+  }, [t]);
 
-  const handleThemeChange = (e: SelectChangeEvent) => {
+  const handleThemeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setTheme(e.target.value);
     save('theme', e.target.value);
   };
@@ -356,13 +361,13 @@ const Settings: React.FC = () => {
     setTheme('blue');
     setCompactMode(false);
     setShowTimestamps(true);
-    setToastMsg('Reset to defaults');
+    setToastMsg(t('settings.messages.resetToDefaults'));
     setToastOpen(true);
   };
 
   const handleClearData = () => {
     localStorage.clear();
-    setToastMsg('All local data cleared');
+    setToastMsg(t('settings.messages.dataCleared'));
     setToastOpen(true);
   };
 
@@ -377,10 +382,10 @@ const Settings: React.FC = () => {
       if (json.success) {
         setVersionInfo(json.data as VersionInfo);
       } else {
-        setCheckError(json.error || 'Failed to check for updates');
+        setCheckError(json.error || t('settings.messages.failedCheckUpdates'));
       }
     } catch {
-      setCheckError('Network error — could not reach npm registry');
+      setCheckError(t('settings.messages.networkErrorNpm'));
     } finally {
       setCheckingUpdate(false);
     }
@@ -437,6 +442,10 @@ const Settings: React.FC = () => {
     }, 1500);
   };
 
+  // @group Utilities : Shared input class
+  const inputCls = 'bg-[#0d0d0d] border border-[#1e1e1e] text-[#e8e8e8] font-mono text-xs rounded-sm px-2.5 py-1.5 focus:border-[#555] focus:outline-none';
+  const selectCls = inputCls;
+
   // @group Render : Section content panels
   const renderSection = () => {
     switch (activeSection) {
@@ -445,69 +454,65 @@ const Settings: React.FC = () => {
       case 'general':
         return (
           <>
-            <SectionCard title="Dashboard">
+            <SectionCard title={t('settings.cards.dashboard')}>
               <SettingRow
-                label="Auto Refresh"
-                description="Automatically refresh process data at a set interval"
+                label={t('settings.rows.autoRefresh')}
+                description={t('settings.rows.autoRefreshDesc')}
                 control={
-                  <Switch
-                    size="small"
+                  <CliToggle
                     checked={autoRefresh}
-                    onChange={e => { setAutoRefresh(e.target.checked); save('autoRefresh', String(e.target.checked)); }}
+                    onChange={v => { setAutoRefresh(v); save('autoRefresh', String(v)); }}
                   />
                 }
               />
               <SettingRow
-                label="Refresh Interval"
-                description="How often to poll for updated process data"
+                label={t('settings.rows.refreshInterval')}
+                description={t('settings.rows.refreshIntervalDesc')}
                 last
                 control={
-                  <FormControl size="small" sx={{ minWidth: 130 }}>
-                    <Select
-                      value={refreshInterval}
-                      disabled={!autoRefresh}
-                      onChange={e => { setRefreshInterval(e.target.value); save('refreshInterval', e.target.value); }}
-                    >
-                      <MenuItem value="1000">Every 1s</MenuItem>
-                      <MenuItem value="2000">Every 2s</MenuItem>
-                      <MenuItem value="3000">Every 3s</MenuItem>
-                      <MenuItem value="5000">Every 5s</MenuItem>
-                      <MenuItem value="10000">Every 10s</MenuItem>
-                      <MenuItem value="30000">Every 30s</MenuItem>
-                    </Select>
-                  </FormControl>
+                  <select
+                    className={selectCls}
+                    value={refreshInterval}
+                    disabled={!autoRefresh}
+                    onChange={e => { setRefreshInterval(e.target.value); save('refreshInterval', e.target.value); }}
+                  >
+                    <option value="1000">{t('settings.intervals.every1s')}</option>
+                    <option value="2000">{t('settings.intervals.every2s')}</option>
+                    <option value="3000">{t('settings.intervals.every3s')}</option>
+                    <option value="5000">{t('settings.intervals.every5s')}</option>
+                    <option value="10000">{t('settings.intervals.every10s')}</option>
+                    <option value="30000">{t('settings.intervals.every30s')}</option>
+                  </select>
                 }
               />
             </SectionCard>
 
-            <SectionCard title="Logs">
+            <SectionCard title={t('settings.cards.logs')}>
               <SettingRow
-                label="Log Lines to Display"
-                description="Maximum number of log lines shown in the log viewer"
+                label={t('settings.rows.logLines')}
+                description={t('settings.rows.logLinesDesc')}
                 control={
-                  <FormControl size="small" sx={{ minWidth: 100 }}>
-                    <Select
-                      value={logLines}
-                      onChange={e => { setLogLines(e.target.value); save('logLines', e.target.value); }}
-                    >
-                      <MenuItem value="50">50</MenuItem>
-                      <MenuItem value="100">100</MenuItem>
-                      <MenuItem value="200">200</MenuItem>
-                      <MenuItem value="500">500</MenuItem>
-                      <MenuItem value="1000">1000</MenuItem>
-                    </Select>
-                  </FormControl>
+                  <select
+                    className={selectCls}
+                    value={logLines}
+                    onChange={e => { setLogLines(e.target.value); save('logLines', e.target.value); }}
+                  >
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                    <option value="500">500</option>
+                    <option value="1000">1000</option>
+                  </select>
                 }
               />
               <SettingRow
-                label="Show Timestamps"
-                description="Display timestamps alongside each log line"
+                label={t('settings.rows.showTimestamps')}
+                description={t('settings.rows.showTimestampsDesc')}
                 last
                 control={
-                  <Switch
-                    size="small"
+                  <CliToggle
                     checked={showTimestamps}
-                    onChange={e => { setShowTimestamps(e.target.checked); save('showTimestamps', String(e.target.checked)); }}
+                    onChange={v => { setShowTimestamps(v); save('showTimestamps', String(v)); }}
                   />
                 }
               />
@@ -519,80 +524,55 @@ const Settings: React.FC = () => {
       case 'appearance':
         return (
           <>
-            <SectionCard title="Theme">
+            <SectionCard title={t('settings.cards.theme')}>
               <SettingRow
-                label="Compact Mode"
-                description="Reduce padding and spacing for a denser layout"
+                label={t('settings.rows.compactMode')}
+                description={t('settings.rows.compactModeDesc')}
                 control={
-                  <Switch
-                    size="small"
+                  <CliToggle
                     checked={compactMode}
-                    onChange={e => { setCompactMode(e.target.checked); save('compactMode', String(e.target.checked)); }}
+                    onChange={v => { setCompactMode(v); save('compactMode', String(v)); }}
                   />
                 }
               />
               <SettingRow
-                label="Accent Color"
-                description="Primary color used for highlights and active states"
+                label={t('settings.rows.accentColor')}
+                description={t('settings.rows.accentColorDesc')}
                 last
                 control={
-                  <FormControl size="small" sx={{ minWidth: 130 }}>
-                    <Select value={theme} onChange={handleThemeChange}>
-                      <MenuItem value="blue">
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#3b82f6' }} />
-                          Blue
-                        </Box>
-                      </MenuItem>
-                      <MenuItem value="purple">
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#8b5cf6' }} />
-                          Purple
-                        </Box>
-                      </MenuItem>
-                      <MenuItem value="green">
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#22c55e' }} />
-                          Green
-                        </Box>
-                      </MenuItem>
-                      <MenuItem value="orange">
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#f97316' }} />
-                          Orange
-                        </Box>
-                      </MenuItem>
-                    </Select>
-                  </FormControl>
+                  <select className={selectCls} value={theme} onChange={handleThemeChange}>
+                    <option value="blue">{t('settings.colors.blue')}</option>
+                    <option value="purple">{t('settings.colors.purple')}</option>
+                    <option value="green">{t('settings.colors.green')}</option>
+                    <option value="orange">{t('settings.colors.orange')}</option>
+                  </select>
                 }
               />
             </SectionCard>
 
-            <Paper variant="outlined" sx={{ p: 2 }}>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
-                Dark / light mode is toggled from the top-right sun/moon icon in the navigation bar.
-              </Typography>
-            </Paper>
+            <div className="bg-[#111] border border-[#1e1e1e] rounded-sm p-3">
+              <span className="text-[9px] font-mono text-[#555] block">
+                {t('settings.notes.darkModeToggle')}
+              </span>
+            </div>
           </>
         );
 
       // ── PM2 ────────────────────────────────────────────────────
       case 'pm2':
         return (
-          <SectionCard title="PM2 Executable">
+          <SectionCard title={t('settings.cards.pm2Executable')}>
             <SettingRow
-              label="PM2 Path"
-              description="Absolute path or command name for the PM2 binary"
+              label={t('settings.rows.pm2Path')}
+              description={t('settings.rows.pm2PathDesc')}
               last
               control={
-                <TextField
-                  size="small"
+                <input
+                  className={`${inputCls} w-48`}
                   value={pm2Path}
                   onChange={e => setPm2Path(e.target.value)}
                   onBlur={e => save('pm2Path', e.target.value)}
                   placeholder="pm2"
-                  sx={{ width: 200 }}
-                  inputProps={{ style: { fontFamily: 'monospace', fontSize: '0.8125rem' } }}
                 />
               }
             />
@@ -603,49 +583,43 @@ const Settings: React.FC = () => {
       case 'advanced':
         return (
           <>
-            <SectionCard title="Reset">
+            <SectionCard title={t('settings.cards.reset')}>
               <SettingRow
-                label="Reset to Defaults"
-                description="Restore all settings to their original default values"
+                label={t('settings.rows.resetToDefaults')}
+                description={t('settings.rows.resetToDefaultsDesc')}
                 last
                 control={
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    startIcon={<RestartAltIcon fontSize="small" />}
+                  <button
+                    className="border border-[#1e1e1e] text-[#888] font-mono text-xs px-4 py-1.5 rounded-sm hover:text-[#e8e8e8] hover:border-[#555] transition-colors"
                     onClick={handleResetDefaults}
                   >
-                    Reset
-                  </Button>
+                    {t('settings.buttons.reset')}
+                  </button>
                 }
               />
             </SectionCard>
 
-            <SectionCard title="Data">
+            <SectionCard title={t('settings.cards.data')}>
               <SettingRow
-                label="Clear Local Storage"
-                description="Wipe all locally stored data including preferences and cached values"
+                label={t('settings.rows.clearLocalStorage')}
+                description={t('settings.rows.clearLocalStorageDesc')}
                 last
                 control={
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    color="error"
-                    startIcon={<DeleteSweepIcon fontSize="small" />}
+                  <button
+                    className="border border-[#ef4444]/40 text-[#ef4444] font-mono text-xs px-4 py-1.5 rounded-sm hover:bg-[#1a0000] transition-colors"
                     onClick={handleClearData}
                   >
-                    Clear All
-                  </Button>
+                    {t('settings.buttons.clearAll')}
+                  </button>
                 }
               />
             </SectionCard>
 
-            <Paper variant="outlined" sx={{ p: 2 }}>
-              <Typography variant="caption" color="text.secondary">
-                <strong>Note:</strong> Clearing local storage will remove all saved preferences.
-                The page will revert to defaults on next load.
-              </Typography>
-            </Paper>
+            <div className="bg-[#111] border border-[#1e1e1e] rounded-sm p-3">
+              <span className="text-[9px] font-mono text-[#555] block">
+                {t('settings.notes.clearDataNote')}
+              </span>
+            </div>
           </>
         );
 
@@ -658,94 +632,103 @@ const Settings: React.FC = () => {
         return (
           <>
             {/* ── Version check ── */}
-            <SectionCard title="Version">
+            <SectionCard title={t('settings.cards.version')}>
               <SettingRow
-                label="Current Version"
-                description="The version of ezpm2gui currently running"
+                label={t('settings.rows.currentVersion')}
+                description={t('settings.rows.currentVersionDesc')}
                 control={
-                  <Chip
-                    label={versionInfo ? `v${versionInfo.currentVersion}` : 'unknown'}
-                    size="small"
-                    variant="outlined"
-                    sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
-                  />
+                  <span className="bg-[#0a0a0a] border border-[#1e1e1e] font-mono text-[10px] text-[#22d3ee] px-2 py-1 rounded-sm">
+                    {versionInfo ? `v${versionInfo.currentVersion}` : 'unknown'}
+                  </span>
                 }
               />
               <SettingRow
-                label="Latest on npm"
-                description="The most recent published version from the npm registry"
+                label={t('settings.rows.latestOnNpm')}
+                description={t('settings.rows.latestOnNpmDesc')}
                 control={
                   versionInfo ? (
-                    <Chip
-                      label={`v${versionInfo.latestVersion}`}
-                      size="small"
-                      color={versionInfo.updateAvailable ? 'warning' : 'success'}
-                      sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
-                    />
+                    <span
+                      className={[
+                        'bg-[#0a0a0a] border font-mono text-[10px] px-2 py-1 rounded-sm',
+                        versionInfo.updateAvailable
+                          ? 'border-[#f59e0b]/40 text-[#f59e0b]'
+                          : 'border-[#22c55e]/40 text-[#22c55e]',
+                      ].join(' ')}
+                    >
+                      v{versionInfo.latestVersion}
+                    </span>
                   ) : (
-                    <Chip label="—" size="small" variant="outlined" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }} />
+                    <span className="bg-[#0a0a0a] border border-[#1e1e1e] font-mono text-[10px] text-[#555] px-2 py-1 rounded-sm">
+                      —
+                    </span>
                   )
                 }
               />
               <SettingRow
-                label="Status"
+                label={t('settings.rows.statusLabel')}
                 description={
                   versionInfo?.publishedAt
-                    ? `Latest published: ${new Date(versionInfo.publishedAt).toLocaleDateString()}`
-                    : 'Click Check for Updates to fetch latest version info'
+                    ? `${t('settings.notes.latestPublishedPrefix')} ${new Date(versionInfo.publishedAt).toLocaleDateString()}`
+                    : t('settings.notes.clickToFetch')
                 }
                 last
                 control={
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    startIcon={checkingUpdate ? <CircularProgress size={12} /> : <SystemUpdateAltIcon fontSize="small" />}
+                  <button
+                    className="bg-[#e8e8e8] text-[#0a0a0a] font-mono text-xs font-semibold px-4 py-1.5 rounded-sm hover:bg-[#ccc] disabled:opacity-40 transition-colors"
                     onClick={handleCheckUpdate}
                     disabled={checkingUpdate || installing}
                   >
-                    {checkingUpdate ? 'Checking...' : 'Check for Updates'}
-                  </Button>
+                    {checkingUpdate ? t('settings.buttons.checking') : t('settings.buttons.checkForUpdates')}
+                  </button>
                 }
               />
             </SectionCard>
 
             {/* ── Check error ── */}
             {checkError && (
-              <Alert severity="error" sx={{ mb: 2, fontSize: '0.8125rem' }}>
-                {checkError}
-              </Alert>
+              <div className="bg-[#1a0000] border border-[#ef4444]/30 rounded-sm px-3 py-2 mb-3">
+                <span className="text-[10px] font-mono text-[#ef4444]">{checkError}</span>
+              </div>
             )}
 
             {/* ── Update available banner ── */}
             {versionInfo && (
-              <Alert
-                severity={versionInfo.updateAvailable ? 'info' : 'success'}
-                sx={{ mb: 2, fontSize: '0.8125rem' }}
+              <div
+                className={[
+                  'rounded-sm px-3 py-2 mb-3 border',
+                  versionInfo.updateAvailable
+                    ? 'bg-[#1a1200] border-[#f59e0b]/30'
+                    : 'bg-[#001a08] border-[#22c55e]/30',
+                ].join(' ')}
               >
-                {versionInfo.updateAvailable
-                  ? `v${versionInfo.latestVersion} is available. Install it below.`
-                  : `You are on the latest version (v${versionInfo.currentVersion}).`}
-              </Alert>
+                <span
+                  className={[
+                    'text-[10px] font-mono',
+                    versionInfo.updateAvailable ? 'text-[#f59e0b]' : 'text-[#22c55e]',
+                  ].join(' ')}
+                >
+                  {versionInfo.updateAvailable
+                    ? `v${versionInfo.latestVersion} is available. Install it below.`
+                    : `You are on the latest version (v${versionInfo.currentVersion}).`}
+                </span>
+              </div>
             )}
 
             {/* ── Install update ── */}
             {versionInfo?.updateAvailable && !installDone && (
-              <SectionCard title="Install Update">
+              <SectionCard title={t('settings.cards.installUpdate')}>
                 <SettingRow
                   label={`Install v${versionInfo.latestVersion}`}
                   description="Runs npm install -g ezpm2gui@latest. Frontend assets update immediately; restart the server to apply backend changes."
                   last
                   control={
-                    <Button
-                      variant="contained"
-                      size="small"
-                      color="primary"
-                      startIcon={installing ? <CircularProgress size={12} color="inherit" /> : <SystemUpdateAltIcon fontSize="small" />}
+                    <button
+                      className="bg-[#e8e8e8] text-[#0a0a0a] font-mono text-xs font-semibold px-4 py-1.5 rounded-sm hover:bg-[#ccc] disabled:opacity-40 transition-colors"
                       onClick={handleInstallUpdate}
                       disabled={installing}
                     >
-                      {installing ? 'Installing...' : 'Install Update'}
-                    </Button>
+                      {installing ? t('settings.buttons.installing') : t('settings.buttons.installUpdate')}
+                    </button>
                   }
                 />
               </SectionCard>
@@ -753,74 +736,80 @@ const Settings: React.FC = () => {
 
             {/* ── Install log output ── */}
             {installLines.length > 0 && (
-              <Paper variant="outlined" sx={{ mb: 2 }}>
-                <Box sx={{ px: 2, py: 1.25, borderBottom: 1, borderColor: 'divider', bgcolor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.6875rem' }}>
-                    Install Output
-                  </Typography>
-                  {installing && <LinearProgress sx={{ width: 80, ml: 1 }} />}
-                </Box>
-                <Box sx={{ p: 1.5, maxHeight: 260, overflowY: 'auto', bgcolor: 'background.default' }}>
+              <div className="bg-[#111] border border-[#1e1e1e] rounded-sm mb-3">
+                <div className="px-4 py-2.5 border-b border-[#1a1a1a] flex items-center justify-between">
+                  <span className="text-[9px] font-mono font-bold text-[#555] uppercase tracking-[0.15em]">
+                    {t('settings.cards.installOutput')}
+                  </span>
+                  {installing && (
+                    <div className="flex gap-0.5 items-center">
+                      <span className="w-1 h-1 bg-[#22c55e] rounded-full animate-pulse" />
+                      <span className="w-1 h-1 bg-[#22c55e] rounded-full animate-pulse delay-75" />
+                      <span className="w-1 h-1 bg-[#22c55e] rounded-full animate-pulse delay-150" />
+                    </div>
+                  )}
+                </div>
+                <div className="p-3 max-h-64 overflow-y-auto bg-[#0a0a0a]">
                   {installLines.map((line, i) => (
-                    <Typography
+                    <div
                       key={i}
-                      variant="caption"
-                      component="div"
-                      sx={{
-                        fontFamily: 'monospace',
-                        fontSize: '0.75rem',
-                        lineHeight: 1.6,
-                        color: line.type === 'error' || line.type === 'fail' ? 'error.main'
-                          : line.type === 'done' ? 'success.main'
-                          : 'text.secondary',
-                        whiteSpace: 'pre-wrap',
-                        wordBreak: 'break-all',
-                      }}
+                      className={[
+                        'font-mono text-[10px] leading-relaxed whitespace-pre-wrap break-all',
+                        line.type === 'error' || line.type === 'fail' ? 'text-[#ef4444]'
+                          : line.type === 'done' ? 'text-[#22c55e]'
+                          : 'text-[#555]',
+                      ].join(' ')}
                     >
                       {line.message}
-                    </Typography>
+                    </div>
                   ))}
                   <div ref={logEndRef} />
-                </Box>
-              </Paper>
+                </div>
+              </div>
             )}
 
             {/* ── Post-install actions ── */}
             {installDone && (
-              <SectionCard title="Apply Update">
+              <SectionCard title={t('settings.cards.applyUpdate')}>
                 <SettingRow
-                  label="Reload Page"
-                  description="Refresh to load the updated frontend assets immediately"
+                  label={t('settings.rows.reloadPage')}
+                  description={t('settings.rows.reloadPageDesc')}
                   control={
-                    <Button variant="outlined" size="small" onClick={() => window.location.reload()}>
-                      Reload
-                    </Button>
+                    <button
+                      className="border border-[#1e1e1e] text-[#888] font-mono text-xs px-4 py-1.5 rounded-sm hover:text-[#e8e8e8] hover:border-[#555] transition-colors"
+                      onClick={() => window.location.reload()}
+                    >
+                      {t('settings.buttons.reload')}
+                    </button>
                   }
                 />
                 <SettingRow
-                  label="Restart Server"
-                  description="Restarts the Node.js server process to apply backend changes. Requires a process manager (PM2, systemd, nodemon) to respawn the process."
+                  label={t('settings.rows.restartServer')}
+                  description={t('settings.rows.restartServerDesc')}
                   last
                   control={
-                    <Button
-                      variant="contained"
-                      size="small"
-                      color="warning"
-                      startIcon={restarting ? <CircularProgress size={12} color="inherit" /> : <RestartAltIcon fontSize="small" />}
+                    <button
+                      className="bg-[#e8e8e8] text-[#0a0a0a] font-mono text-xs font-semibold px-4 py-1.5 rounded-sm hover:bg-[#ccc] disabled:opacity-40 transition-colors"
                       onClick={handleRestartServer}
                       disabled={restarting}
                     >
-                      {restarting ? 'Restarting...' : 'Restart Server'}
-                    </Button>
+                      {restarting ? t('settings.buttons.restarting') : t('settings.buttons.restartServer')}
+                    </button>
                   }
                 />
               </SectionCard>
             )}
 
             {installFailed && (
-              <Alert severity="error" sx={{ fontSize: '0.8125rem' }}>
-                Update failed. Check the output above. You can also run <code>npm install -g ezpm2gui@latest</code> manually.
-              </Alert>
+              <div className="bg-[#1a0000] border border-[#ef4444]/30 rounded-sm px-3 py-2">
+                <span className="text-[10px] font-mono text-[#ef4444]">
+                  Update failed. Check the output above. You can also run{' '}
+                  <code className="bg-[#0a0a0a] border border-[#1e1e1e] font-mono text-[10px] text-[#22d3ee] px-1 rounded-sm">
+                    npm install -g ezpm2gui@latest
+                  </code>{' '}
+                  manually.
+                </span>
+              </div>
             )}
           </>
         );
@@ -831,121 +820,120 @@ const Settings: React.FC = () => {
         const isLoading = secPasswordSet === null;
         return (
           <>
-            {secError   && <Alert severity="error"   sx={{ mb: 2, fontSize: '0.8125rem' }} onClose={() => setSecError(null)}>{secError}</Alert>}
-            {secSuccess && <Alert severity="success" sx={{ mb: 2, fontSize: '0.8125rem' }} onClose={() => setSecSuccess(null)}>{secSuccess}</Alert>}
+            {secError && (
+              <div className="bg-[#1a0000] border border-[#ef4444]/30 rounded-sm px-3 py-2 mb-3 flex items-start justify-between gap-2">
+                <span className="text-[10px] font-mono text-[#ef4444]">{secError}</span>
+                <button onClick={() => setSecError(null)} className="text-[#ef4444] text-[10px] font-mono shrink-0 hover:text-[#ff6666]">✕</button>
+              </div>
+            )}
+            {secSuccess && (
+              <div className="bg-[#001a08] border border-[#22c55e]/30 rounded-sm px-3 py-2 mb-3 flex items-start justify-between gap-2">
+                <span className="text-[10px] font-mono text-[#22c55e]">{secSuccess}</span>
+                <button onClick={() => setSecSuccess(null)} className="text-[#22c55e] text-[10px] font-mono shrink-0 hover:text-[#66ff99]">✕</button>
+              </div>
+            )}
 
             {isLoading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                <CircularProgress size={20} />
-              </Box>
+              <div className="flex justify-center py-8">
+                <span className="text-[10px] font-mono text-[#555] animate-pulse">loading...</span>
+              </div>
             ) : (
               <>
                 {/* Status */}
-                <SectionCard title="Status">
+                <SectionCard title={t('settings.cards.status')}>
                   <SettingRow
-                    label="Password Protection"
-                    description="When enabled, a password is required to access EZ PM2 GUI"
+                    label={t('settings.rows.passwordProtection')}
+                    description={t('settings.rows.passwordProtectionDesc')}
                     last
                     control={
-                      <Chip
-                        label={secPasswordSet ? 'Enabled' : 'Disabled'}
-                        size="small"
-                        color={secPasswordSet ? 'success' : 'default'}
-                        variant={secPasswordSet ? 'filled' : 'outlined'}
-                        icon={secPasswordSet ? <LockIcon sx={{ fontSize: '12px !important' }} /> : <LockOpenIcon sx={{ fontSize: '12px !important' }} />}
+                      <StatusBadge
+                        active={!!secPasswordSet}
+                        labelOn={t('common.enabled')}
+                        labelOff={t('settings.rows.disabled')}
                       />
                     }
                   />
                 </SectionCard>
 
                 {/* Set / Change password */}
-                <SectionCard title={secPasswordSet ? 'Change Password' : 'Set Password'}>
+                <SectionCard title={secPasswordSet ? t('settings.cards.changePassword') : t('settings.cards.setPassword')}>
                   {secPasswordSet && (
                     <SettingRow
-                      label="Current Password"
-                      description="Required to change the existing password"
+                      label={t('settings.rows.currentPassword')}
+                      description={t('settings.rows.currentPasswordDesc')}
                       control={
-                        <TextField
+                        <input
                           type="password"
-                          size="small"
+                          className={`${inputCls} w-48`}
                           value={secCurrentPassword}
                           onChange={e => setSecCurrentPassword(e.target.value)}
                           placeholder="Current password"
-                          sx={{ width: 200 }}
                         />
                       }
                     />
                   )}
                   <SettingRow
-                    label="New Password"
-                    description="Minimum 4 characters"
+                    label={t('settings.rows.newPassword')}
+                    description={t('settings.rows.newPasswordDesc')}
                     control={
-                      <TextField
+                      <input
                         type="password"
-                        size="small"
+                        className={`${inputCls} w-48`}
                         value={secNewPassword}
                         onChange={e => setSecNewPassword(e.target.value)}
                         placeholder="New password"
-                        sx={{ width: 200 }}
                       />
                     }
                   />
                   <SettingRow
-                    label="Confirm Password"
-                    description="Re-enter new password to confirm"
+                    label={t('settings.rows.confirmPassword')}
+                    description={t('settings.rows.confirmPasswordDesc')}
                     last
                     control={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <TextField
+                      <div className="flex items-center gap-2">
+                        <input
                           type="password"
-                          size="small"
+                          className={`${inputCls} w-48`}
                           value={secConfirmPassword}
                           onChange={e => setSecConfirmPassword(e.target.value)}
                           placeholder="Confirm password"
-                          sx={{ width: 200 }}
                         />
-                        <Button
-                          variant="contained"
-                          size="small"
+                        <button
+                          className="bg-[#e8e8e8] text-[#0a0a0a] font-mono text-xs font-semibold px-4 py-1.5 rounded-sm hover:bg-[#ccc] disabled:opacity-40 transition-colors"
                           onClick={handleSecSave}
                           disabled={secSaving || !secNewPassword || !secConfirmPassword}
-                          startIcon={secSaving ? <CircularProgress size={12} color="inherit" /> : <LockIcon fontSize="small" />}
                         >
-                          {secSaving ? 'Saving...' : secPasswordSet ? 'Change' : 'Enable'}
-                        </Button>
-                      </Box>
+                          {secSaving ? t('settings.buttons.saving') : secPasswordSet ? t('settings.buttons.change') : t('settings.buttons.enable')}
+                        </button>
+                      </div>
                     }
                   />
                 </SectionCard>
 
                 {/* Remove password */}
                 {secPasswordSet && (
-                  <SectionCard title="Remove Password">
+                  <SectionCard title={t('settings.cards.removePassword')}>
                     <SettingRow
-                      label="Disable Protection"
-                      description="Enter your current password to remove password protection"
+                      label={t('settings.rows.disableProtection')}
+                      description={t('settings.rows.disableProtectionDesc')}
                       last
                       control={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <TextField
+                        <div className="flex items-center gap-2">
+                          <input
                             type="password"
-                            size="small"
+                            className={`${inputCls} w-40`}
                             value={secRemovePassword}
                             onChange={e => setSecRemovePassword(e.target.value)}
                             placeholder="Current password"
-                            sx={{ width: 160 }}
                           />
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            color="error"
+                          <button
+                            className="border border-[#ef4444]/40 text-[#ef4444] font-mono text-xs px-4 py-1.5 rounded-sm hover:bg-[#1a0000] disabled:opacity-40 transition-colors"
                             onClick={handleSecRemove}
                             disabled={secRemoving || !secRemovePassword}
-                            startIcon={secRemoving ? <CircularProgress size={12} color="inherit" /> : <LockOpenIcon fontSize="small" />}
                           >
-                            {secRemoving ? 'Removing...' : 'Remove'}
-                          </Button>
-                        </Box>
+                            {secRemoving ? t('settings.buttons.removing') : t('settings.buttons.remove')}
+                          </button>
+                        </div>
                       }
                     />
                   </SectionCard>
@@ -953,124 +941,117 @@ const Settings: React.FC = () => {
 
                 {/* PIN Protection */}
                 {secPasswordSet && (
-                  <SectionCard title="PIN Protection">
+                  <SectionCard title={t('settings.cards.pinProtection')}>
                     <SettingRow
-                      label="PIN Status"
-                      description="A 4-digit PIN can be used on the lock screen as an alternative to your password"
+                      label={t('settings.rows.pinStatus')}
+                      description={t('settings.rows.pinStatusDesc')}
                       control={
-                        <Chip
-                          size="small"
-                          label={pinSet ? 'Enabled' : 'Disabled'}
-                          color={pinSet ? 'success' : 'default'}
-                          variant={pinSet ? 'filled' : 'outlined'}
+                        <StatusBadge
+                          active={!!pinSet}
+                          labelOn={t('common.enabled')}
+                          labelOff={t('settings.rows.disabled')}
                         />
                       }
                     />
                     <SettingRow
-                      label={pinSet ? 'Change PIN' : 'Set PIN'}
-                      description="Enter a 4-digit numeric PIN"
+                      label={pinSet ? t('settings.rows.changePin') : t('settings.rows.setPin')}
+                      description={t('settings.rows.pinDesc')}
                       control={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <TextField
-                            size="small"
+                        <div className="flex items-center gap-2">
+                          <input
+                            className={`${inputCls} w-24`}
                             value={pinNew}
                             onChange={e => setPinNew(e.target.value.replace(/\D/g, '').slice(0, 4))}
                             placeholder="New PIN"
-                            inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 4 }}
-                            sx={{ width: 100 }}
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            maxLength={4}
                           />
-                          <TextField
-                            size="small"
+                          <input
+                            className={`${inputCls} w-24`}
                             value={pinConfirm}
                             onChange={e => setPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 4))}
                             placeholder="Confirm"
-                            inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 4 }}
-                            sx={{ width: 100 }}
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            maxLength={4}
                           />
-                          <Button
-                            variant="contained"
-                            size="small"
+                          <button
+                            className="bg-[#e8e8e8] text-[#0a0a0a] font-mono text-xs font-semibold px-4 py-1.5 rounded-sm hover:bg-[#ccc] disabled:opacity-40 transition-colors"
                             onClick={handlePinSave}
                             disabled={pinSaving || pinNew.length !== 4 || pinConfirm.length !== 4}
-                            startIcon={pinSaving ? <CircularProgress size={12} color="inherit" /> : undefined}
                           >
-                            {pinSaving ? 'Saving...' : pinSet ? 'Change' : 'Enable'}
-                          </Button>
-                        </Box>
+                            {pinSaving ? t('settings.buttons.saving') : pinSet ? t('settings.buttons.change') : t('settings.buttons.enable')}
+                          </button>
+                        </div>
                       }
                     />
                     {pinSet && (
                       <SettingRow
-                        label="Remove PIN"
-                        description="Enter your current password to remove PIN protection"
+                        label={t('settings.rows.removePin')}
+                        description={t('settings.rows.removePinDesc')}
                         last
                         control={
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <TextField
+                          <div className="flex items-center gap-2">
+                            <input
                               type="password"
-                              size="small"
+                              className={`${inputCls} w-40`}
                               value={pinRemovePassword}
                               onChange={e => setPinRemovePassword(e.target.value)}
                               placeholder="Current password"
-                              sx={{ width: 160 }}
                             />
-                            <Button
-                              variant="outlined"
-                              size="small"
-                              color="error"
+                            <button
+                              className="border border-[#ef4444]/40 text-[#ef4444] font-mono text-xs px-4 py-1.5 rounded-sm hover:bg-[#1a0000] disabled:opacity-40 transition-colors"
                               onClick={handlePinRemove}
                               disabled={pinRemoving || !pinRemovePassword}
-                              startIcon={pinRemoving ? <CircularProgress size={12} color="inherit" /> : <LockOpenIcon fontSize="small" />}
                             >
-                              {pinRemoving ? 'Removing...' : 'Remove'}
-                            </Button>
-                          </Box>
+                              {pinRemoving ? t('settings.buttons.removing') : t('settings.buttons.remove')}
+                            </button>
+                          </div>
                         }
                       />
                     )}
-                    {!pinSet && <Box />}
+                    {!pinSet && <div />}
                   </SectionCard>
                 )}
 
                 {/* Auto-lock timeout */}
                 {secPasswordSet && (
-                  <SectionCard title="Auto-Lock">
+                  <SectionCard title={t('settings.cards.autoLock')}>
                     <SettingRow
-                      label="Lock after inactivity"
-                      description="Automatically lock the app after a period of inactivity. Set to 0 to disable."
+                      label={t('settings.rows.lockAfterInactivity')}
+                      description={t('settings.rows.lockAfterInactivityDesc')}
                       last
                       control={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <TextField
+                        <div className="flex items-center gap-2">
+                          <input
                             type="number"
-                            size="small"
+                            className={`${inputCls} w-20`}
                             value={autoLockMinutes}
                             onChange={e => setAutoLockMinutes(Math.max(0, parseInt(e.target.value, 10) || 0))}
-                            inputProps={{ min: 0, max: 480, step: 1 }}
-                            sx={{ width: 80 }}
+                            min={0}
+                            max={480}
+                            step={1}
                           />
-                          <Typography variant="caption" color="text.secondary">min</Typography>
-                          <Button
-                            variant="outlined"
-                            size="small"
+                          <span className="text-[10px] font-mono text-[#555]">{t('settings.messages.min')}</span>
+                          <button
+                            className="bg-[#e8e8e8] text-[#0a0a0a] font-mono text-xs font-semibold px-4 py-1.5 rounded-sm hover:bg-[#ccc] disabled:opacity-40 transition-colors"
                             onClick={() => handleAutoLockSave(autoLockMinutes)}
                             disabled={autoLockSaving}
-                            startIcon={autoLockSaving ? <CircularProgress size={12} color="inherit" /> : undefined}
                           >
-                            {autoLockSaving ? 'Saving...' : 'Save'}
-                          </Button>
-                        </Box>
+                            {autoLockSaving ? t('settings.buttons.saving') : t('settings.buttons.save')}
+                          </button>
+                        </div>
                       }
                     />
                   </SectionCard>
                 )}
 
-                <Paper variant="outlined" sx={{ p: 2 }}>
-                  <Typography variant="caption" color="text.secondary">
-                    The password is hashed with PBKDF2 (SHA-512, 100,000 iterations) and stored server-side.
-                    It is never stored in plain text.
-                  </Typography>
-                </Paper>
+                <div className="bg-[#111] border border-[#1e1e1e] rounded-sm p-3">
+                  <span className="text-[9px] font-mono text-[#555] block">
+                    {t('settings.notes.securityNote')}
+                  </span>
+                </div>
               </>
             )}
           </>
@@ -1081,76 +1062,62 @@ const Settings: React.FC = () => {
 
   // @group Render : Page layout — sidebar + content
   return (
-    <Box>
-      <PageHeader title="Settings" subtitle="Application preferences and configuration" />
+    <div className="max-w-3xl mx-auto space-y-4">
+      <PageHeader title={t('settings.title')} subtitle={t('settings.subtitle')} />
 
-      <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+      <div className="flex gap-4 items-start">
 
         {/* ── Left sidebar nav ── */}
-        <Paper variant="outlined" sx={{ width: 168, flexShrink: 0, overflow: 'hidden' }}>
-          {SECTIONS.map((s, i) => (
-            <React.Fragment key={s.id}>
-              <Box
-                onClick={() => setActiveSection(s.id)}
-                sx={{
-                  display: 'flex', alignItems: 'center', gap: 1.25,
-                  px: 1.75, py: 1.25, cursor: 'pointer',
-                  bgcolor: activeSection === s.id ? 'primary.main' : 'transparent',
-                  color: activeSection === s.id ? 'primary.contrastText' : 'text.secondary',
-                  transition: 'background 0.15s',
-                  '&:hover': activeSection !== s.id
-                    ? { bgcolor: 'action.hover', color: 'text.primary' }
-                    : {},
-                }}
-              >
-                {s.icon}
-                <Typography variant="body2" sx={{ fontWeight: activeSection === s.id ? 600 : 400, fontSize: '0.8125rem' }}>
-                  {s.label}
-                </Typography>
-                {activeSection === s.id && (
-                  <CheckCircleIcon sx={{ fontSize: 13, ml: 'auto', opacity: 0.8 }} />
-                )}
-              </Box>
-              {i < SECTIONS.length - 1 && <Divider />}
-            </React.Fragment>
+        <div className="bg-[#111] border border-[#1e1e1e] rounded-sm w-40 shrink-0 overflow-hidden">
+          {SECTIONS.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => setActiveSection(s.id)}
+              className={[
+                'w-full flex items-center gap-2 px-3 py-2.5 text-left font-mono text-[10px] border-l-2 transition-colors',
+                activeSection === s.id
+                  ? 'border-[#22c55e] text-[#e8e8e8] bg-[#141414]'
+                  : 'border-transparent text-[#555] hover:text-[#888] hover:bg-[#141414]',
+              ].join(' ')}
+            >
+              <span className="text-[9px] shrink-0">{s.icon}</span>
+              <span>{s.label}</span>
+            </button>
           ))}
-        </Paper>
+        </div>
 
         {/* ── Right content ── */}
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-              {SECTIONS.find(s => s.id === activeSection)?.label}
-            </Typography>
-            <Chip
-              label="Auto-saved"
-              size="small"
-              variant="outlined"
-              sx={{ fontSize: '0.6875rem', height: 18, opacity: 0.5 }}
-            />
-          </Box>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-[11px] font-mono font-bold text-[#e8e8e8] uppercase tracking-[0.1em]">
+              ▸ {SECTIONS.find(s => s.id === activeSection)?.label}
+            </span>
+            <span className="text-[9px] font-mono text-[#333] border border-[#222] rounded-sm px-1.5 py-0.5">
+              {t('settings.autoSaved')}
+            </span>
+          </div>
 
           {renderSection()}
-        </Box>
-      </Box>
+        </div>
+      </div>
 
       {/* @group Toast : Save confirmation */}
-      <Snackbar
-        open={toastOpen}
-        autoHideDuration={2000}
-        onClose={() => setToastOpen(false)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert
-          onClose={() => setToastOpen(false)}
-          severity="success"
-          icon={<CheckCircleIcon fontSize="small" />}
-          sx={{ fontSize: '0.8125rem' }}
-        >
-          {toastMsg}
-        </Alert>
-      </Snackbar>
-    </Box>
+      {toastOpen && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
+          <div className="bg-[#111] border border-[#22c55e]/40 rounded-sm px-4 py-2 flex items-center gap-2 shadow-lg">
+            <span className="text-[10px] font-mono text-[#22c55e]">✓</span>
+            <span className="text-[10px] font-mono text-[#e8e8e8]">{toastMsg}</span>
+            <button
+              onClick={() => setToastOpen(false)}
+              className="text-[#555] text-[10px] font-mono ml-2 hover:text-[#888]"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

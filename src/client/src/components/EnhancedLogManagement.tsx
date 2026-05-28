@@ -43,6 +43,7 @@ import {
 import { PM2Process } from '../types/pm2';
 import axios from 'axios';
 import { io } from 'socket.io-client';
+import { useTranslation } from 'react-i18next';
 
 interface LogEntry {
   id: string;
@@ -77,6 +78,7 @@ interface ProcessLogStats {
 
 const EnhancedLogManagement: React.FC = () => {
   const theme = useTheme();
+  const { t } = useTranslation();
   const logContainerRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<any>(null);
 
@@ -424,7 +426,7 @@ const EnhancedLogManagement: React.FC = () => {
             startIcon={isStreaming ? <PauseIcon /> : <PlayIcon />}
             disabled={filters.processIds.length === 0}
           >
-            {isStreaming ? 'Stop Stream' : 'Start Stream'}
+            {isStreaming ? t('logs.stopStream') : t('logs.liveStream')}
           </Button>
           <IconButton onClick={fetchLogs} disabled={loading}>
             <RefreshIcon />
@@ -459,7 +461,7 @@ const EnhancedLogManagement: React.FC = () => {
                 <TextField
                   fullWidth
                   size="small"
-                  placeholder="Search logs..."
+                  placeholder={t('logs.searchLogs')}
                   value={filters.searchTerm}
                   onChange={(e) => setFilters(prev => ({ ...prev, searchTerm: e.target.value }))}
                   InputProps={{
@@ -476,13 +478,13 @@ const EnhancedLogManagement: React.FC = () => {
                     value={filters.processIds}
                     onChange={handleProcessFilterChange}
                     renderValue={(selected) => (
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                        {(selected as number[]).map((id) => {
-                          const process = processes.find(p => p.pm_id === id);
-                          return <Chip key={id} label={process?.name || id} size="small" />;
-                        })}
-                      </Box>
-                    )}
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {(selected as number[]).map((id) => {
+                            const process = processes.find(p => p.pm_id === id);
+                            return <Chip key={id} label={process?.name || id} size="small" />;
+                          })}
+                        </Box>
+                      )}
                   >
                     {processes.map((process) => (
                       <MenuItem key={process.pm_id} value={process.pm_id}>
@@ -517,7 +519,7 @@ const EnhancedLogManagement: React.FC = () => {
                       size="small"
                     />
                   }
-                  label="Auto-scroll"
+                  label={t('logs.autoScroll')}
                 />
               </Grid>
 
@@ -526,7 +528,7 @@ const EnhancedLogManagement: React.FC = () => {
                 <TextField
                   fullWidth
                   size="small"
-                  label="From"
+                  label={t('logs.fromDate')}
                   type="datetime-local"
                   value={filters.timestampFrom}
                   onChange={(e) => setFilters(prev => ({ ...prev, timestampFrom: e.target.value, timeRange: 'all' }))}
@@ -537,7 +539,7 @@ const EnhancedLogManagement: React.FC = () => {
                 <TextField
                   fullWidth
                   size="small"
-                  label="To"
+                  label={t('logs.toDate')}
                   type="datetime-local"
                   value={filters.timestampTo}
                   onChange={(e) => setFilters(prev => ({ ...prev, timestampTo: e.target.value, timeRange: 'all' }))}
@@ -610,7 +612,7 @@ const EnhancedLogManagement: React.FC = () => {
             {loading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
                 <CircularProgress />
-                <Typography sx={{ ml: 2 }}>Loading logs...</Typography>
+                <Typography sx={{ ml: 2 }}>{t('logs.loadingLogs')}</Typography>
               </Box>
             ) : (
               <Box
