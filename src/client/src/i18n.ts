@@ -3,6 +3,7 @@ import { initReactI18next } from 'react-i18next';
 
 import enTranslation from './locales/en/translation.json';
 import neTranslation from './locales/ne/translation.json';
+import zhTranslation from './locales/zh/translation.json';
 
 const savedLang = localStorage.getItem('ezpm2gui-language') || 'en';
 
@@ -12,6 +13,7 @@ i18n
     resources: {
       en: { translation: enTranslation },
       ne: { translation: neTranslation },
+      zh: { translation: zhTranslation },
     },
     lng: savedLang,
     fallbackLng: 'en',

@@ -2,6 +2,8 @@
 
 [![Discord](https://img.shields.io/discord/1234567890?logo=discord&logoColor=white&label=Discord&color=5865F2)](https://discord.gg/ttgc2zqK7b)
 
+🌐 **Available Languages**: [English](README.md) | [中文](README_zh.md)
+
 A modern web-based graphical user interface for the PM2 process manager, built with TypeScript, Tailwind CSS, and React.
 
 ## Screenshots
