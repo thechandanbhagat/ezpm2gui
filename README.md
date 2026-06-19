@@ -6,6 +6,17 @@
 
 A modern web-based graphical user interface for the PM2 process manager, built with TypeScript, Tailwind CSS, and React.
 
+## Previous GitHub Releases
+
+- [v1.10.0](https://github.com/thechandanbhagat/ezpm2gui/releases/tag/v1.10.0)
+- [v1.9.0](https://github.com/thechandanbhagat/ezpm2gui/releases/tag/v1.9.0)
+- [v1.8.0](https://github.com/thechandanbhagat/ezpm2gui/releases/tag/v1.8.0)
+- [v1.6.0](https://github.com/thechandanbhagat/ezpm2gui/releases/tag/v1.6.0)
+- [v1.5.0](https://github.com/thechandanbhagat/ezpm2gui/releases/tag/v1.5.0)
+- [v1.4.0](https://github.com/thechandanbhagat/ezpm2gui/releases/tag/v1.4.0)
+- [v1.3.2](https://github.com/thechandanbhagat/ezpm2gui/releases/tag/v1.3.2)
+- [v1.3.0](https://github.com/thechandanbhagat/ezpm2gui/releases/tag/v1.3.0)
+
 ## Screenshots
 
 **Process Dashboard** — live system metrics and every PM2 process at a glance:
@@ -61,7 +72,7 @@ A modern web-based graphical user interface for the PM2 process manager, built w
 - **Remote Server Management** - Connect and manage PM2 on remote servers via SSH
 - **End-to-end encrypted credentials** *(v1.9.0)* - Remote server passwords encrypted in-browser with RSA-OAEP + AES-256-GCM before transmission
 - **Advanced Monitoring Dashboard** - Real-time performance charts with health scoring
-- **Multi-language support** *(v1.10.0)* - Full i18n with English and Nepali locales; language switcher in the navbar; community-extensible
+- **Multi-language support** *(v1.11.0)* - Full i18n with English, Nepali, and Chinese locales; language switcher in the navbar; community-extensible
 - **Tailwind CSS UI** - Sleek, compact, and responsive design with consistent dark/light theming
 - **Fully typed with TypeScript** - Robust and maintainable codebase
 

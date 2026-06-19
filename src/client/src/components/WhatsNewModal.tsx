@@ -13,7 +13,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 // @group Constants
-const VERSION = '1.7.0';
+const VERSION = '1.11.0';
 const STORAGE_KEY = `ezpm2_whats_new_seen_v${VERSION}`;
 
 // @group Types
