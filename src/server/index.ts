@@ -28,6 +28,8 @@ import { remoteConnectionManager } from './utils/remote-connection';
 import { metricsHistory } from './utils/metrics-history';
 import remoteMetricsRoutes from './routes/remoteMetrics';
 import { remoteMetricsPoller } from './utils/remote-metrics-poller';
+import { requireAuth, authorizeSocket } from './middleware/requireAuth';
+import { setRevokeListener } from './utils/auth-tokens';
 
 /**
  * Create and configure the express server
@@ -65,7 +67,23 @@ export function createServer() {
     console.error('Static files directory not found at:', staticPath);
   }
 
-  // Register routes  app.use('/api/cluster', clusterManagementRoutes);
+  // Guard all API routes/sockets. No-op until a password is configured, then
+  // a valid session token is required (see middleware/requireAuth).
+  app.use('/api', requireAuth);
+  io.use(authorizeSocket);
+
+  // When all tokens are revoked (password set/changed/removed), force live
+  // sockets to reconnect so they must re-authenticate with a current token.
+  setRevokeListener(() => {
+    try {
+      io.disconnectSockets(true);
+    } catch {
+      /* ignore */
+    }
+  });
+
+  // Register routes
+  app.use('/api/cluster', clusterManagementRoutes);
   app.use('/api/config', processConfigRoutes);
   app.use('/api/deploy', deployApplicationRoutes);
   app.use('/api/modules', moduleRoutes);
