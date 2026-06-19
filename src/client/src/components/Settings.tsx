@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import PageHeader from './PageHeader';
 import { useTranslation } from 'react-i18next';
+import { setToken, clearToken } from '../auth';
 
 // @group Types : Settings page types
 type SectionId = 'general' | 'appearance' | 'pm2' | 'advanced' | 'updates' | 'security';
@@ -239,6 +240,9 @@ const Settings: React.FC = () => {
       });
       const json = await res.json();
       if (json.success) {
+        // Setting/changing the password revokes old sessions server-side — store
+        // the fresh token so this client stays signed in instead of being locked out.
+        if (json.token) setToken(json.token);
         setSecPasswordSet(true);
         setSecNewPassword('');
         setSecConfirmPassword('');
@@ -271,6 +275,8 @@ const Settings: React.FC = () => {
       });
       const json = await res.json();
       if (json.success) {
+        // Password removed — enforcement is off and the old token was revoked.
+        clearToken();
         setSecPasswordSet(false);
         setSecRemovePassword('');
         setSecSuccess(t('settings.messages.passwordRemoved'));

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LockClosedIcon, BackspaceIcon } from '@heroicons/react/24/outline';
+import { setToken } from '../auth';
 
 // @group Constants
 const PIN_LENGTH = 4;
@@ -42,6 +43,7 @@ const PasswordGate: React.FC<PasswordGateProps> = ({ onUnlock, pinSet, passwordS
       });
       const json = await res.json();
       if (json.success) {
+        if (json.token) setToken(json.token);
         onUnlock();
       } else {
         setError(json.error || t('passwordGate.incorrectPin'));
@@ -93,6 +95,7 @@ const PasswordGate: React.FC<PasswordGateProps> = ({ onUnlock, pinSet, passwordS
       });
       const json = await res.json();
       if (json.success) {
+        if (json.token) setToken(json.token);
         onUnlock();
       } else {
         setError(json.error || t('passwordGate.incorrectPassword'));
