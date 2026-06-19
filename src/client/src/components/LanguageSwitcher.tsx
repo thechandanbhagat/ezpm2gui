@@ -11,6 +11,7 @@ interface LanguageSwitcherProps {
 const LANGUAGES = [
   { code: 'en', label: 'English' },
   { code: 'ne', label: 'नेपाली' },
+  { code: 'zh', label: '中文' },
   // To add a new language: see DEVELOPMENT.md § "Adding a New Language"
 ];
 
