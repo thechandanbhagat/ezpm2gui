@@ -1,46 +1,36 @@
 import express, { Request, Response, Router } from 'express';
 import crypto from 'crypto';
-import fs from 'fs';
-import path from 'path';
-
-// @group Configuration : Path to the stored auth config file
-const AUTH_FILE = path.join(__dirname, '../config/auth.json');
-
-// @group Types : Shape of the persisted auth config
-interface AuthConfig {
-  hash: string;             // PBKDF2 hex digest for password
-  salt: string;             // random 32-byte hex salt for password
-  autoLockMinutes?: number; // 0 = disabled
-  pinHash?: string;         // PBKDF2 hex digest for PIN
-  pinSalt?: string;         // random 32-byte hex salt for PIN
-}
-
-// @group Utilities : Load auth config — returns null when no password is set
-function loadAuthConfig(): AuthConfig | null {
-  try {
-    if (!fs.existsSync(AUTH_FILE)) return null;
-    const raw = fs.readFileSync(AUTH_FILE, 'utf8').trim();
-    if (!raw) return null;
-    return JSON.parse(raw) as AuthConfig;
-  } catch {
-    return null;
-  }
-}
-
-// @group Utilities : Persist auth config to disk
-function saveAuthConfig(config: AuthConfig): void {
-  const dir = path.dirname(AUTH_FILE);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(AUTH_FILE, JSON.stringify(config), 'utf8');
-}
-
-// @group Utilities : Hash a plaintext password with PBKDF2 + salt
-function hashPassword(password: string, salt: string): string {
-  return crypto.pbkdf2Sync(password, salt, 100_000, 64, 'sha512').toString('hex');
-}
+import {
+  AuthConfig,
+  loadAuthConfig,
+  saveAuthConfig,
+  removeAuthConfig,
+  hashPassword,
+  timingSafeHexEqual,
+} from '../utils/auth-state';
+import { issueToken, revokeAllTokens } from '../utils/auth-tokens';
+import { authLimiter } from '../utils/login-limiter';
 
 // @group Router : Express router for password-protection endpoints
 const router: Router = express.Router();
+
+// @group Utilities : Per-client key for attempt limiting (remote address)
+function clientKey(req: Request): string {
+  return req.ip || req.socket.remoteAddress || 'unknown';
+}
+
+// @group Authentication : Reject + report when the caller is locked out. Returns true if blocked.
+function isRateLimited(req: Request, res: Response): boolean {
+  const { locked, retryAfterMs } = authLimiter.check(clientKey(req));
+  if (!locked) return false;
+  const retryAfterSec = Math.ceil(retryAfterMs / 1000);
+  res.set('Retry-After', String(retryAfterSec));
+  res.status(429).json({
+    success: false,
+    error: `Too many attempts. Try again in ${Math.ceil(retryAfterSec / 60)} minute(s).`,
+  });
+  return true;
+}
 
 // @group Endpoints : GET /api/auth/status — is a password/PIN configured?
 router.get('/status', (_req: Request, res: Response) => {
@@ -68,6 +58,7 @@ router.patch('/settings', (req: Request, res: Response) => {
 
 // @group Endpoints : POST /api/auth/set — set or change the password
 router.post('/set', (req: Request, res: Response) => {
+  if (isRateLimited(req, res)) return;
   const { password, currentPassword } = req.body as { password?: string; currentPassword?: string };
 
   if (!password || typeof password !== 'string' || password.length < 4) {
@@ -82,11 +73,13 @@ router.post('/set', (req: Request, res: Response) => {
       return res.status(401).json({ success: false, error: 'Current password required to change password' });
     }
     const currentHash = hashPassword(currentPassword, existing.salt);
-    if (!crypto.timingSafeEqual(Buffer.from(currentHash, 'hex'), Buffer.from(existing.hash, 'hex'))) {
+    if (!timingSafeHexEqual(currentHash, existing.hash)) {
+      authLimiter.recordFailure(clientKey(req));
       return res.status(401).json({ success: false, error: 'Current password is incorrect' });
     }
   }
 
+  authLimiter.recordSuccess(clientKey(req));
   const salt = crypto.randomBytes(32).toString('hex');
   const hash = hashPassword(password, salt);
   // Preserve PIN and autoLock settings when changing password
@@ -96,11 +89,15 @@ router.post('/set', (req: Request, res: Response) => {
     autoLockMinutes: existing?.autoLockMinutes ?? 0,
     ...(existing?.pinHash ? { pinHash: existing.pinHash, pinSalt: existing.pinSalt } : {}),
   });
-  res.json({ success: true });
+  // Revoke any previously issued tokens, then hand the caller a fresh one so
+  // they stay signed in after setting/changing the password.
+  revokeAllTokens();
+  res.json({ success: true, token: issueToken() });
 });
 
 // @group Endpoints : POST /api/auth/verify — verify a password attempt
 router.post('/verify', (req: Request, res: Response) => {
+  if (isRateLimited(req, res)) return;
   const { password } = req.body as { password?: string };
 
   if (!password || typeof password !== 'string') {
@@ -110,21 +107,22 @@ router.post('/verify', (req: Request, res: Response) => {
   const config = loadAuthConfig();
   if (!config) {
     // No password set — treat as unlocked
-    return res.json({ success: true, token: crypto.randomBytes(32).toString('hex') });
+    return res.json({ success: true, token: issueToken() });
   }
 
   const hash = hashPassword(password, config.salt);
-  const match = crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(config.hash, 'hex'));
-
-  if (!match) {
+  if (!timingSafeHexEqual(hash, config.hash)) {
+    authLimiter.recordFailure(clientKey(req));
     return res.status(401).json({ success: false, error: 'Incorrect password' });
   }
 
-  res.json({ success: true, token: crypto.randomBytes(32).toString('hex') });
+  authLimiter.recordSuccess(clientKey(req));
+  res.json({ success: true, token: issueToken() });
 });
 
 // @group Endpoints : DELETE /api/auth/remove — remove the password (requires current password)
 router.delete('/remove', (req: Request, res: Response) => {
+  if (isRateLimited(req, res)) return;
   const { password } = req.body as { password?: string };
 
   const config = loadAuthConfig();
@@ -137,13 +135,15 @@ router.delete('/remove', (req: Request, res: Response) => {
   }
 
   const hash = hashPassword(password, config.salt);
-  const match = crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(config.hash, 'hex'));
-
-  if (!match) {
+  if (!timingSafeHexEqual(hash, config.hash)) {
+    authLimiter.recordFailure(clientKey(req));
     return res.status(401).json({ success: false, error: 'Incorrect password' });
   }
 
-  fs.unlinkSync(AUTH_FILE);
+  authLimiter.recordSuccess(clientKey(req));
+  removeAuthConfig();
+  // Removing the password disables enforcement — invalidate all sessions.
+  revokeAllTokens();
   res.json({ success: true });
 });
 
@@ -168,6 +168,7 @@ router.post('/pin/set', (req: Request, res: Response) => {
 
 // @group Endpoints : POST /api/auth/pin/verify — verify a PIN attempt
 router.post('/pin/verify', (req: Request, res: Response) => {
+  if (isRateLimited(req, res)) return;
   const { pin } = req.body as { pin?: string };
 
   if (!pin || typeof pin !== 'string') {
@@ -179,18 +180,19 @@ router.post('/pin/verify', (req: Request, res: Response) => {
     return res.status(400).json({ success: false, error: 'No PIN configured' });
   }
 
-  const hash  = hashPassword(pin, config.pinSalt);
-  const match = crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(config.pinHash, 'hex'));
-
-  if (!match) {
+  const hash = hashPassword(pin, config.pinSalt);
+  if (!timingSafeHexEqual(hash, config.pinHash)) {
+    authLimiter.recordFailure(clientKey(req));
     return res.status(401).json({ success: false, error: 'Incorrect PIN' });
   }
 
-  res.json({ success: true, token: crypto.randomBytes(32).toString('hex') });
+  authLimiter.recordSuccess(clientKey(req));
+  res.json({ success: true, token: issueToken() });
 });
 
 // @group Endpoints : DELETE /api/auth/pin/remove — remove PIN (requires current password)
 router.delete('/pin/remove', (req: Request, res: Response) => {
+  if (isRateLimited(req, res)) return;
   const { password } = req.body as { password?: string };
 
   const config = loadAuthConfig();
@@ -202,13 +204,13 @@ router.delete('/pin/remove', (req: Request, res: Response) => {
     return res.status(400).json({ success: false, error: 'Current password required to remove PIN' });
   }
 
-  const hash  = hashPassword(password, config.salt);
-  const match = crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(config.hash, 'hex'));
-
-  if (!match) {
+  const hash = hashPassword(password, config.salt);
+  if (!timingSafeHexEqual(hash, config.hash)) {
+    authLimiter.recordFailure(clientKey(req));
     return res.status(401).json({ success: false, error: 'Incorrect password' });
   }
 
+  authLimiter.recordSuccess(clientKey(req));
   const { pinHash: _ph, pinSalt: _ps, ...rest } = config;
   saveAuthConfig(rest as AuthConfig);
   res.json({ success: true });
