@@ -25,6 +25,7 @@ import WhatsNew from './components/WhatsNew';
 import WhatsNewModal, { shouldShowWhatsNew, markWhatsNewSeen } from './components/WhatsNewModal';
 import StatusBar, { Notification } from './components/StatusBar';
 import LanguageSwitcher from './components/LanguageSwitcher';
+import { getToken } from './auth';
 import {
   Dialog,
   DialogContent,
@@ -54,6 +55,8 @@ import {
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3101';
 
 const socket = io(API_URL, {
+  // Send the session token (if any) on every (re)connection attempt
+  auth: (cb: (data: { token?: string }) => void) => cb({ token: getToken() || undefined }),
   // Reconnection settings
   reconnection: true,
   reconnectionDelay: 1000,
@@ -673,7 +676,12 @@ const App: React.FC = () => {
       {(passwordSet === true || pinSet === true) && !appUnlocked && (
         <PasswordGate
           darkMode={darkMode}
-          onUnlock={() => setAppUnlocked(true)}
+          onUnlock={() => {
+            setAppUnlocked(true);
+            // Reconnect the socket so the freshly stored token is sent on the handshake
+            socket.disconnect();
+            socket.connect();
+          }}
           pinSet={pinSet ?? false}
           passwordSet={passwordSet ?? false}
         />
@@ -700,12 +708,17 @@ const App: React.FC = () => {
                 <Bars3Icon className="h-4 w-4" />
               </button>
 
-              {/* Logo */}
+              {/* @group Branding : App logo and wordmark */}
               <Link
                 to="/"
-                className="font-mono text-xs font-bold text-[#e8e8e8] tracking-tight no-underline"
+                className="flex items-center gap-1.5 font-mono text-xs font-bold text-[#e8e8e8] tracking-tight no-underline"
               >
-                EZ PM2 GUI
+                <img
+                  src={`${process.env.PUBLIC_URL}/logo192.svg`}
+                  alt=""
+                  className="h-4 w-4 rounded-[3px] shrink-0"
+                />
+                <span>EZ PM2 GUI</span>
               </Link>
 
               {/* @group Auth : No-password banner — shown when password protection is not yet enabled */}
@@ -975,13 +988,12 @@ const App: React.FC = () => {
 
         <Dialog open={showAbout} onClose={toggleAbout} maxWidth="xs" fullWidth>
           <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pb: 1 }}>
-            <div style={{
-              width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-              background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <span style={{ color: '#fff', fontWeight: 700, fontSize: 11 }}>EZ</span>
-            </div>
+            {/* @group Branding : About dialog app logo */}
+            <img
+              src={`${process.env.PUBLIC_URL}/logo192.svg`}
+              alt=""
+              style={{ width: 32, height: 32, borderRadius: 8, flexShrink: 0 }}
+            />
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 600, fontSize: '0.9375rem', lineHeight: 1.3 }}>EZ PM2 GUI</div>
               <div style={{ fontSize: '0.75rem', opacity: 0.5, fontWeight: 400 }}>v1.7.0 · Chandan Bhagat</div>

@@ -3,29 +3,57 @@
  */
 import crypto from 'crypto';
 
-// Simple encryption implementation with fixed key/iv for development
-// In production, this should be replaced with proper key management
-const ENCRYPTION_KEY = 'ezpm2gui-encryption-key-12345678901234';
-const ENCRYPTION_IV = 'ezpm2gui-iv-1234'; 
+// @group Configuration : Encryption secret
+// Prefer an operator-supplied secret via the EZPM2GUI_SECRET env var. When it is
+// not set we fall back to legacy constants so existing installs can still decrypt
+// previously stored data — but a warning is emitted so deployments exposed over
+// LAN/tunnel are nudged to configure a real secret.
+const LEGACY_KEY = 'ezpm2gui-encryption-key-12345678901234';
+const LEGACY_IV = 'ezpm2gui-iv-1234';
+
+const SECRET = process.env.EZPM2GUI_SECRET;
+if (!SECRET) {
+  console.warn(
+    '[security] EZPM2GUI_SECRET is not set — using built-in default encryption key. ' +
+    'Set EZPM2GUI_SECRET to protect stored remote-server credentials.'
+  );
+}
+
+const ENCRYPTION_KEY = SECRET || LEGACY_KEY;
+const ENCRYPTION_IV = SECRET ? `${SECRET}-iv` : LEGACY_IV;
 const ALGORITHM = 'aes-256-cbc';
 
+// @group Utilities : Derive the 32-byte AES key from the configured secret.
+// NOTE: the key is sliced from a base64 string (rather than raw digest bytes)
+// for backward compatibility — changing this would make data encrypted by
+// older versions undecryptable.
+function deriveKey(): string {
+  return crypto.createHash('sha256').update(String(ENCRYPTION_KEY)).digest('base64').slice(0, 32);
+}
+
+// @group Utilities : Static IV used only to read data written by older versions.
+function deriveLegacyIV(): string {
+  return crypto.createHash('sha256').update(String(ENCRYPTION_IV)).digest('base64').slice(0, 16);
+}
+
 /**
- * Encrypt a string
+ * Encrypt a string. A fresh random IV is generated per call and prepended to
+ * the ciphertext ("ivHex:cipherHex") so identical plaintexts no longer produce
+ * identical ciphertexts.
  * @param text The text to encrypt
  * @returns The encrypted text
  */
 export function encrypt(text: string): string {
   if (!text) return '';
-  
+
   try {
-    // Ensure key and IV are the correct length
-    const key = crypto.createHash('sha256').update(String(ENCRYPTION_KEY)).digest('base64').slice(0, 32);
-    const iv = crypto.createHash('sha256').update(String(ENCRYPTION_IV)).digest('base64').slice(0, 16);
-    
+    const key = deriveKey();
+    const iv = crypto.randomBytes(16);
+
     const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
     let encrypted = cipher.update(text, 'utf8', 'hex');
     encrypted += cipher.final('hex');
-    return encrypted;
+    return `${iv.toString('hex')}:${encrypted}`;
   } catch (error) {
     console.error('Encryption error:', error);
     return '';
@@ -33,7 +61,8 @@ export function encrypt(text: string): string {
 }
 
 /**
- * Decrypt an encrypted string
+ * Decrypt an encrypted string. Handles both the current format ("ivHex:cipher")
+ * and the legacy format (ciphertext only, encrypted with the static IV).
  * @param encryptedText The encrypted text
  * @returns The decrypted text
  */
@@ -41,12 +70,23 @@ export function decrypt(encryptedText: string): string {
   if (!encryptedText) return '';
 
   try {
-    // Ensure key and IV are the correct length
-    const key = crypto.createHash('sha256').update(String(ENCRYPTION_KEY)).digest('base64').slice(0, 32);
-    const iv = crypto.createHash('sha256').update(String(ENCRYPTION_IV)).digest('base64').slice(0, 16);
+    const key = deriveKey();
+
+    let iv: Buffer | string;
+    let ciphertext: string;
+    const sep = encryptedText.indexOf(':');
+    if (sep !== -1) {
+      // Current format — IV travels with the ciphertext
+      iv = Buffer.from(encryptedText.slice(0, sep), 'hex');
+      ciphertext = encryptedText.slice(sep + 1);
+    } else {
+      // Legacy format — decrypt with the old static IV
+      iv = deriveLegacyIV();
+      ciphertext = encryptedText;
+    }
 
     const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
-    let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+    let decrypted = decipher.update(ciphertext, 'hex', 'utf8');
     decrypted += decipher.final('utf8');
     return decrypted;
   } catch (error) {
