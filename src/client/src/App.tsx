@@ -996,7 +996,7 @@ const App: React.FC = () => {
             />
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 600, fontSize: '0.9375rem', lineHeight: 1.3 }}>EZ PM2 GUI</div>
-              <div style={{ fontSize: '0.75rem', opacity: 0.5, fontWeight: 400 }}>v1.7.0 · Chandan Bhagat</div>
+              <div style={{ fontSize: '0.75rem', opacity: 0.5, fontWeight: 400 }}>v1.11.0 · Chandan Bhagat</div>
             </div>
             <IconButton size="small" onClick={toggleAbout} sx={{ ml: 'auto' }}>
               <CloseIcon fontSize="small" />
