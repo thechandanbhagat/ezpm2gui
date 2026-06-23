@@ -6,6 +6,18 @@
 
 A modern web-based graphical user interface for the PM2 process manager, built with TypeScript, Tailwind CSS, and React.
 
+## Previous GitHub Releases
+
+- [v1.11.1](https://github.com/thechandanbhagat/ezpm2gui/releases/tag/v1.11.1)
+- [v1.10.0](https://github.com/thechandanbhagat/ezpm2gui/releases/tag/v1.10.0)
+- [v1.9.0](https://github.com/thechandanbhagat/ezpm2gui/releases/tag/v1.9.0)
+- [v1.8.0](https://github.com/thechandanbhagat/ezpm2gui/releases/tag/v1.8.0)
+- [v1.6.0](https://github.com/thechandanbhagat/ezpm2gui/releases/tag/v1.6.0)
+- [v1.5.0](https://github.com/thechandanbhagat/ezpm2gui/releases/tag/v1.5.0)
+- [v1.4.0](https://github.com/thechandanbhagat/ezpm2gui/releases/tag/v1.4.0)
+- [v1.3.2](https://github.com/thechandanbhagat/ezpm2gui/releases/tag/v1.3.2)
+- [v1.3.0](https://github.com/thechandanbhagat/ezpm2gui/releases/tag/v1.3.0)
+
 ## Screenshots
 
 **Process Dashboard** — live system metrics and every PM2 process at a glance:
@@ -52,7 +64,8 @@ A modern web-based graphical user interface for the PM2 process manager, built w
 - **WebSocket for live updates** - Get instant updates without refreshing
 - **Process CPU and memory charts** - Visualize performance metrics over time
 - **Filter processes by status or name** - Quickly find the processes you need
-- **Dark/light mode** - Fully supported across all pages with Tailwind CSS; preference persisted across sessions
+- **Dark/light mode** *(v1.11.1)* - Fully supported across all pages with Tailwind CSS; preference and accent color persisted across sessions
+- **Docker support** *(v1.11.1)* - Official `Dockerfile` and `.dockerignore` for containerised deployments
 - **Cluster management** - Easily scale your Node.js applications
 - **Application deployment** - Deploy new applications directly from the UI
 - **Ecosystem configuration** - Create and manage your PM2 ecosystem files
@@ -61,7 +74,8 @@ A modern web-based graphical user interface for the PM2 process manager, built w
 - **Remote Server Management** - Connect and manage PM2 on remote servers via SSH
 - **End-to-end encrypted credentials** *(v1.9.0)* - Remote server passwords encrypted in-browser with RSA-OAEP + AES-256-GCM before transmission
 - **Advanced Monitoring Dashboard** - Real-time performance charts with health scoring
-- **Multi-language support** *(v1.10.0)* - Full i18n with English and Nepali locales; language switcher in the navbar; community-extensible
+- **Multi-language support** *(v1.11.0)* - Full i18n with English, Nepali, and Chinese locales; language switcher in the navbar; community-extensible
+- **Live metrics sparklines** *(v1.11.1)* - Per-process rolling 1-hour CPU and memory micro-graphs; switch to History tab for SQLite-backed long-term charts
 - **Tailwind CSS UI** - Sleek, compact, and responsive design with consistent dark/light theming
 - **Fully typed with TypeScript** - Robust and maintainable codebase
 

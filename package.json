@@ -1,6 +1,6 @@
 {
   "name": "ezpm2gui",
-  "version": "1.10.0",
+  "version": "1.11.1",
   "main": "dist/server/index.js",
   "bin": {
     "ezpm2gui": "bin/ezpm2gui.js",
@@ -27,7 +27,7 @@
     "build:client": "cd src/client && npm run build",
     "build:bin": "tsc --project tsconfig.bin.json",
     "prepare": "npm run build",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "ts-node tests/unit/server-selection.test.ts && ts-node tests/unit/theme.test.ts && ts-node tests/unit/app-version.test.ts",
     "postinstall": "node scripts/postinstall.js"
   },
   "keywords": [
