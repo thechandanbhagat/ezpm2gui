@@ -73,6 +73,16 @@ const isNewer = (current: string, latest: string): boolean => {
 
 const router: Router = Router();
 
+// @group CurrentVersion : GET /api/update/current — local installed version only
+router.get('/current', (_req, res) => {
+  res.json({
+    success: true,
+    data: {
+      currentVersion: getCurrentVersion(),
+    },
+  });
+});
+
 // @group CheckUpdate : GET /api/update/check — returns current vs latest npm version
 router.get('/check', async (_req, res) => {
   try {
