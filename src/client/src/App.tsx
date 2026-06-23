@@ -27,6 +27,24 @@ import StatusBar, { Notification } from './components/StatusBar';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import { getToken } from './auth';
 import {
+  ACTIVE_SERVER_STORAGE_KEY,
+  LOCAL_SERVER_ID,
+  REMOTE_CONNECTIONS_CHANGED_EVENT,
+  isRemoteServerAvailable,
+  resolveAvailableServerId,
+} from './utils/server-selection';
+import {
+  ACCENT_CHANGED_EVENT,
+  ACCENT_STORAGE_KEY,
+  AccentColor,
+  THEME_STORAGE_KEY,
+  getAccentPalette,
+  getThemePreference,
+  isDarkTheme,
+  normalizeAccentColor,
+  normalizeThemePreference,
+} from './utils/theme';
+import {
   Dialog,
   DialogContent,
   DialogTitle,
@@ -72,6 +90,17 @@ const socket = io(API_URL, {
   forceNew: false
 });
 
+// @group ServerSwitcher : Read persisted active server selection
+const getStoredActiveServerId = (): string =>
+  localStorage.getItem(ACTIVE_SERVER_STORAGE_KEY) || LOCAL_SERVER_ID;
+
+// @group Theme : Read persisted color theme selection
+const getStoredDarkMode = (): boolean =>
+  isDarkTheme(normalizeThemePreference(localStorage.getItem(THEME_STORAGE_KEY)));
+
+const getStoredAccentColor = (): AccentColor =>
+  normalizeAccentColor(localStorage.getItem(ACCENT_STORAGE_KEY));
+
 const App: React.FC = () => {
   const { t } = useTranslation();
   // State for process data
@@ -109,6 +138,7 @@ const App: React.FC = () => {
 
   // @group Updates : Silently check for a newer npm version after initial load
   const [updateAvailable, setUpdateAvailable] = useState<boolean>(false);
+  const [appVersion, setAppVersion] = useState<string>('');
 
   // @group Auth : Password-protection state
   // null = not yet fetched, false = no password set, true = password set
@@ -123,26 +153,85 @@ const App: React.FC = () => {
   // @group WhatsNew : Show popup once per session
   const [showWhatsNew, setShowWhatsNew] = useState<boolean>(false);
   
-  // Theme state — always dark; toggle kept for compatibility but always starts dark
-  const [darkMode, setDarkMode] = useState<boolean>(true);
+  // @group Theme : Persisted dark/light mode state
+  const [darkMode, setDarkMode] = useState<boolean>(getStoredDarkMode);
+  const [accentColor, setAccentColor] = useState<AccentColor>(getStoredAccentColor);
+  const accentPalette = getAccentPalette(accentColor);
 
-  // @group Theme : Sync Tailwind 'dark' class on <html> so dark: variants work globally
+  // @group Theme : Sync document theme hooks for Tailwind, MUI, accent colors, and CSS overrides
   useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
+    const theme = getThemePreference(darkMode);
+    document.documentElement.classList.toggle('dark', darkMode);
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.dataset.accent = accentColor;
+    document.documentElement.style.colorScheme = theme;
+    document.documentElement.style.setProperty('--ez-accent', accentPalette.main);
+    document.documentElement.style.setProperty('--ez-accent-hover', accentPalette.hover);
+    document.documentElement.style.setProperty('--ez-accent-muted', accentPalette.muted);
+    document.documentElement.style.setProperty('--ez-accent-soft', accentPalette.soft);
+    document.documentElement.style.setProperty('--ez-accent-strong-bg', accentPalette.strongBg);
+    document.documentElement.style.setProperty('--ez-accent-border', accentPalette.border);
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+    localStorage.setItem(ACCENT_STORAGE_KEY, accentColor);
+  }, [accentColor, accentPalette, darkMode]);
+
+  // @group Theme : React to accent color changes from Settings without a reload
+  useEffect(() => {
+    const handleAccentChanged = (event: Event) => {
+      const detail = (event as CustomEvent<{ accentColor?: string }>).detail;
+      setAccentColor(normalizeAccentColor(detail?.accentColor));
+    };
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === ACCENT_STORAGE_KEY) {
+        setAccentColor(normalizeAccentColor(event.newValue));
+      }
+    };
+
+    window.addEventListener(ACCENT_CHANGED_EVENT, handleAccentChanged);
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      window.removeEventListener(ACCENT_CHANGED_EVENT, handleAccentChanged);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, []);
 
   // @group ServerSwitcher : Active server state and remote connections list
   const [activeServerId, setActiveServerId] = useState<string>(
-    () => localStorage.getItem('ezpm2gui-active-server') || 'local'
+    getStoredActiveServerId
   );
-  const activeServerIdRef = useRef<string>(
-    localStorage.getItem('ezpm2gui-active-server') || 'local'
-  );
+  const activeServerIdRef = useRef<string>(getStoredActiveServerId());
   const [remoteConnections, setRemoteConnections] = useState<RemoteConnection[]>([]);
+  const [remoteConnectionsLoaded, setRemoteConnectionsLoaded] = useState<boolean>(false);
+
+  // @group ServerSwitcher : Persist active server selection consistently
+  const persistActiveServerId = useCallback((serverId: string): void => {
+    activeServerIdRef.current = serverId;
+    setActiveServerId(serverId);
+    localStorage.setItem(ACTIVE_SERVER_STORAGE_KEY, serverId);
+  }, []);
+
+  // @group DataFetching : Local server process and metrics loader
+  const loadLocalProcessesAndMetrics = useCallback(async (): Promise<void> => {
+    const [processesRes, metricsRes] = await Promise.all([
+      axios.get<PM2Process[]>('/api/processes'),
+      axios.get<SystemMetricsData>('/api/metrics'),
+    ]);
+    setProcesses(processesRes.data);
+    setMetrics(metricsRes.data);
+  }, []);
+
+  // @group ServerSwitcher : Refresh configured remote server list
+  const refreshRemoteConnections = useCallback(async (): Promise<void> => {
+    try {
+      const res = await axios.get<RemoteConnection[]>('/api/remote/connections');
+      setRemoteConnections(res.data);
+      setRemoteConnectionsLoaded(true);
+    } catch {
+      // silent — connections list is non-critical
+    }
+  }, []);
 
   // Confirmation dialog state
   const [confirmationDialog, setConfirmationDialog] = useState<ConfirmationDialogData>({
@@ -158,18 +247,10 @@ const App: React.FC = () => {
     let connectionErrorTimeout: ReturnType<typeof setTimeout> | null = null;
     let socketConnected = socket.connected;
 
-    // Initial data fetch (local processes + remote connections list)
+    // Initial data fetch (local processes and metrics)
     const fetchInitialData = async (): Promise<void> => {
       try {
-        const [processesRes, metricsRes, connectionsRes] = await Promise.all([
-          axios.get<PM2Process[]>('/api/processes'),
-          axios.get<SystemMetricsData>('/api/metrics'),
-          axios.get<RemoteConnection[]>('/api/remote/connections').catch(() => ({ data: [] }))
-        ]);
-
-        setProcesses(processesRes.data);
-        setMetrics(metricsRes.data);
-        setRemoteConnections(connectionsRes.data);
+        await loadLocalProcessesAndMetrics();
         setLoading(false);
         lastDataUpdate = Date.now();
       } catch (err: any) {
@@ -265,7 +346,7 @@ const App: React.FC = () => {
       socket.off('disconnect');
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enqueueNotification]);
+  }, [enqueueNotification, loadLocalProcessesAndMetrics]);
 
   // Filter processes when search, status, or namespace filter changes
   useEffect(() => {
@@ -293,9 +374,31 @@ const App: React.FC = () => {
     setFilteredProcesses(result);
   }, [processes, searchTerm, statusFilter, namespaceFilter]);
 
+  // @group ServerSwitcher : Fall back to local when persisted remote selection no longer exists
+  useEffect(() => {
+    if (!remoteConnectionsLoaded || activeServerId === LOCAL_SERVER_ID) return;
+
+    const nextServerId = resolveAvailableServerId(activeServerId, remoteConnections);
+    if (nextServerId === activeServerId) return;
+
+    console.warn(`Active remote server "${activeServerId}" no longer exists; switching to local.`);
+    setProcesses([]);
+    persistActiveServerId(nextServerId);
+    loadLocalProcessesAndMetrics().catch((err) => {
+      console.error('Error restoring local processes after remote removal:', err);
+    });
+  }, [
+    activeServerId,
+    loadLocalProcessesAndMetrics,
+    persistActiveServerId,
+    remoteConnections,
+    remoteConnectionsLoaded,
+  ]);
+
   // @group ServerSwitcher : Poll remote processes when a remote server is active
   useEffect(() => {
-    if (activeServerId === 'local') return;
+    if (activeServerId === LOCAL_SERVER_ID || !remoteConnectionsLoaded) return;
+    if (!isRemoteServerAvailable(activeServerId, remoteConnections)) return;
 
     const fetchRemoteProcesses = async (): Promise<void> => {
       try {
@@ -303,38 +406,49 @@ const App: React.FC = () => {
         setProcesses(res.data);
       } catch (err: any) {
         console.error('Error fetching remote processes:', err);
-        enqueueNotification(t('errors.failedFetchRemote', { error: err.response?.data?.error || err.message }));
+        const errorMessage = err.response?.data?.error || err.message;
+
+        if (err.response?.status === 404 && errorMessage === 'Connection not found') {
+          setProcesses([]);
+          persistActiveServerId(LOCAL_SERVER_ID);
+          await loadLocalProcessesAndMetrics().catch((localErr) => {
+            console.error('Error restoring local processes after missing remote:', localErr);
+          });
+          return;
+        }
+
+        enqueueNotification(t('errors.failedFetchRemote', { error: errorMessage }));
       }
     };
 
     fetchRemoteProcesses();
     const interval = setInterval(fetchRemoteProcesses, 3000);
     return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeServerId, enqueueNotification]);
+  }, [
+    activeServerId,
+    enqueueNotification,
+    loadLocalProcessesAndMetrics,
+    persistActiveServerId,
+    remoteConnections,
+    remoteConnectionsLoaded,
+    t,
+  ]);
 
   // @group ServerSwitcher : Refresh remote connections list periodically so status dots stay current
   useEffect(() => {
-    const refresh = async () => {
-      try {
-        const res = await axios.get<RemoteConnection[]>('/api/remote/connections');
-        setRemoteConnections(res.data);
-      } catch {
-        // silent — connections list is non-critical
-      }
+    const refresh = () => {
+      void refreshRemoteConnections();
     };
-    const interval = setInterval(refresh, 5000);
-    return () => clearInterval(interval);
-  }, []);
+    refresh();
 
-  // Effect to handle dark mode class on document
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
+    const interval = setInterval(refresh, 5000);
+    window.addEventListener(REMOTE_CONNECTIONS_CHANGED_EVENT, refresh);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener(REMOTE_CONNECTIONS_CHANGED_EVENT, refresh);
+    };
+  }, [refreshRemoteConnections]);
 
   // @group Updates : Check for update once after 4 s — non-blocking, silent on failure
   useEffect(() => {
@@ -350,6 +464,19 @@ const App: React.FC = () => {
       }
     }, 4000);
     return () => clearTimeout(timer);
+  }, []);
+
+  // @group Updates : Load installed app version for footer/about display
+  useEffect(() => {
+    fetch('/api/update/current')
+      .then(res => res.json())
+      .then(json => {
+        const version = json?.data?.currentVersion;
+        if (typeof version === 'string') setAppVersion(version);
+      })
+      .catch(() => {
+        // silent — footer falls back to a loading placeholder
+      });
   }, []);
 
   // @group Auth : Fetch password-protection status on mount; also load autoLockMinutes
@@ -482,7 +609,6 @@ const App: React.FC = () => {
   
   const toggleDarkMode = (): void => {
     const next = !darkMode;
-    localStorage.setItem('ezpm2gui-theme', next ? 'dark' : 'light');
     setDarkMode(next);
   };
   
@@ -503,19 +629,26 @@ const App: React.FC = () => {
     if (serverId === activeServerId) return;
 
     setProcesses([]);
-    activeServerIdRef.current = serverId;
-    setActiveServerId(serverId);
-    localStorage.setItem('ezpm2gui-active-server', serverId);
+    persistActiveServerId(serverId);
 
-    if (serverId !== 'local') {
+    if (serverId !== LOCAL_SERVER_ID) {
       // Auto-connect if not already connected
       const conn = remoteConnections.find(c => c.id === serverId);
+      if (!conn) {
+        persistActiveServerId(LOCAL_SERVER_ID);
+        try {
+          await loadLocalProcessesAndMetrics();
+        } catch (err) {
+          console.error('Error restoring local processes after unavailable remote switch:', err);
+        }
+        return;
+      }
+
       if (conn && !conn.connected) {
         try {
           await axios.post(`/api/remote/${serverId}/connect`);
           // Refresh connections list to reflect new connected state
-          const res = await axios.get<RemoteConnection[]>('/api/remote/connections');
-          setRemoteConnections(res.data);
+          await refreshRemoteConnections();
         } catch (err: any) {
           enqueueNotification(t('errors.failedConnectTo', { name: conn.name || conn.host, error: err.response?.data?.error || err.message }));
         }
@@ -523,12 +656,7 @@ const App: React.FC = () => {
     } else {
       // Switching back to local — restore from socket / re-fetch
       try {
-        const [processesRes, metricsRes] = await Promise.all([
-          axios.get<PM2Process[]>('/api/processes'),
-          axios.get<SystemMetricsData>('/api/metrics'),
-        ]);
-        setProcesses(processesRes.data);
-        setMetrics(metricsRes.data);
+        await loadLocalProcessesAndMetrics();
       } catch (err) {
         console.error('Error restoring local processes:', err);
       }
@@ -571,17 +699,22 @@ const App: React.FC = () => {
     );
   }
 
-  // @group Theme : MUI theme wired to darkMode state — normalises typography and component sizes globally
-  // Background colors aligned with Tailwind neutral palette so MUI Paper matches the process page card color:
-  //   light → white cards on neutral-100 page bg
-  //   dark  → neutral-900 (#0f172a) cards on neutral-950 (#020617) page bg
+  // @group Theme : MUI theme wired to persisted dark/light mode
   const muiTheme = createTheme({
     palette: {
-      mode: 'dark',
-      background: {
-        default: '#0a0a0a',
-        paper:   '#111111',
+      mode: darkMode ? 'dark' : 'light',
+      primary: {
+        main: accentPalette.main,
       },
+      background: {
+        default: darkMode ? '#0a0a0a' : '#f8fafc',
+        paper:   darkMode ? '#111111' : '#ffffff',
+      },
+      text: {
+        primary:   darkMode ? '#e8e8e8' : '#0f172a',
+        secondary: darkMode ? '#888888' : '#475569',
+      },
+      divider: darkMode ? '#1e1e1e' : '#d8dee9',
     },
     typography: {
       fontFamily: 'inherit',          // use the Tailwind / CSS font stack
@@ -968,6 +1101,7 @@ const App: React.FC = () => {
             onlineCount: processes.filter(p => p.pm2_env.status === 'online').length,
             activeServer: activeServerId,
           }}
+          version={appVersion}
         />
 
         <ConfirmationDialog
@@ -996,7 +1130,9 @@ const App: React.FC = () => {
             />
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 600, fontSize: '0.9375rem', lineHeight: 1.3 }}>EZ PM2 GUI</div>
-              <div style={{ fontSize: '0.75rem', opacity: 0.5, fontWeight: 400 }}>v1.7.0 · Chandan Bhagat</div>
+              <div style={{ fontSize: '0.75rem', opacity: 0.5, fontWeight: 400 }}>
+                {appVersion ? `v${appVersion}` : 'v...'} · Chandan Bhagat
+              </div>
             </div>
             <IconButton size="small" onClick={toggleAbout} sx={{ ml: 'auto' }}>
               <CloseIcon fontSize="small" />

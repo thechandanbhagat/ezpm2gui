@@ -9,6 +9,7 @@ import {
   SignalIcon,
   SignalSlashIcon,
 } from '@heroicons/react/24/outline';
+import { formatVersionLabel } from '../utils/app-version';
 
 // @group Types : Notification item
 export interface Notification {
@@ -29,6 +30,7 @@ interface StatusBarProps {
   notifications: Notification[];
   onDismiss: (id: string) => void;
   status: StatusBarStatus;
+  version?: string;
 }
 
 // @group Utilities : Per-type visual config — hardcoded dark CLI palette
@@ -40,7 +42,7 @@ const TYPE_CONFIG = {
 };
 
 // @group StatusBar : Single-row persistent footer — tips at rest, notifications inline
-const StatusBar: React.FC<StatusBarProps> = ({ notifications, onDismiss, status }) => {
+const StatusBar: React.FC<StatusBarProps> = ({ notifications, onDismiss, status, version }) => {
   const { t } = useTranslation();
   const TIPS = [
     t('statusBar.tip1'),
@@ -165,7 +167,7 @@ const StatusBar: React.FC<StatusBarProps> = ({ notifications, onDismiss, status 
 
       {/* ── Right: version ── */}
       <div className="shrink-0 px-3 font-mono text-[#555] hover:text-[#888] transition-colors cursor-default">
-        v1.6.0
+        {formatVersionLabel(version)}
       </div>
     </div>
   );
