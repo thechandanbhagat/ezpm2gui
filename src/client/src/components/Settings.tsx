@@ -2,6 +2,12 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import PageHeader from './PageHeader';
 import { useTranslation } from 'react-i18next';
 import { setToken, clearToken } from '../auth';
+import {
+  ACCENT_CHANGED_EVENT,
+  ACCENT_STORAGE_KEY,
+  AccentColor,
+  normalizeAccentColor,
+} from '../utils/theme';
 
 // @group Types : Settings page types
 type SectionId = 'general' | 'appearance' | 'pm2' | 'advanced' | 'updates' | 'security';
@@ -29,6 +35,13 @@ interface Section {
 // @group Utilities : Load setting from localStorage with fallback
 const load = (key: string, fallback: string) =>
   localStorage.getItem(key) ?? fallback;
+
+// @group Utilities : Notify the app shell when accent color changes
+const notifyAccentChanged = (accentColor: AccentColor): void => {
+  window.dispatchEvent(new CustomEvent(ACCENT_CHANGED_EVENT, {
+    detail: { accentColor }
+  }));
+};
 
 // @group Components : Reusable setting row — label/description left, control right
 // Defined outside Settings to keep a stable reference across re-renders (prevents focus loss)
@@ -336,7 +349,7 @@ const Settings: React.FC = () => {
   const [refreshInterval,  setRefreshInterval]  = useState<string>(load('refreshInterval', '3000'));
   const [logLines,         setLogLines]         = useState<string>(load('logLines', '100'));
   const [pm2Path,          setPm2Path]          = useState<string>(load('pm2Path', 'pm2'));
-  const [theme,            setTheme]            = useState<string>(load('theme', 'blue'));
+  const [theme,            setTheme]            = useState<AccentColor>(normalizeAccentColor(load(ACCENT_STORAGE_KEY, 'blue')));
   const [compactMode,      setCompactMode]      = useState<boolean>(load('compactMode', 'false') === 'true');
   const [showTimestamps,   setShowTimestamps]   = useState<boolean>(load('showTimestamps', 'true') === 'true');
   const [toastOpen,        setToastOpen]        = useState<boolean>(false);
@@ -350,14 +363,16 @@ const Settings: React.FC = () => {
   }, [t]);
 
   const handleThemeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setTheme(e.target.value);
-    save('theme', e.target.value);
+    const next = normalizeAccentColor(e.target.value);
+    setTheme(next);
+    save(ACCENT_STORAGE_KEY, next);
+    notifyAccentChanged(next);
   };
 
   const handleResetDefaults = () => {
     const defaults: Record<string, string> = {
       autoRefresh: 'true', refreshInterval: '3000', logLines: '100',
-      pm2Path: 'pm2', theme: 'blue', compactMode: 'false', showTimestamps: 'true',
+      pm2Path: 'pm2', [ACCENT_STORAGE_KEY]: 'blue', compactMode: 'false', showTimestamps: 'true',
     };
     Object.entries(defaults).forEach(([k, v]) => localStorage.setItem(k, v));
     setAutoRefresh(true);
@@ -365,6 +380,7 @@ const Settings: React.FC = () => {
     setLogLines('100');
     setPm2Path('pm2');
     setTheme('blue');
+    notifyAccentChanged('blue');
     setCompactMode(false);
     setShowTimestamps(true);
     setToastMsg(t('settings.messages.resetToDefaults'));
@@ -373,6 +389,8 @@ const Settings: React.FC = () => {
 
   const handleClearData = () => {
     localStorage.clear();
+    setTheme('blue');
+    notifyAccentChanged('blue');
     setToastMsg(t('settings.messages.dataCleared'));
     setToastOpen(true);
   };

@@ -3,6 +3,35 @@
 @tailwind components;
 @tailwind utilities;
 
+/* @group Theme : Runtime accent defaults overwritten by App.tsx */
+:root {
+  --ez-bg-page: #0a0a0a;
+  --ez-bg-sidebar: #0d0d0d;
+  --ez-bg-surface: #111111;
+  --ez-bg-surface-muted: #141414;
+  --ez-bg-hover: #1a1a1a;
+  --ez-border: #1e1e1e;
+  --ez-border-strong: #333333;
+  --ez-text: #e8e8e8;
+  --ez-text-muted: #888888;
+  --ez-text-subtle: #555555;
+  --ez-text-faint: #444444;
+  --ez-primary-action: #e8e8e8;
+  --ez-primary-action-hover: #cfcfcf;
+  --ez-primary-action-text: #0a0a0a;
+  --ez-danger-soft: #1a0000;
+  --ez-success-soft: #0a1f0a;
+  --ez-warning-soft: #1a1000;
+  --ez-info-soft: #0a0f1a;
+  --ez-neutral-soft: #1a1a1a;
+  --ez-accent: #22d3ee;
+  --ez-accent-hover: #67e8f9;
+  --ez-accent-muted: #0891b2;
+  --ez-accent-soft: rgba(34, 211, 238, 0.10);
+  --ez-accent-strong-bg: #001a1f;
+  --ez-accent-border: rgba(34, 211, 238, 0.35);
+}
+
 /* ─── Base ────────────────────────────────────────────────── */
 @layer base {
   * { @apply box-border; }
@@ -198,3 +227,224 @@
   outline-offset: 2px;
 }
 *:focus:not(:focus-visible) { outline: none; }
+
+/* ─── Light Theme Overrides ─────────────────────────────────
+   The app uses a compact CLI-style palette with many Tailwind arbitrary
+   hex utilities. These mappings make the existing screens respond to the
+   persisted light theme without rewriting every component class. */
+html[data-theme="light"] {
+  --ez-bg-page: #f8fafc;
+  --ez-bg-sidebar: #f1f5f9;
+  --ez-bg-surface: #ffffff;
+  --ez-bg-surface-muted: #f8fafc;
+  --ez-bg-hover: #e2e8f0;
+  --ez-border: #d8dee9;
+  --ez-border-strong: #cbd5e1;
+  --ez-text: #0f172a;
+  --ez-text-muted: #475569;
+  --ez-text-subtle: #64748b;
+  --ez-text-faint: #94a3b8;
+  --ez-primary-action: #111827;
+  --ez-primary-action-hover: #1e293b;
+  --ez-primary-action-text: #ffffff;
+  --ez-danger-soft: #fef2f2;
+  --ez-success-soft: #f0fdf4;
+  --ez-warning-soft: #fffbeb;
+  --ez-info-soft: #ecfeff;
+  --ez-neutral-soft: #f1f5f9;
+}
+
+html[data-theme="light"] body {
+  background: var(--ez-bg-page);
+  color: var(--ez-text);
+}
+
+/* @group Theme > LightMode : Tailwind arbitrary background remaps */
+html[data-theme="light"] [class~="bg-[#0a0a0a]"] { background-color: var(--ez-bg-page) !important; }
+html[data-theme="light"] [class~="bg-[#0d0d0d]"] { background-color: var(--ez-bg-sidebar) !important; }
+html[data-theme="light"] [class~="bg-[#111]"],
+html[data-theme="light"] [class~="bg-[#111111]"] { background-color: var(--ez-bg-surface) !important; }
+html[data-theme="light"] [class~="bg-[#141414]"] { background-color: var(--ez-bg-surface-muted) !important; }
+html[data-theme="light"] [class~="bg-[#1a1a1a]"],
+html[data-theme="light"] [class~="bg-[#1e1e1e]"],
+html[data-theme="light"] [class~="bg-[#222]"],
+html[data-theme="light"] [class~="bg-[#333]"] { background-color: var(--ez-bg-hover) !important; }
+html[data-theme="light"] [class~="bg-[#e8e8e8]"] { background-color: var(--ez-primary-action) !important; }
+
+/* @group Theme > LightMode : Status background remaps */
+html[data-theme="light"] [class~="bg-[#1a0000]"],
+html[data-theme="light"] [class~="bg-[#7f1d1d]"],
+html[data-theme="light"] [class~="bg-[#991b1b]"] { background-color: #fef2f2 !important; }
+html[data-theme="light"] [class~="bg-[#001a00]"],
+html[data-theme="light"] [class~="bg-[#001a08]"],
+html[data-theme="light"] [class~="bg-[#0a1f0a]"],
+html[data-theme="light"] [class~="bg-[#0d1a0d]"] { background-color: #f0fdf4 !important; }
+html[data-theme="light"] [class~="bg-[#1a1200]"],
+html[data-theme="light"] [class~="bg-[#1a0e00]"],
+html[data-theme="light"] [class~="bg-[#2d1500]"],
+html[data-theme="light"] [class~="bg-[#3d1e00]"] { background-color: #fffbeb !important; }
+html[data-theme="light"] [class~="bg-[#16003a]"],
+html[data-theme="light"] [class~="bg-[#1a0a3a]"] { background-color: #f5f3ff !important; }
+
+/* @group Theme > LightMode : Tailwind arbitrary text remaps */
+html[data-theme="light"] [class~="text-[#e8e8e8]"] { color: var(--ez-text) !important; }
+html[data-theme="light"] [class~="text-[#888]"] { color: var(--ez-text-muted) !important; }
+html[data-theme="light"] [class~="text-[#555]"],
+html[data-theme="light"] [class~="text-[#444]"] { color: var(--ez-text-subtle) !important; }
+html[data-theme="light"] [class~="text-[#333]"] { color: var(--ez-text-faint) !important; }
+html[data-theme="light"] [class~="text-[#aaa]"],
+html[data-theme="light"] [class~="text-[#ccc]"] { color: #1e293b !important; }
+html[data-theme="light"] [class~="text-[#0a0a0a]"] { color: #ffffff !important; }
+
+/* @group Theme > LightMode : Tailwind arbitrary border remaps */
+html[data-theme="light"] [class~="border-[#111]"],
+html[data-theme="light"] [class~="border-[#1a1a1a]"],
+html[data-theme="light"] [class~="border-[#1e1e1e]"],
+html[data-theme="light"] [class~="border-[#222]"] { border-color: var(--ez-border) !important; }
+html[data-theme="light"] [class~="border-[#333]"],
+html[data-theme="light"] [class~="border-[#555]"] { border-color: var(--ez-border-strong) !important; }
+
+/* @group Theme > LightMode : Hover state remaps */
+html[data-theme="light"] [class~="hover:bg-[#111]"]:hover,
+html[data-theme="light"] [class~="hover:bg-[#141414]"]:hover,
+html[data-theme="light"] [class~="hover:bg-[#1a1a1a]"]:hover { background-color: var(--ez-bg-hover) !important; }
+html[data-theme="light"] [class~="hover:bg-[#ccc]"]:hover,
+html[data-theme="light"] [class~="hover:bg-white"]:hover { background-color: #1e293b !important; }
+html[data-theme="light"] [class~="hover:bg-[#1a0000]"]:hover,
+html[data-theme="light"] [class~="hover:bg-[#991b1b]"]:hover { background-color: #fee2e2 !important; }
+html[data-theme="light"] [class~="hover:bg-[#3d1e00]"]:hover,
+html[data-theme="light"] [class~="hover:bg-[#251900]"]:hover,
+html[data-theme="light"] [class~="hover:bg-[#261500]"]:hover { background-color: #fef3c7 !important; }
+html[data-theme="light"] [class~="hover:text-[#e8e8e8]"]:hover,
+html[data-theme="light"] [class~="hover:text-[#aaa]"]:hover,
+html[data-theme="light"] [class~="hover:text-[#888]"]:hover { color: var(--ez-text) !important; }
+html[data-theme="light"] [class~="hover:border-[#333]"]:hover,
+html[data-theme="light"] [class~="hover:border-[#555]"]:hover { border-color: #94a3b8 !important; }
+
+/* @group Theme > LightMode : Shared component helpers */
+html[data-theme="light"] .card {
+  background: var(--ez-bg-surface);
+  border-color: var(--ez-border);
+}
+
+html[data-theme="light"] .btn-primary {
+  background: var(--ez-primary-action);
+  color: #ffffff;
+}
+
+html[data-theme="light"] .btn-primary:hover { background: #1e293b; }
+
+html[data-theme="light"] .btn-secondary,
+html[data-theme="light"] .btn-ghost {
+  color: var(--ez-text-muted);
+  border-color: var(--ez-border-strong);
+}
+
+html[data-theme="light"] .input-field {
+  background: var(--ez-bg-surface);
+  color: var(--ez-text);
+  border-color: var(--ez-border);
+}
+
+/* @group Theme > LightMode : MUI components with local sx color overrides */
+html[data-theme="light"] .MuiPaper-root,
+html[data-theme="light"] .MuiDialog-paper,
+html[data-theme="light"] .MuiPopover-paper {
+  background-color: var(--ez-bg-surface) !important;
+  color: var(--ez-text) !important;
+  border-color: var(--ez-border) !important;
+}
+
+html[data-theme="light"] .MuiTypography-root,
+html[data-theme="light"] .MuiDialogTitle-root,
+html[data-theme="light"] .MuiDialogContent-root {
+  color: var(--ez-text) !important;
+}
+
+html[data-theme="light"] .MuiInputBase-root,
+html[data-theme="light"] .MuiOutlinedInput-root {
+  background-color: var(--ez-bg-surface) !important;
+  color: var(--ez-text) !important;
+}
+
+html[data-theme="light"] .MuiOutlinedInput-notchedOutline {
+  border-color: var(--ez-border-strong) !important;
+}
+
+html[data-theme="light"] .MuiInputLabel-root,
+html[data-theme="light"] .MuiFormHelperText-root {
+  color: var(--ez-text-subtle) !important;
+}
+
+html[data-theme="light"] .MuiTableCell-root {
+  color: var(--ez-text-muted) !important;
+  border-color: #e2e8f0 !important;
+}
+
+html[data-theme="light"] .MuiTableCell-head {
+  color: var(--ez-text-subtle) !important;
+}
+
+html[data-theme="light"] .MuiButton-contained {
+  background-color: var(--ez-primary-action) !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="light"] .MuiButton-outlined {
+  color: var(--ez-text-muted) !important;
+  border-color: var(--ez-border-strong) !important;
+}
+
+html[data-theme="light"] ::-webkit-scrollbar-thumb { background: #cbd5e1; }
+html[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* ─── Accent Color Overrides ───────────────────────────────
+   Existing UI accents used green as the primary highlight. The settings
+   accent preference now replaces those primary highlight tokens at runtime. */
+
+/* @group Theme > Accent : Primary highlight text */
+html[data-accent] [class~="text-[#22c55e]"] { color: var(--ez-accent) !important; }
+html[data-accent] [class~="hover:text-[#22c55e]"]:hover,
+html[data-accent] [class~="hover:text-[#4ade80]"]:hover,
+html[data-accent] [class~="hover:text-[#66ff99]"]:hover { color: var(--ez-accent-hover) !important; }
+
+/* @group Theme > Accent : Primary highlight borders */
+html[data-accent] [class~="border-[#22c55e]"],
+html[data-accent] [class~="border-l-[#22c55e]"] { border-color: var(--ez-accent) !important; }
+html[data-accent] [class~="border-[#22c55e]/20"],
+html[data-accent] [class~="border-[#22c55e]/30"],
+html[data-accent] [class~="border-[#22c55e]/40"],
+html[data-accent] [class~="border-[#22c55e]/50"] { border-color: var(--ez-accent-border) !important; }
+html[data-accent] [class~="focus:border-[#22c55e]"]:focus { border-color: var(--ez-accent) !important; }
+
+/* @group Theme > Accent : Primary highlight backgrounds */
+html[data-accent] [class~="bg-[#22c55e]"] { background-color: var(--ez-accent) !important; }
+html[data-accent] [class~="bg-[#22c55e]/5"],
+html[data-accent] [class~="bg-[#22c55e]/10"],
+html[data-accent] [class~="bg-[#22c55e]/15"],
+html[data-accent] [class~="bg-[#22c55e]/20"],
+html[data-accent] [class~="bg-[#22c55e]/30"] { background-color: var(--ez-accent-soft) !important; }
+html[data-accent] [class~="bg-[#001a00]"],
+html[data-accent] [class~="bg-[#001a08]"],
+html[data-accent] [class~="bg-[#022c00]"],
+html[data-accent] [class~="bg-[#0a1f0a]"],
+html[data-accent] [class~="bg-[#0d1a0d]"],
+html[data-accent] [class~="bg-[#0d1f0d]"],
+html[data-accent] [class~="bg-[#1a2e1a]"] { background-color: var(--ez-accent-strong-bg) !important; }
+html[data-accent] [class~="hover:bg-[#22c55e]/5"]:hover,
+html[data-accent] [class~="hover:bg-[#22c55e]/10"]:hover,
+html[data-accent] [class~="hover:bg-[#22c55e]/20"]:hover,
+html[data-accent] [class~="hover:bg-[#22c55e]/30"]:hover { background-color: var(--ez-accent-soft) !important; }
+
+/* @group Theme > Accent : Inputs, focus rings, and browser accent-color */
+html[data-accent] [class~="focus:ring-[#22c55e]"]:focus {
+  --tw-ring-color: var(--ez-accent) !important;
+}
+
+html[data-accent] [class~="accent-[#22c55e]"] {
+  accent-color: var(--ez-accent) !important;
+}
+
+html[data-accent] *:focus-visible {
+  outline-color: var(--ez-accent);
+}
