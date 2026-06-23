@@ -1,0 +1,38 @@
+# @group BuildContext : Keep Docker builds small and exclude local-only state
+.git
+.github
+.claude
+.groupcode
+.vscode
+node_modules
+src/client/node_modules
+mobile-app/node_modules
+dist
+build
+src/client/build
+coverage
+screenshots
+uploads
+excluded
+mobile-app/android/.gradle
+
+# @group Secrets : Never bake local credentials or machine-specific config into images
+.env
+.env.*
+.npmrc
+*.pem
+*.key
+*.crt
+src/server/config/auth.json
+src/server/config/remote-connections.json
+src/server/config/cron-jobs.json
+src/server/config/cron-scripts
+
+# @group Noise : Exclude logs, temporary files, and package artifacts
+*.log
+*.tgz
+*.db
+*.db-shm
+*.db-wal
+.DS_Store
+Thumbs.db
