@@ -11,10 +11,10 @@ import {
   CpuChipIcon,
   ArrowRightIcon,
 } from '@heroicons/react/24/outline';
+import { APP_RELEASE_SUBTITLE, APP_RELEASE_VERSION } from '../utils/release-info';
 
-// @group Constants
-const VERSION = '1.11.0';
-const STORAGE_KEY = `ezpm2_whats_new_seen_v${VERSION}`;
+// @group Constants : Per-version popup display tracking
+const STORAGE_KEY = `ezpm2_whats_new_seen_v${APP_RELEASE_VERSION}`;
 
 // @group Types
 interface HighlightItem {
@@ -120,10 +120,10 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ open, onClose }) => {
                     {t('whatsNew.title')}
                   </h2>
                   <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-sm bg-[#16003a] text-[#a78bfa] border border-[#a78bfa]/25">
-                    v{VERSION}
+                    v{APP_RELEASE_VERSION}
                   </span>
                 </div>
-                <p className="text-[10px] font-mono text-[#555] mt-0.5">EZ PM2 GUI · April 2026</p>
+                <p className="text-[10px] font-mono text-[#555] mt-0.5">{APP_RELEASE_SUBTITLE}</p>
               </div>
             </div>
             <button

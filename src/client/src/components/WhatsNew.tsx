@@ -1,15 +1,16 @@
 import React from 'react';
 import {
-  ShieldCheckIcon,
-  LockClosedIcon,
-  LockOpenIcon,
-  KeyIcon,
+  ChartBarIcon,
+  CircleStackIcon,
   ClockIcon,
+  CpuChipIcon,
   SparklesIcon,
+  SignalIcon,
   ArrowTopRightOnSquareIcon,
 } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { APP_RELEASE_DATE, APP_RELEASE_VERSION } from '../utils/release-info';
 
 // @group Types
 interface ChangeItem {
@@ -30,57 +31,57 @@ interface Release {
 // @group Constants : Changelog data
 const RELEASES: Release[] = [
   {
-    version: '1.6.0',
-    date: 'April 2026',
-    headline: 'App Security & Lock Screen',
+    version: APP_RELEASE_VERSION,
+    date: APP_RELEASE_DATE,
+    headline: 'Live Metrics & Remote Monitoring',
     changes: [
       {
-        title: 'PIN Lock Screen',
+        title: 'Live Metrics Page',
         description:
-          'Protect the app with a 4-digit PIN. The lock screen shows a numeric keypad that auto-submits on the 4th digit. Keyboard entry is also supported.',
-        icon: KeyIcon,
+          'Per-process rolling 1-hour CPU and memory sparklines, updated every 3 seconds from the Metrics page.',
+        icon: SignalIcon,
         color: 'text-[#a78bfa]',
         tag: 'New',
       },
       {
-        title: 'Password Protection',
+        title: 'Metrics History',
         description:
-          'Optionally require a password before the app is accessible. Set, change, or remove password protection from the Security section in Settings.',
-        icon: ShieldCheckIcon,
+          'Remote process metrics are recorded to local SQLite history so CPU and memory trends can be reviewed over time.',
+        icon: ChartBarIcon,
         color: 'text-[#22d3ee]',
         tag: 'New',
       },
       {
-        title: 'Lock / Unlock Toggle',
+        title: 'Inline Sparklines',
         description:
-          'A lock button in the top navbar lets you manually lock the app at any time. Reopening the tab restores your unlocked session automatically.',
-        icon: LockClosedIcon,
-        color: 'text-[#e8e8e8]',
-        tag: 'New',
-      },
-      {
-        title: 'Session Persistence',
-        description:
-          'Once unlocked, the session stays unlocked through page refreshes within the same browser tab — no need to re-enter credentials on every reload.',
-        icon: LockOpenIcon,
+          'Rows in the Metrics table include compact CPU and memory micro-graphs for quick scanning without opening another view.',
+        icon: CpuChipIcon,
         color: 'text-[#22c55e]',
-        tag: 'New',
+        tag: 'Improved',
       },
       {
-        title: 'Auto-Lock on Inactivity',
+        title: 'Background Metrics Poller',
         description:
-          'Configure an inactivity timeout (in minutes) from Settings > Security. The app automatically locks after the specified idle period. Set to 0 to disable.',
+          'The server samples connected remote servers every 30 seconds, even when you are working on a different page.',
         icon: ClockIcon,
         color: 'text-[#f59e0b]',
-        tag: 'New',
+        tag: 'Improved',
       },
       {
-        title: 'PIN + Password Dual Mode',
+        title: '30-Day Retention',
         description:
-          'When both PIN and password are configured, the lock screen shows a toggle so you can choose which method to use. Defaults to PIN for convenience.',
-        icon: SparklesIcon,
+          'Historical metrics are automatically purged after 30 days, with downsampling when large result sets are requested.',
+        icon: CircleStackIcon,
         color: 'text-[#a78bfa]',
         tag: 'Improved',
+      },
+      {
+        title: 'Theme Polish',
+        description:
+          'Light mode and accent colors now apply across more of the app shell and settings-driven UI surfaces.',
+        icon: SparklesIcon,
+        color: 'text-[#22d3ee]',
+        tag: 'Fix',
       },
     ],
   },
