@@ -29,6 +29,7 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import DownloadIcon from '@mui/icons-material/Download';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import { stripAnsi } from '../utils/ansi';
 
 // @group Types
 interface LogFile {
@@ -167,7 +168,7 @@ const LogFileBrowser: React.FC<LogFileBrowserProps> = ({ processId, processName,
     setFileError(prev => ({ ...prev, [filePath]: '' }));
     try {
       const res = await axios.get(fileReadUrl(filePath));
-      setFileContent(prev => ({ ...prev, [filePath]: res.data.logs || [] }));
+      setFileContent(prev => ({ ...prev, [filePath]: (res.data.logs || []).map(stripAnsi) }));
       setFileTotal(prev => ({ ...prev, [filePath]: res.data.totalLines || 0 }));
     } catch (err: any) {
       setFileError(prev => ({
