@@ -10,6 +10,7 @@ import axios from 'axios';
 import { io } from 'socket.io-client';
 import PageHeader from './PageHeader';
 import { useTranslation } from 'react-i18next';
+import { stripAnsi } from '../utils/ansi';
 
 // @group Constants : Backend API URL — must match App.tsx
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3101';
@@ -81,7 +82,7 @@ const LogStreamEnhanced: React.FC<LogStreamEnhancedProps> = ({
         const res = await axios.get(`/api/remote/${serverId}/logs/${initPid}/${selectedLogType}`);
         logsData = res.data.logs || [];
       }
-      setLogs(logsData);
+      setLogs(logsData.map(stripAnsi));
       setAppliedFrom(dateFrom);
       setAppliedTo(dateTo);
     } catch (err: any) {
@@ -98,11 +99,6 @@ const LogStreamEnhanced: React.FC<LogStreamEnhancedProps> = ({
     setAppliedFrom('');
     setAppliedTo('');
   };
-
-  // @group Utilities : Strip ANSI escape codes so the regex reliably matches timestamps
-  // even when log lines are prefixed with terminal colour codes.
-  // eslint-disable-next-line no-control-regex
-  const stripAnsi = (str: string) => str.replace(/\x1B\[[0-9;]*[mGKHFABCDsuJK]/g, '');
 
   // @group Utilities : Try to extract a Date from the start of a log line
   const parseLineTimestamp = (line: string): Date | null => {
@@ -157,7 +153,7 @@ const LogStreamEnhanced: React.FC<LogStreamEnhancedProps> = ({
           logsData = res.data.logs || [];
         }
 
-        setLogs(logsData);
+        setLogs(logsData.map(stripAnsi));
         setLoading(false);
       } catch (err: any) {
         setError(err.response?.data?.error || 'Failed to fetch logs');
@@ -180,7 +176,7 @@ const LogStreamEnhanced: React.FC<LogStreamEnhancedProps> = ({
         // Don't append new lines when a date-range filter is active
         if (dateFilterActiveRef.current) return;
         if (data.processId === initPid && data.logType === selectedLogType) {
-          setLogs(prev => [...prev, data.line]);
+          setLogs(prev => [...prev, stripAnsi(data.line)]);
         }
       });
 
@@ -197,7 +193,7 @@ const LogStreamEnhanced: React.FC<LogStreamEnhancedProps> = ({
         if (dateFilterActiveRef.current) return;
         try {
           const res = await axios.get(`/api/remote/${serverId}/logs/${initPid}/${selectedLogType}`);
-          const fresh: string[] = res.data.logs || [];
+          const fresh: string[] = (res.data.logs || []).map(stripAnsi);
           setLogs(prev => {
             // Only update if there are actually new lines to avoid needless re-renders
             if (fresh.length !== prev.length || (fresh.length > 0 && fresh[fresh.length - 1] !== prev[prev.length - 1])) {
@@ -242,7 +238,7 @@ const LogStreamEnhanced: React.FC<LogStreamEnhancedProps> = ({
         const res = await axios.get(`/api/remote/${serverId}/logs/${initPid}/${selectedLogType}`);
         logsData = res.data.logs || [];
       }
-      setLogs(logsData);
+      setLogs(logsData.map(stripAnsi));
       setLoading(false);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to fetch logs');
