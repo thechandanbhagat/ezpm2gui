@@ -33,6 +33,7 @@ import {
   isRemoteServerAvailable,
   resolveAvailableServerId,
 } from './utils/server-selection';
+import { getSocketUrl } from './utils/socket-url';
 import {
   ACCENT_CHANGED_EVENT,
   ACCENT_STORAGE_KEY,
@@ -68,11 +69,8 @@ import {
   Cog6ToothIcon,
 } from '@heroicons/react/24/outline';
 
-// Initialize socket connection with improved settings
-// process.env.REACT_APP_API_URL is baked in at build time by CRA from .env.local / .env
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3101';
-
-const socket = io(API_URL, {
+// Connect to the page origin in production so a remote host is not baked as localhost
+const socket = io(getSocketUrl(), {
   // Send the session token (if any) on every (re)connection attempt
   auth: (cb: (data: { token?: string }) => void) => cb({ token: getToken() || undefined }),
   // Reconnection settings

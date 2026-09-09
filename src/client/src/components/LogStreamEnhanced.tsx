@@ -11,9 +11,7 @@ import { io } from 'socket.io-client';
 import PageHeader from './PageHeader';
 import { useTranslation } from 'react-i18next';
 import { stripAnsi } from '../utils/ansi';
-
-// @group Constants : Backend API URL — must match App.tsx
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3101';
+import { getSocketUrl } from '../utils/socket-url';
 
 interface LogStreamEnhancedProps {
   processId?: number | string;
@@ -164,7 +162,7 @@ const LogStreamEnhanced: React.FC<LogStreamEnhancedProps> = ({
 
     // Live streaming for local; polling for remote
     if (serverId === 'local') {
-      const socket = io(API_URL, { transports: ['websocket', 'polling'], reconnection: true });
+      const socket = io(getSocketUrl(), { transports: ['websocket', 'polling'], reconnection: true });
       socketRef.current = socket;
 
       socket.on('connect', () => {
