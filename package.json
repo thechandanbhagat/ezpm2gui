@@ -27,7 +27,7 @@
     "build:client": "cd src/client && npm run build",
     "build:bin": "tsc --project tsconfig.bin.json",
     "prepare": "npm run build",
-    "test": "ts-node tests/unit/server-selection.test.ts && ts-node tests/unit/theme.test.ts && ts-node tests/unit/app-version.test.ts && ts-node tests/unit/socket-url.test.ts",
+    "test": "ts-node tests/unit/server-selection.test.ts && ts-node tests/unit/theme.test.ts && ts-node tests/unit/app-version.test.ts && ts-node tests/unit/socket-url.test.ts && ts-node tests/unit/config-dir.test.ts",
     "postinstall": "node scripts/postinstall.js"
   },
   "keywords": [
@@ -71,7 +71,7 @@
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
-    "@types/node": "^22.15.17",
+    "@types/node": "^22.20.2",
     "@types/react": "^19.1.4",
     "@types/react-dom": "^19.1.5",
     "@types/socket.io": "^3.0.2",
