@@ -54,50 +54,45 @@ A modern web-based graphical user interface for the PM2 process manager, built w
 
 - **Real-time process monitoring** - Keep track of all your PM2 processes in real-time
 - **Process management** - Start, stop, restart, and delete processes with one click
-- **Sidebar quick-actions** _(v1.9.0)_ - Per-process restart, start/stop, and logs buttons revealed on hover in the sidebar
+- **Sidebar quick-actions** *(v1.9.0)* - Per-process restart, start/stop, and logs buttons revealed on hover in the sidebar
 - **System metrics dashboard** - Monitor CPU, memory usage, and uptime
 - **Metrics page with live sparklines** - Per-process rolling 1-hour CPU and memory micro-graphs updated every 3s; switch to History tab for SQLite-backed long-term charts
 - **Enhanced log streaming** - View and filter logs from multiple processes simultaneously
-- **Log search highlighting** _(v1.9.0)_ - Search terms are visually highlighted in the log viewer
-- **Log timestamp range filter** _(v1.9.0)_ - Filter log output by start/end timestamp with snapshot mode
-- **Remote log polling** _(v1.9.0)_ - Logs from remote servers fetched and displayed in real-time
+- **Log search highlighting** *(v1.9.0)* - Search terms are visually highlighted in the log viewer
+- **Log timestamp range filter** *(v1.9.0)* - Filter log output by start/end timestamp with snapshot mode
+- **Remote log polling** *(v1.9.0)* - Logs from remote servers fetched and displayed in real-time
 - **WebSocket for live updates** - Get instant updates without refreshing
 - **Process CPU and memory charts** - Visualize performance metrics over time
 - **Filter processes by status or name** - Quickly find the processes you need
-- **Dark/light mode** _(v1.11.1)_ - Fully supported across all pages with Tailwind CSS; preference and accent color persisted across sessions
-- **Docker support** _(v1.11.1)_ - Official `Dockerfile` and `.dockerignore` for containerised deployments
+- **Dark/light mode** *(v1.11.1)* - Fully supported across all pages with Tailwind CSS; preference and accent color persisted across sessions
+- **Docker support** *(v1.11.1)* - Official `Dockerfile` and `.dockerignore` for containerised deployments
 - **Cluster management** - Easily scale your Node.js applications
 - **Application deployment** - Deploy new applications directly from the UI
 - **Ecosystem configuration** - Create and manage your PM2 ecosystem files
 - **PM2 modules support** - Manage and configure PM2 modules
 - **Cron Jobs** - Schedule and manage automated tasks with visual cron expression builder
 - **Remote Server Management** - Connect and manage PM2 on remote servers via SSH
-- **End-to-end encrypted credentials** _(v1.9.0)_ - Remote server passwords encrypted in-browser with RSA-OAEP + AES-256-GCM before transmission
+- **End-to-end encrypted credentials** *(v1.9.0)* - Remote server passwords encrypted in-browser with RSA-OAEP + AES-256-GCM before transmission
 - **Advanced Monitoring Dashboard** - Real-time performance charts with health scoring
-- **Multi-language support** _(v1.11.0)_ - Full i18n with English, Nepali, and Chinese locales; language switcher in the navbar; community-extensible
-- **Live metrics sparklines** _(v1.11.1)_ - Per-process rolling 1-hour CPU and memory micro-graphs; switch to History tab for SQLite-backed long-term charts
+- **Multi-language support** *(v1.11.0)* - Full i18n with English, Nepali, and Chinese locales; language switcher in the navbar; community-extensible
+- **Live metrics sparklines** *(v1.11.1)* - Per-process rolling 1-hour CPU and memory micro-graphs; switch to History tab for SQLite-backed long-term charts
 - **Tailwind CSS UI** - Sleek, compact, and responsive design with consistent dark/light theming
 - **Fully typed with TypeScript** - Robust and maintainable codebase
 
 ## Detailed Features
 
 ### Process Monitoring
-
 Monitor all your PM2 processes in real-time with detailed information on CPU usage, memory consumption, uptime, and status. The intuitive interface makes it easy to identify issues at a glance.
 
 ### Multi-Language Support
-
 EZ PM2 GUI ships with full internationalisation (i18n) powered by `i18next` and `react-i18next`:
-
 - Every page, component, dialog, toast, and tooltip is fully translated
 - **English** (default) and **Nepali** locales included out of the box
 - Language switcher in the navbar; selection persists across sessions
 - Community-extensible — add a new locale by following `CONTRIBUTING_TRANSLATIONS.md`
 
 ### Remote Server Management
-
 Connect to and manage PM2 processes on remote servers via secure SSH connections:
-
 - Add multiple remote server connections with SSH credentials
 - View and manage processes on remote servers
 - Stream logs from remote processes in real-time with polling
@@ -105,9 +100,7 @@ Connect to and manage PM2 processes on remote servers via secure SSH connections
 - **End-to-end credential encryption** — passwords are encrypted client-side (RSA-OAEP + AES-256-GCM hybrid scheme) before transmission; the server never sees plaintext passwords in transit
 
 ### Cron Jobs
-
 Schedule and automate tasks using PM2's cron restart feature:
-
 - Visual cron expression builder with common presets
 - Support for Node.js, Python, Shell, and .NET scripts
 - Inline script editor or file-based execution
@@ -115,9 +108,7 @@ Schedule and automate tasks using PM2's cron restart feature:
 - View next execution times and job status
 
 ### Advanced Monitoring Dashboard
-
 Get deeper insights into your system and process performance:
-
 - Real-time performance charts for CPU, memory, and load
 - System health score calculation
 - Historical metrics tracking
@@ -125,9 +116,7 @@ Get deeper insights into your system and process performance:
 - Per-process performance visualization
 
 ### Application Deployment
-
 Deploy new Node.js applications to PM2 directly from the UI. Configure all the necessary options including:
-
 - Application name and script path
 - Working directory
 - Number of instances for load balancing
@@ -137,13 +126,10 @@ Deploy new Node.js applications to PM2 directly from the UI. Configure all the n
 - Environment variables
 
 ### Cluster Management
-
 Easily scale your Node.js applications with the cluster management interface. Add or remove instances on the fly and switch between fork and cluster execution modes for optimal performance.
 
 ### Log Streaming
-
 View and filter logs from multiple processes simultaneously with the enhanced log streaming interface. Features include:
-
 - Real-time log updates via WebSocket
 - **Search with visual highlighting** — matched terms are highlighted inline
 - **Timestamp range filter** — narrow logs to a start/end time window with snapshot mode (polling pauses while filter is active)
@@ -154,26 +140,20 @@ View and filter logs from multiple processes simultaneously with the enhanced lo
 - Remote server log polling
 
 ### Ecosystem Configuration
-
 Generate and manage PM2 ecosystem configuration files directly from the UI. This makes it easy to set up complex application deployments and share configurations across your team.
 
 ### PM2 Modules
-
 Manage and configure PM2 modules to extend the functionality of your PM2 installation. Install, update, and remove modules with a few clicks.
 
 ### System Metrics
-
 Monitor key system metrics including:
-
 - CPU usage and number of cores
 - Memory usage and availability
 - System uptime
 - Load averages (1, 5, and 15 minutes)
 
 ### User Interface
-
 EZ PM2 GUI uses Tailwind CSS for a sleek, compact, and fully responsive interface:
-
 - Dark and light mode support across all pages
 - Consistent color theming with smooth transitions
 - Compact layout with small fonts and reduced spacing for information density
@@ -215,7 +195,7 @@ ezpm2gui-generate-ecosystem
 ### As a Module (Local Installation)
 
 ```javascript
-const ezpm2gui = require("ezpm2gui");
+const ezpm2gui = require('ezpm2gui');
 
 // Start the server with default options
 ezpm2gui.start();
@@ -223,7 +203,7 @@ ezpm2gui.start();
 // Or with custom options
 ezpm2gui.start({
   port: 3030,
-  host: "0.0.0.0",
+  host: '0.0.0.0'
 });
 ```
 
@@ -271,6 +251,15 @@ EnvironmentFile=/etc/ezpm2gui/ezpm2gui.env
 ExecStart=/usr/bin/ezpm2gui
 ```
 
+```env
+# /etc/ezpm2gui/ezpm2gui.env
+NODE_ENV=production
+HOST=0.0.0.0
+PORT=3101
+EZPM2GUI_SECRET=<random>
+EZPM2GUI_CONFIG_DIR=/etc/ezpm2gui
+```
+
 If `EZPM2GUI_CONFIG_DIR` points at an empty directory, existing files from the package config folder are copied there once (so a password set before the move is not lost).
 
 For the React client to connect to the correct port during a production build, also set:
@@ -286,7 +275,7 @@ EZ PM2 GUI provides an easy interface to manage PM2's load balancing capabilitie
 
 ### Setting Up Load Balancing
 
-1. **Deploy a new application or modify an existing one**:
+1. **Deploy a new application or modify an existing one**: 
    - Set the number of instances to greater than 1 (or 0/-1 for max instances based on CPU cores)
    - Choose "Cluster" as the execution mode for optimal load balancing
 
