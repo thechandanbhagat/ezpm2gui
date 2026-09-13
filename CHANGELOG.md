@@ -6,6 +6,12 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Added
+- **`EZPM2GUI_CONFIG_DIR`** — optional directory for runtime state (`auth.json`, session tokens, remote connections, cron jobs, metrics DB). Set it in the systemd `EnvironmentFile` (e.g. `/etc/ezpm2gui`) so `npm i -g` no longer wipes the GUI password and remotes. Unset, files still live in `dist/server/config`. Existing package config is copied into an empty override directory once on first start.
+- **`EZPM2GUI_SECRET` documented** — encryption key for at-rest remote credentials; README now lists it next to `PORT`/`HOST`.
+
 ## [1.10.0] - 2026-05-28
 
 ### Added

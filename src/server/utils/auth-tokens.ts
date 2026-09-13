@@ -15,9 +15,10 @@
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
+import { configPath } from './config-dir';
 
 // @group Constants : Persisted token store location, lifetime, and cap
-const TOKENS_FILE = path.join(__dirname, '../config/auth-tokens.json');
+const TOKENS_FILE = configPath('auth-tokens.json');
 const TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const MAX_TOKENS = 100;                         // newest-N kept so the store can't grow unbounded
 

@@ -212,6 +212,8 @@ EZ PM2 GUI 使用环境变量进行配置：
 
 - `PORT`: 服务器运行端口（默认：`3101`）
 - `HOST`: 绑定的主机（默认：`localhost`）
+- `EZPM2GUI_SECRET`: 用于加密磁盘上远程服务器凭据的密钥。未设置时使用内置的旧版密钥（不建议在非本机环境使用）。
+- `EZPM2GUI_CONFIG_DIR`: 运行时状态目录（`auth.json`、会话令牌、远程连接、定时任务、指标数据库）。未设置时文件写在 npm 包内（`dist/server/config`），**执行 `npm i -g` 时会被删除**。
 
 您可以在项目根目录的 `.env` 文件中设置（如不存在请创建）：
 
@@ -219,7 +221,32 @@ EZ PM2 GUI 使用环境变量进行配置：
 # .env
 PORT=3102
 HOST=localhost
+EZPM2GUI_SECRET=change-me
+EZPM2GUI_CONFIG_DIR=/etc/ezpm2gui
 ```
+
+在 systemd 主机上，将同样的变量放进单元的 `EnvironmentFile`，这样更新软件包时不会丢失：
+
+```ini
+# /etc/systemd/system/ezpm2gui.service
+[Service]
+WorkingDirectory=/root
+Environment=NODE_ENV=production
+Environment=HOME=/root
+EnvironmentFile=/etc/ezpm2gui/ezpm2gui.env
+ExecStart=/usr/bin/ezpm2gui
+```
+
+```env
+# /etc/ezpm2gui/ezpm2gui.env
+NODE_ENV=production
+HOST=0.0.0.0
+PORT=3101
+EZPM2GUI_SECRET=<random>
+EZPM2GUI_CONFIG_DIR=/etc/ezpm2gui
+```
+
+如果 `EZPM2GUI_CONFIG_DIR` 指向空目录，会从软件包配置目录一次性复制已有文件（因此迁移前设置的密码不会丢失）。
 
 为了让 React 客户端在生产构建时连接到正确的端口，还需设置：
 

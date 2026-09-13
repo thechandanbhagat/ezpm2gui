@@ -226,6 +226,8 @@ EZ PM2 GUI uses environment variables for configuration:
 
 - `PORT`: The port to run the server on (default: `3101`)
 - `HOST`: The host to bind to (default: `localhost`)
+- `EZPM2GUI_SECRET`: Encryption key for remote-server credentials stored on disk. If unset, a built-in legacy key is used (not recommended for anything exposed beyond localhost).
+- `EZPM2GUI_CONFIG_DIR`: Directory for runtime state (`auth.json`, session tokens, remote connections, cron jobs, metrics DB). If unset, files are written inside the npm package (`dist/server/config`) and **will be deleted on `npm i -g`**.
 
 You can set these in a `.env` file at the project root (create it if it doesn't exist):
 
@@ -233,7 +235,32 @@ You can set these in a `.env` file at the project root (create it if it doesn't 
 # .env
 PORT=3102
 HOST=localhost
+EZPM2GUI_SECRET=change-me
+EZPM2GUI_CONFIG_DIR=/etc/ezpm2gui
 ```
+
+On a systemd host, put the same variables in the unit's `EnvironmentFile` so they survive package updates:
+
+```ini
+# /etc/systemd/system/ezpm2gui.service
+[Service]
+WorkingDirectory=/root
+Environment=NODE_ENV=production
+Environment=HOME=/root
+EnvironmentFile=/etc/ezpm2gui/ezpm2gui.env
+ExecStart=/usr/bin/ezpm2gui
+```
+
+```env
+# /etc/ezpm2gui/ezpm2gui.env
+NODE_ENV=production
+HOST=0.0.0.0
+PORT=3101
+EZPM2GUI_SECRET=<random>
+EZPM2GUI_CONFIG_DIR=/etc/ezpm2gui
+```
+
+If `EZPM2GUI_CONFIG_DIR` points at an empty directory, existing files from the package config folder are copied there once (so a password set before the move is not lost).
 
 For the React client to connect to the correct port during a production build, also set:
 
