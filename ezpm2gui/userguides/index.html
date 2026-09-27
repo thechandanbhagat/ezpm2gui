@@ -494,6 +494,19 @@
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+    .demo-video { aspect-ratio: 16 / 9; width: 100%; margin: 1.25rem 0; background: #0a0a0a; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .demo-video iframe { display: block; width: 100%; height: 100%; border: 0; }
+    figure.shot { margin: 1.5rem 0; }
+    .content h3 { scroll-margin-top: 96px; margin-top: 2rem; }
+    .content p { color: var(--text-muted); line-height: 1.75; margin: .8rem 0; }
+    .content ol, .content ul { margin: 1rem 0; padding-left: 1.5rem; }
+    .content ol { list-style: decimal; }
+    .content ul { list-style: disc; }
+    .content li { color: var(--text-muted); line-height: 1.75; margin-bottom: .55rem; }
+    @media (max-width: 640px) { .content pre { max-width: 100%; overflow-x: auto; } }
+    @media (max-width: 900px) { .toc ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .2rem 1rem; } }
+    @media (max-width: 480px) { .toc ul { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -507,7 +520,7 @@
       <div class="nav-links-row">
         <a href="#getting-started">Getting Started</a>
         <a href="#processes">Processes</a>
-        <a href="#monitoring">Monitoring</a>
+        <a href="#metrics">Metrics</a>
         <a href="#remote">Remote</a>
         <a href="#deploy">Deploy</a>
         <a href="#settings">Settings</a>
@@ -526,11 +539,12 @@
   <!-- @group Hero -->
   <section class="hero">
     <div class="hero-inner">
-      <div class="hero-badge"><i class="fas fa-book-open"></i> User Guide · v1.7.0</div>
-      <h1>Master every screen in EZ PM2 GUI</h1>
-      <p>A visual walkthrough of every page — Processes, Monitoring, Remote Servers, Deploy, Modules, Ecosystem, Cluster, Cron Jobs, Load Balancing, Logs and Settings — with annotated screenshots.</p>
+      <div class="hero-badge"><i class="fas fa-book-open"></i> User Guide · v1.11.4</div>
+      <h1>Manage your processes with confidence</h1>
+      <p>Set up the dashboard, manage processes, follow live and recorded metrics, and investigate logs. Current screenshots show each workflow.</p>
       <div class="hero-actions">
         <a href="#getting-started" class="btn btn-primary"><i class="fas fa-rocket"></i> Get Started</a>
+        <a href="#demo" class="btn btn-outline"><i class="fas fa-play"></i> Watch Demo</a>
         <a href="https://github.com/thechandanbhagat/ezpm2gui" target="_blank" rel="noopener" class="btn btn-outline"><i class="fab fa-github"></i> View on GitHub</a>
       </div>
     </div>
@@ -543,557 +557,170 @@
     <aside class="toc">
       <div class="toc-heading"><i class="fas fa-list-ul"></i> On this page</div>
       <ul>
-        <li class="toc-section"><a href="#getting-started">Getting Started</a></li>
-        <li class="toc-sub"><a href="#installation">Installation</a></li>
-        <li class="toc-sub"><a href="#first-launch">First Launch</a></li>
-        <li class="toc-sub"><a href="#lock-screen">Lock Screen</a></li>
-
-        <li class="toc-section"><a href="#processes">Processes</a></li>
-        <li class="toc-section"><a href="#monitoring">Monitoring</a></li>
-        <li class="toc-section"><a href="#remote">Remote Servers</a></li>
-        <li class="toc-section"><a href="#deploy">Deploy App</a></li>
-        <li class="toc-section"><a href="#modules">PM2 Modules</a></li>
-        <li class="toc-section"><a href="#ecosystem">Ecosystem Config</a></li>
-        <li class="toc-section"><a href="#cluster">Cluster</a></li>
-        <li class="toc-section"><a href="#cron">Cron Jobs</a></li>
-        <li class="toc-section"><a href="#load-balancing">Load Balancing</a></li>
-        <li class="toc-section"><a href="#logs">Log Streaming</a></li>
-
-        <li class="toc-section"><a href="#settings">Settings</a></li>
-        <li class="toc-sub"><a href="#updates">Checking for Updates</a></li>
-        <li class="toc-sub"><a href="#theme">Theme</a></li>
-
-        <li class="toc-section"><a href="#faq">FAQ</a></li>
-      </ul>
+<li class="toc-section"><a href="#demo">Watch the demo</a></li>
+<li class="toc-section"><a href="#getting-started">Getting Started</a></li>
+<li class="toc-section"><a href="#processes">Processes (Dashboard)</a></li>
+<li class="toc-section"><a href="#monitoring">Process Details</a></li>
+<li class="toc-section"><a href="#metrics">Metrics: Live and History</a></li>
+<li class="toc-section"><a href="#remote">Remote Servers</a></li>
+<li class="toc-section"><a href="#deploy">Deploy App</a></li>
+<li class="toc-section"><a href="#modules">PM2 Modules</a></li>
+<li class="toc-section"><a href="#ecosystem">Ecosystem Config</a></li>
+<li class="toc-section"><a href="#cluster">Cluster</a></li>
+<li class="toc-section"><a href="#cron">Cron Jobs</a></li>
+<li class="toc-section"><a href="#load-balancing">Load Balancing</a></li>
+<li class="toc-section"><a href="#logs">Log Streaming</a></li>
+<li class="toc-section"><a href="#settings">Settings and Navigation</a></li>
+<li class="toc-section"><a href="#faq">Troubleshooting and Data</a></li>
+</ul>
     </aside>
 
     <!-- Main content -->
     <main class="content">
-
-      <!-- Getting Started -->
-      <section id="getting-started">
-        <span class="section-anchor"></span>
-        <h2 class="section-title">
-          <span class="section-icon"><i class="fas fa-rocket"></i></span>
-          Getting Started
-        </h2>
-
-        <div class="subsection" id="installation">
-          <h3><span class="dot"></span> Installation</h3>
-          <p>EZ PM2 GUI requires <strong>Node.js 18+</strong> and <strong>PM2</strong> installed globally. Install both with:</p>
-          <pre><code># Install PM2 globally (skip if already installed)
-npm install -g pm2
-
-# Install EZ PM2 GUI globally
-npm install -g ezpm2gui</code></pre>
-          <div class="callout callout-info">
-            <i class="fas fa-info-circle"></i>
-            <div>On Linux/macOS, prefix with <code>sudo</code> if you get a permission error, or configure npm to use a user-writable directory.</div>
-          </div>
-        </div>
-
-        <div class="subsection" id="first-launch">
-          <h3><span class="dot"></span> First Launch</h3>
-          <div class="steps">
-            <div class="step">
-              <div class="step-num">1</div>
-              <div class="step-body">
-                <h4>Start the GUI server</h4>
-                <p>Run <code>ezpm2gui</code> from any terminal. The server starts on port <strong>3101</strong> by default.</p>
-              </div>
-            </div>
-            <div class="step">
-              <div class="step-num">2</div>
-              <div class="step-body">
-                <h4>Open the dashboard</h4>
-                <p>Navigate to <a href="http://localhost:3101" target="_blank">http://localhost:3101</a> in your browser.</p>
-              </div>
-            </div>
-            <div class="step">
-              <div class="step-num">3</div>
-              <div class="step-body">
-                <h4>Unlock with your PIN or password</h4>
-                <p>On first use, set a 4-digit PIN or password. Every subsequent launch starts at the lock screen below.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="subsection" id="lock-screen">
-          <h3><span class="dot"></span> Lock Screen</h3>
-          <p>When you open the dashboard, the lock screen appears first. Choose between a 4-digit PIN keypad or password entry — PIN auto-submits once all four digits are entered. The app auto-locks after an idle period (default 5 minutes — configurable in Settings &rarr; Security).</p>
-          <div class="shot">
-            <div class="shot-bar">
-              <span class="shot-dot r"></span><span class="shot-dot y"></span><span class="shot-dot g"></span>
-              <span class="shot-url">localhost:3101 — Lock screen</span>
-            </div>
-            <img src="../screenshots/00-lock-screen.png" alt="EZ PM2 GUI lock screen with PIN keypad">
-            <div class="shot-caption">Lock screen — PIN keypad with optional password fallback.</div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Processes -->
-      <section id="processes">
-        <span class="section-anchor"></span>
-        <h2 class="section-title">
-          <span class="section-icon"><i class="fas fa-chart-line"></i></span>
-          Processes (Dashboard)
-        </h2>
-
-        <p>The default landing page shows system health and every PM2 process at a glance.</p>
-
-        <div class="shot">
-          <div class="shot-bar">
-            <span class="shot-dot r"></span><span class="shot-dot y"></span><span class="shot-dot g"></span>
-            <span class="shot-url">localhost:3101/processes</span>
-          </div>
-          <img src="../screenshots/01-processes.png" alt="Process Dashboard showing system metrics and empty process list">
-          <div class="shot-caption">Process Dashboard — system metrics on the left, process list on the right.</div>
-        </div>
-
-        <div class="card-grid">
-          <div class="card">
-            <div class="card-icon">⏱️</div>
-            <h4>Uptime</h4>
-            <p>Host uptime since boot, formatted as days/hours/minutes.</p>
-          </div>
-          <div class="card">
-            <div class="card-icon">📈</div>
-            <h4>Load Average</h4>
-            <p>Classic 1 / 5 / 15-minute load averages from the OS.</p>
-          </div>
-          <div class="card">
-            <div class="card-icon">🧠</div>
-            <h4>Memory</h4>
-            <p>Used vs. total host memory with a live progress bar.</p>
-          </div>
-          <div class="card">
-            <div class="card-icon">⚙️</div>
-            <h4>CPU Cores</h4>
-            <p>Detected logical CPU count — useful when sizing cluster mode.</p>
-          </div>
-        </div>
-
-        <ul>
-          <li><strong>Search bar</strong> — filter processes by name or ID as you type.</li>
-          <li><strong>All Processes dropdown</strong> — narrow by status or namespace.</li>
-          <li><strong>Active / total counter</strong> — top-right summary of online vs. stopped.</li>
-          <li>Each process card shows status, CPU %, memory, uptime, restarts, and action buttons.</li>
-        </ul>
-      </section>
-
-      <!-- Monitoring -->
-      <section id="monitoring">
-        <span class="section-anchor"></span>
-        <h2 class="section-title">
-          <span class="section-icon"><i class="fas fa-microchip"></i></span>
-          Monitoring
-        </h2>
-
-        <p>Real-time CPU, memory, and uptime per process. All values update live via WebSocket — no manual refresh required.</p>
-
-        <div class="shot">
-          <div class="shot-bar">
-            <span class="shot-dot r"></span><span class="shot-dot y"></span><span class="shot-dot g"></span>
-            <span class="shot-url">localhost:3101/monit</span>
-          </div>
-          <img src="../screenshots/02-monitoring.png" alt="Process Monitor showing total, online, CPU peak and memory peak cards">
-          <div class="shot-caption">Process Monitor — aggregate cards above a sortable per-process table.</div>
-        </div>
-
-        <ul>
-          <li><strong>Total / Online</strong> — count of registered and running processes.</li>
-          <li><strong>CPU Peak</strong> — highest CPU-consuming process right now.</li>
-          <li><strong>Memory Peak</strong> — highest RSS with the process name labelled below.</li>
-          <li><strong>Sortable table</strong> — click any column header to sort by ID, Name, Status, CPU, Memory, Uptime, or Restarts.</li>
-          <li><strong>Refresh icon</strong> — force an immediate poll (top-right).</li>
-        </ul>
-
-        <div class="callout callout-info">
-          <i class="fas fa-info-circle"></i>
-          <div>CPU usage above <strong>80%</strong> turns the bar red; 60–80% shows orange. Memory thresholds follow the same colour pattern.</div>
-        </div>
-      </section>
-
-      <!-- Remote Servers -->
-      <section id="remote">
-        <span class="section-anchor"></span>
-        <h2 class="section-title">
-          <span class="section-icon"><i class="fas fa-server"></i></span>
-          Remote Servers
-        </h2>
-
-        <p>Manage PM2 instances on other machines over SSH — no agent installation needed on the remote side, just PM2 and SSH access.</p>
-
-        <div class="shot">
-          <div class="shot-bar">
-            <span class="shot-dot r"></span><span class="shot-dot y"></span><span class="shot-dot g"></span>
-            <span class="shot-url">localhost:3101/remote</span>
-          </div>
-          <img src="../screenshots/03-remote-servers.png" alt="Remote Servers page for managing SSH-connected PM2 hosts">
-          <div class="shot-caption">Remote Servers — add, edit and test SSH connections to remote PM2 hosts.</div>
-        </div>
-
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Field</th><th>Notes</th></tr></thead>
-            <tbody>
-              <tr><td>Name</td><td>Friendly label shown in the top-bar server switcher</td></tr>
-              <tr><td>Host</td><td>IP address or hostname of the remote server</td></tr>
-              <tr><td>Port</td><td>SSH port (default: 22)</td></tr>
-              <tr><td>Username</td><td>SSH user — must have PM2 access</td></tr>
-              <tr><td>Auth type</td><td>Password or private key (PEM format)</td></tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="callout callout-success">
-          <i class="fas fa-shield-alt"></i>
-          <div>Passwords are encrypted at rest using <strong>AES-256-GCM</strong> before being saved. Private keys are never stored — only referenced by path.</div>
-        </div>
-
-        <div class="callout callout-warning">
-          <i class="fas fa-exclamation-triangle"></i>
-          <div>PM2 must be installed on the remote machine and reachable in the SSH user's <code>PATH</code>. Use the built-in <em>Install PM2</em> button if detection fails.</div>
-        </div>
-      </section>
-
-      <!-- Deploy App -->
-      <section id="deploy">
-        <span class="section-anchor"></span>
-        <h2 class="section-title">
-          <span class="section-icon"><i class="fas fa-upload"></i></span>
-          Deploy App
-        </h2>
-
-        <p>Start a new PM2-managed process from a structured form — no terminal needed.</p>
-
-        <div class="shot">
-          <div class="shot-bar">
-            <span class="shot-dot r"></span><span class="shot-dot y"></span><span class="shot-dot g"></span>
-            <span class="shot-url">localhost:3101/deploy</span>
-          </div>
-          <img src="../screenshots/04-deploy-app.png" alt="Deploy Application form with Basic Info, Runtime and Environment Variables sections">
-          <div class="shot-caption">Deploy Application — Basic Info, Runtime and Environment Variables panels.</div>
-        </div>
-
-        <div class="steps">
-          <div class="step">
-            <div class="step-num">1</div>
-            <div class="step-body">
-              <h4>Fill in Basic Info</h4>
-              <p>Choose the app type (Node.js, Python, Bash, .NET…), name, namespace, entry file, and optional working directory.</p>
-            </div>
-          </div>
-          <div class="step">
-            <div class="step-num">2</div>
-            <div class="step-body">
-              <h4>Configure Runtime</h4>
-              <p>Set instance count, exec mode (Fork / Cluster), memory cap and port. Toggle <em>Auto Restart</em>, <em>Watch for Changes</em>, or <em>Auto Setup on Deploy</em> as needed.</p>
-            </div>
-          </div>
-          <div class="step">
-            <div class="step-num">3</div>
-            <div class="step-body">
-              <h4>Add environment variables</h4>
-              <p>Use the key / value inputs to add one variable at a time — press <em>Add</em> or Enter.</p>
-            </div>
-          </div>
-          <div class="step">
-            <div class="step-num">4</div>
-            <div class="step-body">
-              <h4>Click Deploy</h4>
-              <p>The process starts under PM2 and appears immediately on the Processes page.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- PM2 Modules -->
-      <section id="modules">
-        <span class="section-anchor"></span>
-        <h2 class="section-title">
-          <span class="section-icon"><i class="fas fa-puzzle-piece"></i></span>
-          PM2 Modules
-        </h2>
-
-        <p>Install and manage official and community PM2 modules (equivalent to <code>pm2 install &lt;module&gt;</code>).</p>
-
-        <div class="shot">
-          <div class="shot-bar">
-            <span class="shot-dot r"></span><span class="shot-dot y"></span><span class="shot-dot g"></span>
-            <span class="shot-url">localhost:3101/modules</span>
-          </div>
-          <img src="../screenshots/05-pm2-modules.png" alt="PM2 Modules management page">
-          <div class="shot-caption">PM2 Modules — browse, install and configure modules like pm2-logrotate.</div>
-        </div>
-
-        <ul>
-          <li>Browse popular modules (<code>pm2-logrotate</code>, <code>pm2-server-monit</code>, <code>pm2-auto-pull</code>, etc.).</li>
-          <li>Install / uninstall / enable / disable modules with a single click.</li>
-          <li>Edit module configuration inline — changes apply without restarting PM2.</li>
-        </ul>
-      </section>
-
-      <!-- Ecosystem Config -->
-      <section id="ecosystem">
-        <span class="section-anchor"></span>
-        <h2 class="section-title">
-          <span class="section-icon"><i class="fas fa-file-code"></i></span>
-          Ecosystem Config
-        </h2>
-
-        <p>Edit, preview and generate your <code>ecosystem.config.js</code> file from a structured editor.</p>
-
-        <div class="shot">
-          <div class="shot-bar">
-            <span class="shot-dot r"></span><span class="shot-dot y"></span><span class="shot-dot g"></span>
-            <span class="shot-url">localhost:3101/ecosystem</span>
-          </div>
-          <img src="../screenshots/06-ecosystem-config.png" alt="Ecosystem Config generator and editor">
-          <div class="shot-caption">Ecosystem Config — form-driven editor with live file preview.</div>
-        </div>
-
-        <ul>
-          <li>Visual editor for the <code>apps</code> array — add, remove and reorder entries.</li>
-          <li>Deploy section for staging and production targets (host, user, ref, post-deploy hooks).</li>
-          <li>Export to disk, copy to clipboard, or generate a sample skeleton.</li>
-        </ul>
-
-        <div class="callout callout-info">
-          <i class="fas fa-info-circle"></i>
-          <div>You can also generate a starter ecosystem file from the CLI: <code>ezpm2gui-generate-ecosystem</code>.</div>
-        </div>
-      </section>
-
-      <!-- Cluster -->
-      <section id="cluster">
-        <span class="section-anchor"></span>
-        <h2 class="section-title">
-          <span class="section-icon"><i class="fas fa-network-wired"></i></span>
-          Cluster
-        </h2>
-
-        <p>Scale a single app across multiple CPU cores with zero-downtime reloads.</p>
-
-        <div class="shot">
-          <div class="shot-bar">
-            <span class="shot-dot r"></span><span class="shot-dot y"></span><span class="shot-dot g"></span>
-            <span class="shot-url">localhost:3101/cluster</span>
-          </div>
-          <img src="../screenshots/07-cluster.png" alt="Cluster Management page">
-          <div class="shot-caption">Cluster Management — scale instance count and switch between fork and cluster mode.</div>
-        </div>
-
-        <ul>
-          <li>Pick an app, then slide the instance count up or down.</li>
-          <li>Switch Exec Mode between <strong>Fork</strong> and <strong>Cluster</strong>.</li>
-          <li>View per-instance CPU/memory breakdown for the selected app.</li>
-          <li>Use <em>Reload</em> for rolling, zero-downtime restarts.</li>
-        </ul>
-      </section>
-
-      <!-- Cron Jobs -->
-      <section id="cron">
-        <span class="section-anchor"></span>
-        <h2 class="section-title">
-          <span class="section-icon"><i class="fas fa-clock"></i></span>
-          Cron Jobs
-        </h2>
-
-        <p>Schedule recurring tasks without editing crontab — jobs are stored and executed by the EZ PM2 GUI server.</p>
-
-        <div class="shot">
-          <div class="shot-bar">
-            <span class="shot-dot r"></span><span class="shot-dot y"></span><span class="shot-dot g"></span>
-            <span class="shot-url">localhost:3101/cron-jobs</span>
-          </div>
-          <img src="../screenshots/08-cron-jobs.png" alt="Cron Jobs page with two example jobs">
-          <div class="shot-caption">Cron Jobs — schedule counters at the top, enable/disable toggles on each row.</div>
-        </div>
-
-        <div class="card-grid">
-          <div class="card">
-            <div class="card-icon">🕐</div>
-            <h4>Schedule</h4>
-            <p>Standard 5-field cron expressions (seconds-precision supported).</p>
-          </div>
-          <div class="card">
-            <div class="card-icon">💻</div>
-            <h4>Command types</h4>
-            <p>Shell, Node.js, Python, and .NET executables.</p>
-          </div>
-          <div class="card">
-            <div class="card-icon">📋</div>
-            <h4>Run log</h4>
-            <p>Exit code, stdout and stderr saved per execution for review.</p>
-          </div>
-        </div>
-
-        <div class="callout callout-warning">
-          <i class="fas fa-exclamation-triangle"></i>
-          <div>Cron jobs run as the same OS user as the EZ PM2 GUI server. Ensure that user has permission to execute the configured commands.</div>
-        </div>
-      </section>
-
-      <!-- Load Balancing -->
-      <section id="load-balancing">
-        <span class="section-anchor"></span>
-        <h2 class="section-title">
-          <span class="section-icon"><i class="fas fa-balance-scale"></i></span>
-          Load Balancing
-        </h2>
-
-        <p>Interactive guide to setting up load balancing with PM2's cluster mode, sticky sessions, and graceful reloads.</p>
-
-        <div class="shot">
-          <div class="shot-bar">
-            <span class="shot-dot r"></span><span class="shot-dot y"></span><span class="shot-dot g"></span>
-            <span class="shot-url">localhost:3101/load-balancing-guide</span>
-          </div>
-          <img src="../screenshots/09-load-balancing.png" alt="Load Balancing guide page">
-          <div class="shot-caption">Load Balancing — explanation of cluster mode with copyable command snippets.</div>
-        </div>
-
-        <ul>
-          <li>Use the number of instances equal to your CPU core count for CPU-bound apps.</li>
-          <li>Use more instances than cores for I/O-bound apps.</li>
-          <li>Always use <strong>cluster mode</strong> for port-sharing between instances.</li>
-          <li>Use <em>Reload</em> (not <em>Restart</em>) for zero-downtime deployments.</li>
-        </ul>
-      </section>
-
-      <!-- Log Streaming -->
-      <section id="logs">
-        <span class="section-anchor"></span>
-        <h2 class="section-title">
-          <span class="section-icon"><i class="fas fa-stream"></i></span>
-          Log Streaming
-        </h2>
-
-        <p>Follow <code>stdout</code> and <code>stderr</code> in real time for any process.</p>
-
-        <div class="shot">
-          <div class="shot-bar">
-            <span class="shot-dot r"></span><span class="shot-dot y"></span><span class="shot-dot g"></span>
-            <span class="shot-url">localhost:3101/logs</span>
-          </div>
-          <img src="../screenshots/10-log-streaming.png" alt="Log Streaming page">
-          <div class="shot-caption">Log Streaming — pick a process, tail output live over WebSocket.</div>
-        </div>
-
-        <ul>
-          <li>Select a process from the dropdown.</li>
-          <li>Toggle between <code>stdout</code> and <code>stderr</code>.</li>
-          <li>Adjust the line buffer (50 / 200 / 500 / All) — default in Settings.</li>
-          <li>Pause / resume the stream, filter by keyword, or download the full log file.</li>
-        </ul>
-
-        <div class="callout callout-warning">
-          <i class="fas fa-exclamation-triangle"></i>
-          <div>Log paths are read from PM2's process descriptor. If PM2 was started without log paths configured, logs may be unavailable.</div>
-        </div>
-      </section>
-
-      <!-- Settings -->
-      <section id="settings">
-        <span class="section-anchor"></span>
-        <h2 class="section-title">
-          <span class="section-icon"><i class="fas fa-cog"></i></span>
-          Settings
-        </h2>
-
-        <p>Application-wide preferences, auto-saved as you change them.</p>
-
-        <div class="shot">
-          <div class="shot-bar">
-            <span class="shot-dot r"></span><span class="shot-dot y"></span><span class="shot-dot g"></span>
-            <span class="shot-url">localhost:3101/settings</span>
-          </div>
-          <img src="../screenshots/11-settings.png" alt="Settings page showing General, Appearance, PM2, Advanced, Updates and Security tabs">
-          <div class="shot-caption">Settings — sections in the left rail, auto-saved on change.</div>
-        </div>
-
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Section</th><th>What you can change</th></tr></thead>
-            <tbody>
-              <tr><td><strong>General</strong></td><td>Auto refresh toggle, refresh interval, log line count, timestamp display</td></tr>
-              <tr><td><strong>Appearance</strong></td><td>Light / dark mode, accent colour</td></tr>
-              <tr><td><strong>PM2</strong></td><td>Daemon connection options</td></tr>
-              <tr><td><strong>Advanced</strong></td><td>Low-level flags for power users</td></tr>
-              <tr><td><strong>Updates</strong></td><td>Check for and install a newer <code>ezpm2gui</code> version from npm</td></tr>
-              <tr><td><strong>Security</strong></td><td>PIN, password, and auto-lock timeout</td></tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="subsection" id="updates">
-          <h3><span class="dot"></span> Checking for Updates</h3>
-          <p>Go to <strong>Settings &rarr; Updates</strong> and click <em>Check for Updates</em>. EZ PM2 GUI queries the npm registry and compares your installed version against the latest published release.</p>
-          <p>If an update is available, an <strong>Install</strong> button appears. Installation runs <code>npm install -g ezpm2gui@latest</code> and streams output live. After a successful install, click <em>Restart Server</em> to apply.</p>
-          <div class="callout callout-info">
-            <i class="fas fa-info-circle"></i>
-            <div>A pulsing yellow badge also appears in the top navbar whenever a newer version is detected (checked automatically 4 seconds after page load).</div>
-          </div>
-        </div>
-
-        <div class="subsection" id="theme">
-          <h3><span class="dot"></span> Theme</h3>
-          <p>Click the <i class="fas fa-moon"></i> / <i class="fas fa-sun"></i> icon in the top navigation bar to toggle between <strong>dark</strong> and <strong>light</strong> mode. Your preference is saved and applied instantly across all pages.</p>
-        </div>
-      </section>
-
-      <!-- FAQ -->
-      <section id="faq">
-        <span class="section-anchor"></span>
-        <h2 class="section-title">
-          <span class="section-icon"><i class="fas fa-question-circle"></i></span>
-          FAQ
-        </h2>
-
-        <div class="subsection">
-          <h3><span class="dot"></span> EZ PM2 GUI says "PM2 not connected" on startup</h3>
-          <p>This usually means PM2 has no running processes. Start at least one process with <code>pm2 start &lt;app&gt;</code> and refresh the page.</p>
-        </div>
-
-        <div class="subsection">
-          <h3><span class="dot"></span> Remote server shows "PM2 not found"</h3>
-          <p>PM2 is installed in a non-standard PATH on the remote machine. EZ PM2 GUI tries several detection methods automatically. If all fail, use the <em>Install PM2</em> button in the connection settings, or SSH in manually and run <code>npm install -g pm2</code>.</p>
-        </div>
-
-        <div class="subsection">
-          <h3><span class="dot"></span> Can I run multiple instances of EZ PM2 GUI?</h3>
-          <p>Yes — set a different port with the <code>PORT</code> environment variable: <code>PORT=3102 ezpm2gui</code>.</p>
-        </div>
-
-        <div class="subsection">
-          <h3><span class="dot"></span> How do I run EZ PM2 GUI as a system service?</h3>
-          <p>On Linux, copy <code>ezpm2gui.service</code> to <code>/etc/systemd/system/</code>, then run:</p>
-          <pre><code>sudo systemctl daemon-reload
-sudo systemctl enable --now ezpm2gui</code></pre>
-          <p>On Windows, run <code>install-windows-service.js</code> with Node.js (requires administrator privileges).</p>
-        </div>
-
-        <div class="subsection">
-          <h3><span class="dot"></span> Where are config files stored?</h3>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>File</th><th>Purpose</th></tr></thead>
-              <tbody>
-                <tr><td><code>src/server/config/remote-connections.json</code></td><td>Remote SSH connections (passwords AES-256 encrypted)</td></tr>
-                <tr><td><code>src/server/config/project-configs.json</code></td><td>Deployment project definitions</td></tr>
-                <tr><td><code>src/server/config/cron-jobs.json</code></td><td>Scheduled cron job definitions</td></tr>
-                <tr><td><code>src/server/config/auth.json</code></td><td>PIN / password hashes and auto-lock settings</td></tr>
-                <tr><td><code>src/server/logs/deployment.log</code></td><td>Deployment history log</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-      </section>
-    </main>
+<section id="demo"><h2 class="section-title">Watch the demo</h2>
+<p>A 66-second walkthrough of the dashboard, process restart, live metrics, log search, deployment form, and appearance settings, with voiceover and soft background music.</p>
+<div class="demo-video"><iframe src="https://www.youtube-nocookie.com/embed/u1ckawU-sg4" title="EZ PM2 GUI demo with voiceover" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div><p><a href="https://youtu.be/u1ckawU-sg4" target="_blank" rel="noopener">Watch the demo on YouTube ↗</a></p>
+<p>Screenshots below show v1.11.4 using three isolated sample processes. The remote-history screenshot shows the real empty state before a remote server is connected; it does not contain simulated history. Example forms are shown before submission.</p>
+</section>
+
+<section id="getting-started"><h2 class="section-title">Getting Started</h2>
+<h3 id="installation">Installation</h3>
+<p>Use <strong>Node.js 24</strong>, the runtime tested with this checkout. Older Node.js 16/18 instructions do not match the current native SQLite dependency. PM2 must be installed and available on the server process’s <strong>PATH</strong>.</p>
+<pre><code>npm install -g pm2
+npm install -g ezpm2gui
+ezpm2gui</code></pre>
+<p>For a local project dependency, run <code>npm install ezpm2gui</code> followed by <code>npx ezpm2gui</code>. Run the GUI as the same operating-system user, with the same <code>PM2_HOME</code>, as the PM2 processes you want to manage.</p>
+<h3 id="first-launch">First Launch</h3>
+<ol><li>Open <code>http://localhost:3101</code> after the server reports that it is listening.</li><li>If PM2 has no processes, start an existing application with <code>pm2 start path/to/app.js --name my-app</code>. An empty process list is valid; it does not mean the daemon is disconnected.</li><li>On a fresh installation without a password, the dashboard opens directly. Configure access under <strong>Settings → Security</strong> if required.</li></ol>
+<h3 id="configuration">Host, port, and configuration</h3>
+<p>Configure the server with environment variables. The current CLI does not parse <code>--port</code> or <code>--host</code> options. The server also reads <code>.env.local</code>, then <code>.env</code>, from the working directory.</p>
+<pre><code>HOST=127.0.0.1 PORT=3102 ezpm2gui</code></pre>
+<pre><code>$env:HOST=&quot;127.0.0.1&quot;
+$env:PORT=&quot;3102&quot;
+ezpm2gui</code></pre>
+<div class="table-wrap"><table><thead><tr><th scope="col">Variable</th><th scope="col">Purpose</th></tr></thead><tbody><tr><td>HOST</td><td>Listen address; defaults to localhost.</td></tr><tr><td>PORT</td><td>Listen port; defaults to 3101.</td></tr><tr><td>PM2_HOME</td><td>Choose the PM2 daemon and process data directory.</td></tr><tr><td>EZPM2GUI_SECRET</td><td>Operator-supplied encryption secret for stored SSH credentials. Keep it stable and back it up separately.</td></tr></tbody></table></div>
+<p>The production browser client uses the server’s origin. You do not need to rebuild the client just to change the server port. Before exposing the server to other machines, configure authentication and HTTPS access.</p>
+<h3 id="lock-screen">Password, PIN, and Lock Screen</h3>
+<figure class="shot"><img src="../screenshots/15-security.png" alt="Settings → Security on a fresh installation, before password protection is enabled." loading="lazy" width="1280" height="720"><figcaption class="shot-caption">Settings → Security on a fresh installation, before password protection is enabled.</figcaption></figure>
+<ol><li>Enter and confirm a password under <strong>Settings → Security</strong>, then click <strong>Enable</strong>. The current minimum is four characters.</li><li>After setting a password, optionally add a <strong>four-digit PIN</strong>. A PIN cannot be configured before a password.</li><li>Use the lock control in the top bar to lock immediately. At the lock screen, enter the password or configured PIN; a complete PIN submits automatically.</li><li>Choose an idle auto-lock timeout and click <strong>Save</strong>. The default is <strong>0 (disabled)</strong>.</li></ol>
+<p>Security changes use their explicit Enable/Save/Remove controls. They are not all auto-saved like appearance preferences.</p>
+<h3 id="docker">Run with Docker</h3>
+<p>Build the image from the repository root. This runs a separate PM2 environment inside the container; mounting a host PM2 folder does not make host processes portable into it.</p>
+<pre><code>docker build -t ezpm2gui:local .
+docker run --name ezpm2gui -p 127.0.0.1:3101:3101 \
+  -v ezpm2gui-pm2:/app/.pm2 \
+  -v ezpm2gui-config:/app/dist/server/config \
+  -v ezpm2gui-uploads:/app/uploads \
+  ezpm2gui:local</code></pre>
+<p>The image runs as a non-root user. Application code, runtimes, and writable directories must be available inside the container. Use <strong>Remote Servers</strong> for an existing PM2 installation on another host.</p>
+</section>
+
+<section id="processes"><h2 class="section-title">Processes (Dashboard)</h2>
+<p>Open <strong>Processes</strong> for the active server’s process list. Status cards show online, stopped, errored, and total counts alongside system uptime, load averages, memory, and CPU cores.</p>
+<figure class="shot"><img src="../screenshots/01-processes.png" alt="Process dashboard with three running sample services and live resource readings." loading="lazy" width="1280" height="720"><figcaption class="shot-caption">Process dashboard with three running sample services and live resource readings.</figcaption></figure>
+<ul><li>Search by process <strong>name or ID</strong>. The status dropdown offers All, Online, Stopped, and Errored; namespace appears as a label beside the process name.</li><li>Each row shows status, PID, CPU, memory, uptime, restart count, and execution mode.</li><li>Use <strong>Details</strong>, <strong>Logs</strong>, and the start/stop/restart/delete actions on a row. Read any confirmation before applying it.</li><li>The sidebar groups processes by server. Click a process name for logs; hover a process row for its restart/start and log shortcuts.</li><li>The top bar includes the server selector, security status, What’s New, About, Settings, theme toggle, and the English/Nepali/Chinese language selector.</li></ul>
+</section>
+
+<section id="monitoring"><h2 class="section-title">Process Details</h2>
+<p>Choose <strong>Details</strong> on a process row. The process page combines current resource use, restart count, start time, management controls, and four tabs.</p>
+<figure class="shot"><img src="../screenshots/14-process-detail.png" alt="A sample process’s Metrics tab with current CPU and memory and time-series charts." loading="lazy" width="1280" height="720"><figcaption class="shot-caption">A sample process’s Metrics tab with current CPU and memory and time-series charts.</figcaption></figure>
+<div class="table-wrap"><table><thead><tr><th scope="col">Tab</th><th scope="col">What it shows</th></tr></thead><tbody><tr><td>Details</td><td>Namespace, execution mode, instances, script path, and environment variables.</td></tr><tr><td>Logs</td><td>Process output for diagnosis.</td></tr><tr><td>Log Files</td><td>Browse available log files for the selected process.</td></tr><tr><td>Metrics</td><td>Current CPU and memory with recent performance charts.</td></tr></tbody></table></div>
+<p>Environment variables can contain credentials, so review them before sharing a screenshot. For the broader monitoring view, use <strong>Metrics</strong> in the sidebar. The current navigation does not have a separate <code>/monit</code> page.</p>
+</section>
+
+<section id="metrics"><h2 class="section-title">Metrics: Live and History</h2>
+<h3 id="metrics-live">Live metrics</h3>
+<figure class="shot"><img src="../screenshots/12-metrics-live.png" alt="Metrics → Live: process sparklines on the left, CPU and memory charts for the selected process on the right." loading="lazy" width="1280" height="720"><figcaption class="shot-caption">Metrics → Live: process sparklines on the left, CPU and memory charts for the selected process on the right.</figcaption></figure>
+<ol><li>Open <strong>Metrics → Live</strong> and select a process from the left-hand list.</li><li>Read the CPU and memory charts and their minimum, average, and maximum values. New samples arrive with the live process updates, normally every three seconds.</li><li>Drag the divider to resize the process list and chart panels.</li></ol>
+<p>The live buffer holds up to <strong>1,200 samples</strong>—about one hour at three-second intervals. It builds while this view is open and is not a persisted recording; reopening the page starts a new buffer.</p>
+<h3 id="metrics-history">Recorded remote history</h3>
+<figure class="shot"><img src="../screenshots/13-metrics-history.png" alt="Metrics → History before a remote connection has recorded its first sample." loading="lazy" width="1280" height="720"><figcaption class="shot-caption">Metrics → History before a remote connection has recorded its first sample.</figcaption></figure>
+<ol><li>Add and connect a server in <strong>Remote Servers</strong>.</li><li>Keep the GUI server and remote connection running. The background collector records remote process CPU and memory every <strong>30 seconds</strong>.</li><li>Open <strong>Metrics → History</strong>, choose a <strong>Connection</strong>, then a <strong>Process</strong>.</li><li>Choose <strong>30 min, 1 hr, 6 hr, 12 hr, 24 hr, or 7 days</strong>. Use <strong>Refresh</strong>, or turn on the separate <strong>Auto-refresh (30s)</strong> control.</li></ol>
+<p>Recorded remote history is stored in <code>remote-metrics.db</code> under the running server’s config directory. The database prunes samples older than 30 days at startup. Local live samples do not automatically appear in this remote-history selector. A new connection needs a collection cycle before data appears.</p>
+</section>
+
+<section id="remote"><h2 class="section-title">Remote Servers</h2>
+<p>Manage an existing PM2 installation over SSH. The remote host needs SSH access, the required application runtimes, and PM2 available to the SSH user.</p>
+<figure class="shot"><img src="../screenshots/03-remote-servers.png" alt="Remote Connections before adding a host." loading="lazy" width="1280" height="720"><figcaption class="shot-caption">Remote Connections before adding a host.</figcaption></figure>
+<figure class="shot"><img src="../screenshots/17-remote-connection-form.png" alt="Add Remote Connection with example host details; no credentials entered or connection submitted." loading="lazy" width="1280" height="720"><figcaption class="shot-caption">Add Remote Connection with example host details; no credentials entered or connection submitted.</figcaption></figure>
+<ol><li>Click <strong>Add Connection</strong> and provide a friendly name, hostname, SSH port (default 22), and username.</li><li>Supply a password or paste a private key. Enable sudo only when the remote actions require it and the account supports it.</li><li>Save the connection, then connect. Follow the PM2 detection/install controls if PM2 is unavailable.</li><li>Select the connected host in the top-bar server switcher to inspect its dashboard and live metrics. Use its sidebar process entries to open remote logs.</li></ol>
+<p>The server selector applies to the process dashboard, process details, live metrics, and remote log routes. <strong>Deploy App, PM2 Modules, Ecosystem Config, Cluster, and Cron Jobs use the local GUI server’s management endpoints</strong> in this version; switching hosts does not redirect all management tools.</p>
+<p>Passwords, pasted private keys, and passphrases are stored encrypted on the GUI server using AES-256-CBC. The browser encrypts credential submissions with RSA-OAEP plus AES-256-GCM; the GUI server decrypts them to establish SSH sessions. Set <code>EZPM2GUI_SECRET</code> before saving connections. Private keys are stored as encrypted content, not merely referenced by path.</p>
+</section>
+
+<section id="deploy"><h2 class="section-title">Deploy App</h2>
+<figure class="shot"><img src="../screenshots/04-deploy-app.png" alt="Deployment form with a sample Node.js application and NODE_ENV variable, before deployment." loading="lazy" width="1276" height="718"><figcaption class="shot-caption">Deployment form with a sample Node.js application and NODE_ENV variable, before deployment.</figcaption></figure>
+<ol><li>Choose <strong>node.js</strong>, <strong>python</strong>, <strong>.net</strong>, or <strong>other</strong> under Type.</li><li>Enter the application name, optional namespace, entry file, and working directory. Paths refer to the machine running the GUI server, not the browser’s computer.</li><li>Set instances, fork/cluster execution mode, maximum memory, and port. Review <strong>autorestart</strong>, <strong>watch</strong>, and <strong>auto_setup</strong>.</li><li>Add environment variables with the key/value fields and <strong>add</strong>. Automatic setup can install dependencies or build the project; review the selected project before enabling it.</li><li>Click <strong>deploy</strong> when ready, then verify the process status and logs. <strong>esc</strong> leaves the form.</li></ol>
+<p>This form starts code already accessible to the server. It does not upload your application from the browser.</p>
+</section>
+
+<section id="modules"><h2 class="section-title">PM2 Modules</h2>
+<figure class="shot"><img src="../screenshots/05-pm2-modules.png" alt="Installed modules and the available module catalogue." loading="lazy" width="1280" height="720"><figcaption class="shot-caption">Installed modules and the available module catalogue.</figcaption></figure>
+<ul><li>Install a listed module such as <code>pm2-logrotate</code>, or use <strong>install module</strong> to enter a package name.</li><li>Installed modules show status and configuration controls. Open the configuration panel, edit values, then save.</li><li>Use <strong>Refresh</strong> to reload the installed list and <strong>Uninstall</strong> to remove a module. The current page does not provide enable/disable toggles.</li><li>Module installation affects the local PM2 environment and may run package installation scripts.</li></ul>
+</section>
+
+<section id="ecosystem"><h2 class="section-title">Ecosystem Config</h2>
+<figure class="shot"><img src="../screenshots/06-ecosystem-config.png" alt="Ecosystem Generator: output path, stopped-process option, preview, and file generation." loading="lazy" width="1280" height="720"><figcaption class="shot-caption">Ecosystem Generator: output path, stopped-process option, preview, and file generation.</figcaption></figure>
+<ol><li>Choose whether to include stopped processes.</li><li>Click <strong>Preview</strong> to inspect the generated <code>apps</code> configuration from the current local PM2 process list.</li><li>Copy the preview, or set a save path and choose <strong>Generate File</strong> / <strong>Save File</strong>. The output is saved on the server; an empty path uses its working directory.</li></ol>
+<p>This is a generator from existing processes, not a structured editor for deployment targets. Review environment values before sharing the resulting file. The CLI command below instead writes a fixed starter example:</p>
+<pre><code>ezpm2gui-generate-ecosystem ecosystem.config.js
+pm2 start ecosystem.config.js</code></pre>
+</section>
+
+<section id="cluster"><h2 class="section-title">Cluster</h2>
+<figure class="shot"><img src="../screenshots/07-cluster.png" alt="Cluster controls for the selected sample process; no scale or mode change applied." loading="lazy" width="1280" height="720"><figcaption class="shot-caption">Cluster controls for the selected sample process; no scale or mode change applied.</figcaption></figure>
+<ol><li>Select a local process from the dropdown.</li><li>Set an instance count with the numeric field or plus/minus buttons, then click <strong>Scale</strong>.</li><li>Use <strong>Switch to Cluster</strong> or <strong>Switch to Fork</strong> to change execution mode.</li><li>For a compatible clustered Node.js application, use <strong>Graceful Reload</strong> to replace workers progressively.</li></ol>
+<p>Mode changes and scaling affect running processes. A graceful reload still depends on application readiness and shutdown handling; it is not an unconditional guarantee of zero downtime.</p>
+</section>
+
+<section id="cron"><h2 class="section-title">Cron Jobs</h2>
+<figure class="shot"><img src="../screenshots/08-cron-jobs.png" alt="Cron Jobs before creating a scheduled task." loading="lazy" width="1280" height="720"><figcaption class="shot-caption">Cron Jobs before creating a scheduled task.</figcaption></figure>
+<figure class="shot"><img src="../screenshots/18-cron-job-form.png" alt="An unsaved Node.js job showing its name, script type, and inline script editor." loading="lazy" width="1280" height="720"><figcaption class="shot-caption">An unsaved Node.js job showing its name, script type, and inline script editor.</figcaption></figure>
+<ol><li>Choose <strong>Create Job</strong>, name the task, and choose whether it is enabled.</li><li>Choose Node.js, Python, Shell Script, or .NET, then an inline script or an existing script file.</li><li>Pick a schedule preset or edit the five fields: <strong>minute hour day-of-month month day-of-week</strong>. <code>0 * * * *</code> runs hourly; <code>*/5 * * * *</code> runs every five minutes.</li><li>Review the next-run preview, arguments, and environment variables, then create the job.</li><li>Use the job list to enable/disable, start/stop, edit, or delete a task. Inspect its associated PM2 process logs for output.</li></ol>
+<p>The server stores job definitions and configures PM2 with <code>cron_restart</code> and <code>autorestart: false</code>. Creating or enabling a job starts its PM2 process, so it can execute immediately as well as on the cron schedule. Scripts run with the GUI server’s OS permissions and should exit when complete. The page does not provide a separate per-execution results archive.</p>
+</section>
+
+<section id="load-balancing"><h2 class="section-title">Load Balancing</h2>
+<figure class="shot"><img src="../screenshots/09-load-balancing.png" alt="The in-app guide’s setup section showing multiple instances and cluster mode." loading="lazy" width="1280" height="720"><figcaption class="shot-caption">The in-app guide’s setup section showing multiple instances and cluster mode.</figcaption></figure>
+<p>Expand the explanations and setup examples, then use <strong>Go to Cluster Management</strong> for the controls. Node.js cluster workers share a listening port. Choose a worker count appropriate to available CPU and memory, and test how the application handles sessions and graceful shutdown.</p>
+</section>
+
+<section id="logs"><h2 class="section-title">Log Streaming</h2>
+<figure class="shot"><img src="../screenshots/10-log-streaming.png" alt="Live stdout from api-gateway with matching health-check text highlighted." loading="lazy" width="1280" height="720"><figcaption class="shot-caption">Live stdout from api-gateway with matching health-check text highlighted.</figcaption></figure>
+<ol><li>Click a process in the sidebar, or its <strong>Logs</strong> action in the process table.</li><li>Select <strong>Standard out</strong> or <strong>Standard err</strong>. Local logs stream over the socket; remote log views refresh through remote polling.</li><li>Use <strong>Filter logs…</strong> to narrow and highlight matching text. <strong>Stop Stream</strong>, <strong>Auto-scroll</strong>, and <strong>Refresh</strong> control the view.</li><li>Enter a <strong>from</strong> and/or <strong>to</strong> timestamp and click <strong>apply</strong> to view a historical snapshot. Incoming live updates pause while the range filter is active; clear the range to return to live output.</li><li>Use <strong>Download</strong> to save the loaded log text. <strong>Clear</strong> clears the viewer; it does not delete the log file on disk.</li></ol>
+<p>Date filtering needs timestamps that the viewer can parse. Lines without a timestamp inherit the preceding timestamp for multiline entries. If logs are missing, check PM2’s stdout/stderr paths and the GUI server’s file permissions.</p>
+</section>
+
+<section id="settings"><h2 class="section-title">Settings and Navigation</h2>
+<figure class="shot"><img src="../screenshots/11-settings.png" alt="General preferences: refresh controls, log line count, and timestamps." loading="lazy" width="1280" height="720"><figcaption class="shot-caption">General preferences: refresh controls, log line count, and timestamps.</figcaption></figure>
+<p>Most display preferences save in this browser. Security settings and updates use their own action buttons; they are not covered by the general auto-save label.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Section</th><th scope="col">Controls and behavior</th></tr></thead><tbody><tr><td>General</td><td>Auto refresh, interval, log line count (50–1000), and timestamp display.</td></tr><tr><td>Appearance</td><td>Compact mode and accent colour. Theme is toggled in the top bar.</td></tr><tr><td>PM2</td><td>A PM2 Path preference is saved locally. The backend still needs pm2 on its PATH; this preference does not repair a missing server executable.</td></tr><tr><td>Advanced</td><td>Reset preferences or clear browser local storage.</td></tr><tr><td>Updates</td><td>Check, install, and restart controls with installation output.</td></tr><tr><td>Security</td><td>Enable/change/remove password, optional PIN, and idle auto-lock timeout.</td></tr></tbody></table></div>
+<h3 id="theme">Appearance and language</h3>
+<figure class="shot"><img src="../screenshots/16-appearance.png" alt="Appearance controls for compact mode and accent colour." loading="lazy" width="1280" height="720"><figcaption class="shot-caption">Appearance controls for compact mode and accent colour.</figcaption></figure>
+<p>Use the top-bar sun/moon button for light or dark mode. The language button switches between <strong>English, Nepali, and Chinese</strong>. Preferences persist in the browser. <strong>What’s New</strong> shows release notes; <strong>About</strong> identifies the application version.</p>
+<h3 id="updates">Checking for Updates</h3>
+<p>Open <strong>Settings → Updates</strong> and click <strong>Check for Updates</strong>. If a newer package is available, use the install control and review the streamed output. Installation runs <code>npm install -g ezpm2gui@latest</code>, so the server user needs the appropriate npm permissions. Restart after a successful update. For a source checkout or container, rebuild/redeploy that installation instead of assuming a global npm update replaces it.</p>
+</section>
+
+<section id="faq"><h2 class="section-title">Troubleshooting and Data</h2>
+<h3 id="empty-processes">The process list is empty</h3>
+<p>Run <code>pm2 list</code> in the same OS account and with the same <code>PM2_HOME</code> as the GUI server. Check the active server selector. A connected daemon can legitimately have zero processes.</p>
+<h3 id="pm2-not-found">PM2 is not installed or not connected</h3>
+<p>Verify <code>pm2 --version</code> works in the server’s environment. Check its PATH, daemon access, directory permissions, and server logs. When running under a service manager, its PATH may differ from your interactive shell. The Settings → PM2 field alone does not change the backend PATH.</p>
+<h3 id="empty-history">History has no data</h3>
+<p>Connect a remote server and allow at least one 30-second collection cycle. Choose a connection, process, and a range covering the collection time. Local Live graphs are separate from stored remote history.</p>
+<h3 id="remote-pm2">Remote PM2 is not found</h3>
+<p>Verify SSH access and run <code>pm2 list</code> as the configured remote user. Ensure Node.js and PM2 are available in that user’s SSH environment; use the remote installation controls only if you intend to install PM2 there.</p>
+<h3 id="runtime-errors">SQLite or startup errors</h3>
+<p>Use Node.js 24 for this checkout. After changing Node versions, reinstall dependencies so the native SQLite module matches the runtime. For source builds, run <code>npm ci</code>, <code>npm test</code>, and <code>npm run build</code>, then <code>npm start</code>. Confirm that port 3101 is free or set <code>PORT</code>.</p>
+<h3 id="data-files">Where data is stored</h3>
+<p>Paths are relative to the running server code: <strong>dist/server/config/</strong> for a built/global installation, or <strong>src/server/config/</strong> when running the TypeScript development server. Preserve this directory when updating or moving an installation.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">File</th><th scope="col">Purpose</th></tr></thead><tbody><tr><td>auth.json</td><td>Password/PIN hashes and auto-lock settings.</td></tr><tr><td>remote-connections.json</td><td>Remote host settings and encrypted credentials.</td></tr><tr><td>project-configs.json</td><td>Project setup configuration.</td></tr><tr><td>cron-jobs.json and cron-scripts/</td><td>Scheduled task definitions and inline script files.</td></tr><tr><td>remote-metrics.db</td><td>SQLite history of connected remote processes.</td></tr></tbody></table></div>
+<p>PM2 process state and process logs live under the selected <code>PM2_HOME</code>. Browser preferences are stored in local storage. Back up the server config, PM2 data, and <code>EZPM2GUI_SECRET</code> together before migrations; changing the secret can prevent saved credentials from decrypting.</p>
+<h3 id="service">Running as a service</h3>
+<p>Configure a service manager to launch the installed CLI or built server as the intended PM2 user. Set its working directory, PATH, HOST, PORT, PM2_HOME, and encryption secret explicitly. Confirm the foreground command works before enabling automatic startup.</p>
+</section>
+</main>
   </div>
 
   <!-- Footer -->

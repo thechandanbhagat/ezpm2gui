@@ -1,0 +1,36 @@
+{
+  "timeline": [
+    {
+      "index": 1,
+      "title": "Every process. One clear view.",
+      "start": 4.508
+    },
+    {
+      "index": 2,
+      "title": "Take action with confidence.",
+      "start": 13.56
+    },
+    {
+      "index": 3,
+      "title": "Follow performance as it happens.",
+      "start": 21.597
+    },
+    {
+      "index": 4,
+      "title": "Get straight to the logs.",
+      "start": 32.642
+    },
+    {
+      "index": 5,
+      "title": "Configure your next service.",
+      "start": 41.699
+    },
+    {
+      "index": 6,
+      "title": "Make the workspace yours.",
+      "start": 51.754
+    }
+  ],
+  "browserErrors": [],
+  "duration": 65.688
+}

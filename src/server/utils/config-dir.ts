@@ -25,23 +25,23 @@ const MIGRATE_FILES = [
   'auth-tokens.json',
   'remote-connections.json',
   'cron-jobs.json',
-  'remote-metrics.db',
-  'remote-metrics.db-wal',
-  'remote-metrics.db-shm',
 ];
-
-let migrated = false;
+const MIGRATION_COMPLETE = '.ezpm2gui-migration-complete';
+const MIGRATION_PENDING = '.ezpm2gui-migration-in-progress';
+const RUNTIME_ENTRIES = [...MIGRATE_FILES, 'cron-scripts', 'remote-metrics.db', 'remote-metrics.db-wal', 'remote-metrics.db-shm'];
+const initializedDirs = new Set<string>();
 
 // @group Utilities : Absolute directory for runtime config files
 export function getConfigDir(): string {
   const fromEnv = process.env.EZPM2GUI_CONFIG_DIR?.trim();
   const dir = fromEnv ? path.resolve(fromEnv) : PACKAGE_CONFIG_DIR;
   fs.mkdirSync(dir, { recursive: true });
-
-  if (fromEnv && path.resolve(dir) !== path.resolve(PACKAGE_CONFIG_DIR)) {
-    migrateFromPackage(dir);
+  const canonicalDir = fs.realpathSync(dir);
+  const isPackageDir = fs.existsSync(PACKAGE_CONFIG_DIR) && canonicalDir === fs.realpathSync(PACKAGE_CONFIG_DIR);
+  if (fromEnv && !isPackageDir && !initializedDirs.has(canonicalDir)) {
+    migrateConfigDirectory(PACKAGE_CONFIG_DIR, dir);
+    initializedDirs.add(canonicalDir);
   }
-
   return dir;
 }
 
@@ -50,54 +50,51 @@ export function configPath(...parts: string[]): string {
   return path.join(getConfigDir(), ...parts);
 }
 
-// @group DatabaseOperations : Copy packaged runtime files into an empty override dir once
-function migrateFromPackage(destDir: string): void {
-  if (migrated) return;
-  migrated = true;
-  if (!fs.existsSync(PACKAGE_CONFIG_DIR)) return;
+// @group DatabaseOperations : Initialize an unused destination exactly once across restarts.
+export function migrateConfigDirectory(sourceDir: string, destDir: string): void {
+  fs.mkdirSync(destDir, { recursive: true });
+  const complete = path.join(destDir, MIGRATION_COMPLETE);
+  const pending = path.join(destDir, MIGRATION_PENDING);
+  if (fs.existsSync(complete)) return;
+  if (fs.existsSync(pending)) {
+    throw new Error(`Incomplete config migration in ${destDir}. Restore the config backup before retrying; startup stopped to preserve authentication.`);
+  }
+  if (RUNTIME_ENTRIES.some(name => fs.existsSync(path.join(destDir, name)))) {
+    // Never fill gaps in an existing store: a missing password may be intentional.
+    fs.writeFileSync(complete, 'Existing runtime state preserved.\n', { flag: 'wx', mode: 0o600 });
+    return;
+  }
 
-  let copied = 0;
+  // Fail closed if any copy fails. The marker also detects an interrupted copy on restart.
+  fs.writeFileSync(pending, 'Config migration in progress.\n', { flag: 'wx', mode: 0o600 });
   for (const name of MIGRATE_FILES) {
-    const src = path.join(PACKAGE_CONFIG_DIR, name);
-    const dest = path.join(destDir, name);
-    if (fs.existsSync(src) && !fs.existsSync(dest)) {
-      try {
-        fs.copyFileSync(src, dest);
-        copied += 1;
-      } catch (error) {
-        console.error(`Failed to migrate ${name} to ${destDir}:`, error);
-      }
+    const source = path.join(sourceDir, name);
+    if (fs.existsSync(source)) fs.copyFileSync(source, path.join(destDir, name), fs.constants.COPYFILE_EXCL);
+  }
+  const scripts = path.join(sourceDir, 'cron-scripts');
+  if (fs.existsSync(scripts)) copyDirectory(scripts, path.join(destDir, 'cron-scripts'));
+
+  const sourceDatabase = path.join(sourceDir, 'remote-metrics.db');
+  if (fs.existsSync(sourceDatabase)) {
+    // VACUUM INTO includes committed WAL data without copying transient WAL/SHM files.
+    const Database = require('better-sqlite3') as typeof import('better-sqlite3');
+    const db = new Database(sourceDatabase, { readonly: true, fileMustExist: true });
+    try {
+      const destination = path.join(destDir, 'remote-metrics.db').replace(/'/g, "''");
+      db.exec(`VACUUM INTO '${destination}'`);
+    } finally {
+      db.close();
     }
   }
-
-  const srcScripts = path.join(PACKAGE_CONFIG_DIR, 'cron-scripts');
-  const destScripts = path.join(destDir, 'cron-scripts');
-  if (fs.existsSync(srcScripts) && fs.statSync(srcScripts).isDirectory()) {
-    copied += copyDirIfMissing(srcScripts, destScripts);
-  }
-
-  if (copied > 0) {
-    console.log(`Migrated ${copied} config file(s) from ${PACKAGE_CONFIG_DIR} to ${destDir}`);
-  }
+  fs.renameSync(pending, complete);
 }
 
-// @group Utilities : Recursively copy missing files; never overwrite dest
-function copyDirIfMissing(srcDir: string, destDir: string): number {
-  let copied = 0;
+function copyDirectory(sourceDir: string, destDir: string): void {
   fs.mkdirSync(destDir, { recursive: true });
-  for (const entry of fs.readdirSync(srcDir, { withFileTypes: true })) {
-    const src = path.join(srcDir, entry.name);
-    const dest = path.join(destDir, entry.name);
-    if (entry.isDirectory()) {
-      copied += copyDirIfMissing(src, dest);
-    } else if (!fs.existsSync(dest)) {
-      try {
-        fs.copyFileSync(src, dest);
-        copied += 1;
-      } catch (error) {
-        console.error(`Failed to migrate ${src} to ${dest}:`, error);
-      }
-    }
+  for (const entry of fs.readdirSync(sourceDir, { withFileTypes: true })) {
+    const source = path.join(sourceDir, entry.name);
+    const destination = path.join(destDir, entry.name);
+    if (entry.isDirectory()) copyDirectory(source, destination);
+    else fs.copyFileSync(source, destination, fs.constants.COPYFILE_EXCL);
   }
-  return copied;
 }
