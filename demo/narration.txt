@@ -1,0 +1,15 @@
+Meet Easy P M Two, G U I. Process management, made visual.
+
+See your services, status, CPU, memory, and uptime in one dashboard. Search instantly to find the process you need.
+
+Restart a service, confirm the action, and watch it return online.
+
+Open live metrics to follow CPU and memory over time, with a focused view of each process.
+
+Jump straight into streaming logs. Filter by text to highlight what matters while new output arrives.
+
+Configure your next application with an entry point, runtime options, and environment variables, all in one form.
+
+Make the workspace yours with appearance settings and a quick switch between dark and light themes.
+
+Easy P M Two, G U I. Your services, within reach.

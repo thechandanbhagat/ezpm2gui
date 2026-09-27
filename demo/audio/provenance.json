@@ -1,0 +1,64 @@
+{
+  "flowUrl": "https://elevenlabs.io/app/flows/3wzCXmWMLGbhXc20aHGH",
+  "provider": "ElevenLabs",
+  "voice": "Sarah - Mature, Reassuring, Confident",
+  "voiceId": "EXAVITQu4vr4xnSDxMaL",
+  "speechModel": "eleven_multilingual_v2",
+  "musicModel": "eleven_music_v2",
+  "generations": [
+    {
+      "id": "r4pNNm2oSpFcJMm9mbH9",
+      "model": "eleven_multilingual_v2",
+      "durationSeconds": 3.947392290249433,
+      "prompt": "Meet Easy P M Two, G U I. Process management, made visual."
+    },
+    {
+      "id": "A7XqqTVOfaP7dELdJX5y",
+      "model": "eleven_multilingual_v2",
+      "durationSeconds": 7.7090249433106575,
+      "prompt": "See your services, status, CPU, memory, and uptime in one dashboard. Search instantly to find the process you need."
+    },
+    {
+      "id": "cux6xocKpaKUh711modJ",
+      "model": "eleven_multilingual_v2",
+      "durationSeconds": 3.8080725623582765,
+      "prompt": "Restart a service, confirm the action, and watch it return online."
+    },
+    {
+      "id": "43vhMRosMspwhkExfWxa",
+      "model": "eleven_music_v2",
+      "durationSeconds": 66.48,
+      "prompt": "Soft ambient electronic instrumental at 82 BPM: warm electric piano chords, airy synth pads, a rounded restrained bass, and very light brushed percussion. Calm, optimistic, polished and spacious, with"
+    },
+    {
+      "id": "1qQnbUF4T1ov4T2SREWP",
+      "model": "eleven_multilingual_v2",
+      "durationSeconds": 6.455147392290249,
+      "prompt": "Open live metrics to follow CPU and memory over time, with a focused view of each process."
+    },
+    {
+      "id": "4DJcXGsBdGEWR0QZqj96",
+      "model": "eleven_multilingual_v2",
+      "durationSeconds": 6.362267573696145,
+      "prompt": "Jump straight into streaming logs. Filter by text to highlight what matters while new output arrives."
+    },
+    {
+      "id": "eUa1T2lykGgBXJfwEW78",
+      "model": "eleven_multilingual_v2",
+      "durationSeconds": 6.873106575963718,
+      "prompt": "Configure your next application with an entry point, runtime options, and environment variables, all in one form."
+    },
+    {
+      "id": "icllXsLn4QrGwjoJkJKF",
+      "model": "eleven_multilingual_v2",
+      "durationSeconds": 5.201269841269841,
+      "prompt": "Make the workspace yours with appearance settings and a quick switch between dark and light themes."
+    },
+    {
+      "id": "SEigaloMyMLYhxz5vYSf",
+      "model": "eleven_multilingual_v2",
+      "durationSeconds": 3.5294331065759637,
+      "prompt": "Easy P M Two, G U I. Your services, within reach."
+    }
+  ]
+}

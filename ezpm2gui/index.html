@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EZ PM2 GUI — Modern Node.js Process Management</title>
   <meta name="description" content="A beautiful, real-time web dashboard for PM2. Monitor, manage, and deploy your Node.js applications from a single interface.">
-  <meta name="keywords" content="PM2, Node.js, process manager, monitoring, dashboard, TypeScript, Material UI">
+  <meta name="keywords" content="PM2, Node.js, process manager, monitoring, dashboard, TypeScript, Tailwind CSS">
   <meta property="og:title" content="EZ PM2 GUI — Modern Node.js Process Management">
   <meta property="og:description" content="A beautiful, real-time web dashboard for the PM2 process manager.">
   <meta property="og:image" content="./screenshots/01-processes.png">
@@ -34,6 +34,7 @@
       </a>
 
       <ul class="nav-links">
+        <li><a href="#demo">Demo</a></li>
         <li><a href="#features">Features</a></li>
         <li><a href="#screenshots">Screenshots</a></li>
         <li><a href="#installation">Install</a></li>
@@ -58,6 +59,7 @@
 
   <!-- Mobile navigation -->
   <div class="mobile-nav" id="mobileNav">
+    <a href="#demo" onclick="closeMobileNav()">Watch Demo</a>
     <a href="#features"          onclick="closeMobileNav()">Features</a>
     <a href="#screenshots"       onclick="closeMobileNav()">Screenshots</a>
     <a href="#installation"      onclick="closeMobileNav()">Install</a>
@@ -84,22 +86,23 @@
           <a href="#installation" class="btn btn-primary">
             <i class="fas fa-download"></i> Get Started
           </a>
+          <a href="#demo" class="btn btn-outline"><i class="fas fa-play"></i> Watch Demo</a>
           <a href="https://github.com/thechandanbhagat/ezpm2gui" target="_blank" rel="noopener" class="btn btn-outline">
             <i class="fab fa-github"></i> View on GitHub
           </a>
         </div>
         <div class="hero-stats">
           <div class="stat">
-            <span class="stat-value">8.5K+</span>
-            <span class="stat-label">Downloads</span>
+            <span class="stat-value">3</span>
+            <span class="stat-label">Languages</span>
           </div>
           <div class="stat">
             <span class="stat-value">100%</span>
             <span class="stat-label">Open Source</span>
           </div>
           <div class="stat">
-            <span class="stat-value">v1.7.0</span>
-            <span class="stat-label">Latest</span>
+            <span class="stat-value">v1.11.4</span>
+            <span class="stat-label">Documented</span>
           </div>
         </div>
       </div>
@@ -124,6 +127,20 @@
   </section>
 
   <!-- @group Features : Feature cards -->
+  <section id="demo" class="section section-alt">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-label">Product walkthrough</span>
+        <h2 class="section-title">Your processes, <span class="grad">in view</span></h2>
+        <p class="section-desc">A 66-second tour of process controls, live metrics, logs, deployment, and appearance settings, with voiceover.</p>
+      </div>
+      <div class="demo-video">
+        <iframe src="https://www.youtube-nocookie.com/embed/u1ckawU-sg4" title="EZ PM2 GUI demo with voiceover" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+      </div>
+      <p class="demo-links"><a href="https://youtu.be/u1ckawU-sg4" target="_blank" rel="noopener">Watch on YouTube ↗</a> · <a href="userguides/index.html">Read the illustrated user guide</a></p>
+    </div>
+  </section>
+
   <section id="features" class="section">
     <div class="container">
       <div class="section-header">
@@ -136,7 +153,7 @@
         <div class="feature-card">
           <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
           <h3>Real-time Monitoring</h3>
-          <p>Track all PM2 processes live — CPU, memory, and status updated every 2 seconds via WebSocket.</p>
+          <p>Track PM2 processes with live CPU, memory, status, and system resource readings.</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon"><i class="fas fa-gamepad"></i></div>
@@ -151,7 +168,7 @@
         <div class="feature-card">
           <div class="feature-icon"><i class="fas fa-rocket"></i></div>
           <h3>One-Click Deploy</h3>
-          <p>Run deployment scripts with live streaming output and a full deployment history log.</p>
+          <p>Start applications from a form with entry points, runtime options, and environment variables.</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon"><i class="fas fa-file-alt"></i></div>
@@ -161,7 +178,7 @@
         <div class="feature-card">
           <div class="feature-icon"><i class="fas fa-network-wired"></i></div>
           <h3>Cluster Mode</h3>
-          <p>Scale instances across CPU cores with a slider. Rolling reload with zero downtime.</p>
+          <p>Choose an instance count, switch execution mode, and gracefully reload compatible clustered apps.</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon"><i class="fas fa-clock"></i></div>
@@ -171,16 +188,16 @@
         <div class="feature-card">
           <div class="feature-icon"><i class="fas fa-chart-area"></i></div>
           <h3>Process Metrics</h3>
-          <p>Live sparklines for every process — rolling 1-hour CPU and memory graphs updated every 3 seconds. Switch to History for SQLite-backed long-term analysis.</p>
+          <p>Live sparklines for every process — rolling 1-hour CPU and memory graphs updated every 3 seconds. Switch to History for recorded remote-server metrics stored in SQLite.</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
-          <h3>Secure by Default</h3>
-          <p>SSH passwords encrypted with AES-256-GCM. Private keys referenced by path, never stored.</p>
+          <h3>Access &amp; Credentials</h3>
+          <p>Optional password and PIN protection, with encrypted SSH credentials stored on the GUI server.</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon"><i class="fas fa-sync"></i></div>
-          <h3>Auto Updates</h3>
+          <h3>Update Controls</h3>
           <p>Check for and install new versions from inside the dashboard. No terminal needed.</p>
         </div>
       </div>
@@ -193,7 +210,7 @@
           <span class="tech-item"><i class="fas fa-code"></i> TypeScript</span>
           <span class="tech-item"><i class="fas fa-server"></i> Express</span>
           <span class="tech-item"><i class="fas fa-chart-line"></i> Chart.js</span>
-          <span class="tech-item"><i class="fas fa-palette"></i> Material UI</span>
+          <span class="tech-item"><i class="fas fa-palette"></i> Tailwind CSS</span>
         </div>
       </div>
     </div>
@@ -210,56 +227,56 @@
 
       <div class="screenshots-grid">
         <div class="screenshot-card reveal">
-          <img src="./screenshots/01-processes.png" alt="Process Dashboard">
+          <img loading="lazy" src="./screenshots/01-processes.png" alt="Process Dashboard">
           <div class="screenshot-label">
             <h4>Process Dashboard</h4>
             <p>All running PM2 processes with CPU, memory, and uptime at a glance.</p>
           </div>
         </div>
         <div class="screenshot-card reveal">
-          <img src="./screenshots/02-monitoring.png" alt="Process Monitor">
+          <img loading="lazy" src="./screenshots/14-process-detail.png" alt="Process details with CPU and memory charts">
           <div class="screenshot-label">
-            <h4>Process Monitor</h4>
-            <p>Real-time CPU, memory and uptime per process — sortable table with aggregate peaks.</p>
+            <h4>Process Details</h4>
+            <p>Inspect a process, read its logs, and follow its CPU and memory charts.</p>
           </div>
         </div>
         <div class="screenshot-card reveal">
-          <img src="./screenshots/04-deploy-app.png" alt="Deploy Application">
+          <img loading="lazy" src="./screenshots/04-deploy-app.png" alt="Deploy Application">
           <div class="screenshot-label">
             <h4>Deploy Application</h4>
             <p>Structured form to start and configure new Node.js applications without a terminal.</p>
           </div>
         </div>
         <div class="screenshot-card reveal">
-          <img src="./screenshots/08-cron-jobs.png" alt="Cron Jobs">
+          <img loading="lazy" src="./screenshots/08-cron-jobs.png" alt="Cron Jobs">
           <div class="screenshot-label">
             <h4>Cron Jobs</h4>
             <p>Schedule recurring tasks with standard cron expressions — shell, Node.js, Python and .NET.</p>
           </div>
         </div>
         <div class="screenshot-card reveal">
-          <img src="./screenshots/03-remote-servers.png" alt="Remote Servers">
+          <img loading="lazy" src="./screenshots/03-remote-servers.png" alt="Remote Servers">
           <div class="screenshot-label">
             <h4>Remote Servers</h4>
             <p>Manage PM2 on other hosts over SSH — AES-256 encrypted credentials, single-click switching.</p>
           </div>
         </div>
         <div class="screenshot-card reveal">
-          <img src="./screenshots/12-metrics-live.png" alt="Metrics Live">
+          <img loading="lazy" src="./screenshots/12-metrics-live.png" alt="Metrics Live">
           <div class="screenshot-label">
             <h4>Metrics &mdash; Live</h4>
             <p>Rolling 1-hour CPU and memory sparklines per process, refreshed every 3 seconds alongside the process list.</p>
           </div>
         </div>
         <div class="screenshot-card reveal">
-          <img src="./screenshots/13-metrics-history.png" alt="Metrics History">
+          <img loading="lazy" src="./screenshots/13-metrics-history.png" alt="Metrics History">
           <div class="screenshot-label">
             <h4>Metrics &mdash; History</h4>
-            <p>SQLite-backed CPU and memory charts with selectable time ranges from 30 min to 7 days.</p>
+            <p>Select a remote connection and process for recorded CPU and memory history, from 30 min to 7 days.</p>
           </div>
         </div>
         <div class="screenshot-card reveal">
-          <img src="./screenshots/11-settings.png" alt="Settings">
+          <img loading="lazy" src="./screenshots/11-settings.png" alt="Settings">
           <div class="screenshot-label">
             <h4>Settings</h4>
             <p>Auto-refresh, log buffering, theme, PIN lock, and one-click update checks in one place.</p>
@@ -368,43 +385,32 @@
         <!-- Docker install -->
         <div class="tab-panel" id="tab-docker">
           <div class="install-steps">
-            <div class="install-step">
-              <div class="step-n">1</div>
-              <div class="step-body">
-                <h4>Run with Docker</h4>
-                <div class="code-block">
-                  <span class="code-prompt">$</span>
-                  <span class="code-text">docker run -p 3101:3101 -v /root/.pm2:/root/.pm2 thechandanbhagat/ezpm2gui</span>
-                  <button class="code-copy" data-code="docker run -p 3101:3101 -v /root/.pm2:/root/.pm2 thechandanbhagat/ezpm2gui" title="Copy"><i class="fas fa-copy"></i></button>
-                </div>
-              </div>
-            </div>
-            <div class="install-step">
-              <div class="step-n">2</div>
-              <div class="step-body">
-                <h4>Or use docker-compose</h4>
-                <div class="code-multi" id="docker-compose-code">
-                  <button class="code-copy-abs" data-code="services:
-  ezpm2gui:
-    image: thechandanbhagat/ezpm2gui
-    ports:
-      - &quot;3101:3101&quot;
-    volumes:
-      - /root/.pm2:/root/.pm2" title="Copy"><i class="fas fa-copy"></i></button>services:
-  ezpm2gui:
-    image: thechandanbhagat/ezpm2gui
-    ports:
-      - "3101:3101"
-    volumes:
-      - /root/.pm2:/root/.pm2</div>
-              </div>
-            </div>
+            <div class="install-step"><div class="step-n">1</div><div class="step-body">
+              <h4>Build from the repository</h4><div class="code-multi"><button class="code-copy-abs" data-code="git clone https://github.com/thechandanbhagat/ezpm2gui.git
+cd ezpm2gui
+docker build -t ezpm2gui:local ." title="Copy command"><i class="fas fa-copy"></i></button>git clone https://github.com/thechandanbhagat/ezpm2gui.git
+cd ezpm2gui
+docker build -t ezpm2gui:local .</div>
+            </div></div>
+            <div class="install-step"><div class="step-n">2</div><div class="step-body">
+              <h4>Run with persistent data</h4><div class="code-multi"><button class="code-copy-abs" data-code="docker run --name ezpm2gui -p 127.0.0.1:3101:3101 \
+  -v ezpm2gui-pm2:/app/.pm2 \
+  -v ezpm2gui-config:/app/dist/server/config \
+  -v ezpm2gui-uploads:/app/uploads \
+  ezpm2gui:local" title="Copy command"><i class="fas fa-copy"></i></button>docker run --name ezpm2gui -p 127.0.0.1:3101:3101 \
+  -v ezpm2gui-pm2:/app/.pm2 \
+  -v ezpm2gui-config:/app/dist/server/config \
+  -v ezpm2gui-uploads:/app/uploads \
+  ezpm2gui:local</div>
+              <p>This manages PM2 inside the container. For PM2 on another machine, use Remote Servers. Application files and runtimes must be available in the container.</p>
+              <p><a href="userguides/index.html#docker">Docker setup details →</a></p>
+            </div></div>
           </div>
         </div>
 
         <div class="compat-note">
           <i class="fas fa-info-circle"></i>
-          <span>Compatible with Linux, macOS, and Windows. Requires <strong>Node.js 18+</strong> and <strong>PM2</strong> installed globally (<code style="font-family:monospace;font-size:.82em;color:var(--blue)">npm install -g pm2</code>).</span>
+          <span>Compatible with Linux, macOS, and Windows. Use <strong>Node.js 24</strong> (tested with this checkout) and <strong>PM2</strong> installed globally (<code style="font-family:monospace;font-size:.82em;color:var(--blue)">npm install -g pm2</code>).</span>
         </div>
       </div>
     </div>
@@ -428,9 +434,9 @@
         </div>
         <div class="doc-card">
           <div class="doc-icon"><i class="fas fa-code"></i></div>
-          <h3>API Reference</h3>
-          <p>REST API documentation for integrating or automating EZ PM2 GUI with your own tooling.</p>
-          <a href="https://github.com/thechandanbhagat/ezpm2gui#readme" target="_blank" rel="noopener" class="doc-link">View API <i class="fas fa-arrow-right"></i></a>
+          <h3>Project Reference</h3>
+          <p>Setup, configuration, source-build instructions, and project information.</p>
+          <a href="https://github.com/thechandanbhagat/ezpm2gui#readme" target="_blank" rel="noopener" class="doc-link">Read README <i class="fas fa-arrow-right"></i></a>
         </div>
         <div class="doc-card">
           <div class="doc-icon"><i class="fab fa-github"></i></div>
@@ -452,7 +458,7 @@
   <section class="cta-section">
     <div class="container cta-inner">
       <h2>Start managing your processes better</h2>
-      <p>Join thousands of developers who use EZ PM2 GUI to keep their Node.js applications healthy every day.</p>
+      <p>Monitor your applications, investigate logs, and manage PM2 from one workspace.</p>
       <div class="cta-btns">
         <a href="#installation" class="btn btn-primary">
           <i class="fas fa-download"></i> Install Now
@@ -507,7 +513,7 @@
 
       <div class="footer-bottom">
         <span>&copy; 2023–2026 EZ PM2 GUI &middot; Created by <a href="https://github.com/thechandanbhagat" target="_blank" rel="noopener">Chandan Bhagat</a></span>
-        <span>MIT License</span>
+        <span>AGPL-3.0-or-later</span>
       </div>
     </div>
   </footer>

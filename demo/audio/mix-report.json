@@ -1,0 +1,56 @@
+{
+  "duration": 66.433333,
+  "narrationTargetLufs": -16,
+  "musicTargetLufs": -29,
+  "musicDucksDuringSpeech": true,
+  "clips": [
+    {
+      "file": "elevenlabs-voice-0.mp3",
+      "start": 0.45,
+      "duration": 3.947392,
+      "end": 4.397392
+    },
+    {
+      "file": "elevenlabs-voice-1.mp3",
+      "start": 4.633,
+      "duration": 7.709025,
+      "end": 12.342025
+    },
+    {
+      "file": "elevenlabs-voice-2.mp3",
+      "start": 13.685,
+      "duration": 3.808073,
+      "end": 17.493073
+    },
+    {
+      "file": "elevenlabs-voice-3.mp3",
+      "start": 21.722,
+      "duration": 6.455147,
+      "end": 28.177147
+    },
+    {
+      "file": "elevenlabs-voice-4.mp3",
+      "start": 32.767,
+      "duration": 6.362268,
+      "end": 39.129268
+    },
+    {
+      "file": "elevenlabs-voice-5.mp3",
+      "start": 41.824,
+      "duration": 6.873107,
+      "end": 48.697106999999995
+    },
+    {
+      "file": "elevenlabs-voice-6.mp3",
+      "start": 51.879,
+      "duration": 5.20127,
+      "end": 57.08027
+    },
+    {
+      "file": "elevenlabs-voice-7.mp3",
+      "start": 59.779,
+      "duration": 3.529433,
+      "end": 63.308433
+    }
+  ]
+}
