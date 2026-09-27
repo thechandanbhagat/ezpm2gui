@@ -226,7 +226,8 @@ EZ PM2 GUI uses environment variables for configuration:
 - `PORT`: The port to run the server on (default: `3101`)
 - `HOST`: The host to bind to (default: `localhost`)
 - `PM2_HOME`: Use the same PM2 data directory as the processes you intend to manage
-- `EZPM2GUI_SECRET`: Stable encryption secret for saved SSH credentials; preserve it when migrating data
+- `EZPM2GUI_SECRET`: Stable encryption secret for saved SSH credentials; preserve it when migrating data. If unset, a built-in legacy key is used.
+- `EZPM2GUI_CONFIG_DIR`: Directory for runtime state (`auth.json`, session tokens, remote connections, cron jobs, metrics DB). If unset, files are written inside the npm package (`dist/server/config`) and can be lost on `npm i -g`.
 
 You can set these in a `.env` file at the project root (create it if it doesn't exist):
 
@@ -234,7 +235,32 @@ You can set these in a `.env` file at the project root (create it if it doesn't 
 # .env
 PORT=3102
 HOST=localhost
+EZPM2GUI_SECRET=change-me
+EZPM2GUI_CONFIG_DIR=/etc/ezpm2gui
 ```
+
+On a systemd host, put the same variables in the unit's `EnvironmentFile` so they survive package updates:
+
+```ini
+# /etc/systemd/system/ezpm2gui.service
+[Service]
+WorkingDirectory=/root
+Environment=NODE_ENV=production
+Environment=HOME=/root
+EnvironmentFile=/etc/ezpm2gui/ezpm2gui.env
+ExecStart=/usr/bin/ezpm2gui
+```
+
+```env
+# /etc/ezpm2gui/ezpm2gui.env
+NODE_ENV=production
+HOST=0.0.0.0
+PORT=3101
+EZPM2GUI_SECRET=<random>
+EZPM2GUI_CONFIG_DIR=/etc/ezpm2gui
+```
+
+On first use, packaged runtime state is copied only if the destination has no runtime state yet (an environment file is allowed). Existing destination state is never mixed with package data. Migration is recorded on disk so deleting a password or remote connection does not restore it after restart. SQLite metrics are copied as a consistent snapshot. Stop the old instance and back up its config before migrating; keep `EZPM2GUI_SECRET` unchanged. A failed migration stops startup and must be recovered from the backup before retrying.
 
 The production client connects to the server's origin; changing the server port does not require a client rebuild. The CLI currently uses environment variables, not `--host` / `--port` flags. In PowerShell, set `$env:PORT="3102"` before running `ezpm2gui`.
 
