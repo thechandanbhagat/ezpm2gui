@@ -846,6 +846,7 @@
     "sectionIdentity": "पहिचान",
     "sectionEntryPoint": "प्रवेश बिन्दु",
     "sectionRuntime": "रनटाइम",
+    "instances": "इन्स्ट्यान्सहरू",
     "sectionEnvironment": "वातावरण",
     "sectionLog": "लग",
     "fieldName": "नाम",

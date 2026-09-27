@@ -1027,3 +1027,10 @@ footer {
   .cta-btns          { flex-direction: column; align-items: center; }
   .hero-cta          { flex-direction: column; align-items: center; }
 }
+
+/* Embedded walkthrough shares the documentation screenshot proportions. */
+.demo-video { aspect-ratio: 16 / 9; width: 100%; max-width: 960px; margin: 0 auto; overflow: hidden; border: 1px solid var(--border); border-radius: 14px; background: #0a0a0a; }
+.demo-video iframe { display: block; width: 100%; height: 100%; border: 0; }
+.demo-links { text-align: center; margin-top: 1.25rem; line-height: 1.8; }
+.demo-links a { color: var(--blue); }
+.install-step .step-body { min-width: 0; }
