@@ -30,6 +30,7 @@ import remoteMetricsRoutes from './routes/remoteMetrics';
 import { remoteMetricsPoller } from './utils/remote-metrics-poller';
 import { requireAuth, authorizeSocket } from './middleware/requireAuth';
 import { setRevokeListener } from './utils/auth-tokens';
+import { getConfigDir } from './utils/config-dir';
 
 /**
  * Create and configure the express server
@@ -60,6 +61,7 @@ export function createServer() {
   // Serve static files from the React app build directory
   const staticPath = path.join(__dirname, '../../src/client/build');
   console.log('Serving static files from:', staticPath);
+  console.log('Config directory:', getConfigDir());
   const fs = require('fs');
   if (fs.existsSync(staticPath)) {
     app.use(express.static(staticPath));

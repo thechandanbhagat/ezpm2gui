@@ -1,10 +1,10 @@
 import Database from 'better-sqlite3';
-import path from 'path';
 import fs from 'fs';
+import { configPath, getConfigDir } from './config-dir';
 
 // @group Configuration : SQLite DB lives alongside other server config files
-const DB_DIR  = path.join(__dirname, '../config');
-const DB_PATH = path.join(DB_DIR, 'remote-metrics.db');
+const DB_DIR  = getConfigDir();
+const DB_PATH = configPath('remote-metrics.db');
 
 // @group Types : Single recorded data-point for a remote process
 export interface RemoteMetricRow {

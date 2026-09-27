@@ -1,5 +1,6 @@
 import { Client, ClientChannel } from 'ssh2';
 import { EventEmitter } from 'events';
+import { configPath } from './config-dir';
 
 /**
  * Interface for remote server connection configuration
@@ -876,8 +877,7 @@ export class RemoteConnectionManager {
   private configFilePath: string;
   
   constructor() {
-    const path = require('path');
-    this.configFilePath = path.join(__dirname, '../config/remote-connections.json');
+    this.configFilePath = configPath('remote-connections.json');
     this.loadConnectionsFromDisk();
   }
   /**
