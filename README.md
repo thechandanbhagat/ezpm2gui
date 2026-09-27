@@ -6,6 +6,12 @@
 
 A modern web-based graphical user interface for the PM2 process manager, built with TypeScript, Tailwind CSS, and React.
 
+## Demo and User Guide
+
+[Watch the narrated demo on YouTube](https://youtu.be/u1ckawU-sg4) — a 66-second walkthrough with soft background music.
+
+Read the [illustrated user guide](ezpm2gui/userguides/user-guide.md) or the [documentation website](https://ezpm2gui.vercel.app/). The local guide has been reviewed against v1.11.4 and includes setup, live and remote historical metrics, logs, deployment, and security settings.
+
 ## Previous GitHub Releases
 
 - [v1.11.1](https://github.com/thechandanbhagat/ezpm2gui/releases/tag/v1.11.1)
@@ -24,15 +30,15 @@ A modern web-based graphical user interface for the PM2 process manager, built w
 
 ![Process Dashboard](ezpm2gui/screenshots/01-processes.png)
 
-**Monitoring** — real-time CPU, memory and uptime per process:
+**Process Details** — resource readings, logs, and per-process metrics:
 
-![Process Monitor](ezpm2gui/screenshots/02-monitoring.png)
+![Process Details](ezpm2gui/screenshots/14-process-detail.png)
 
 **Metrics (Live)** — rolling 1-hour sparklines per process, updated every 3 seconds:
 
 ![Metrics Live](ezpm2gui/screenshots/12-metrics-live.png)
 
-**Metrics (History)** — SQLite-backed CPU and memory charts with selectable time range:
+**Metrics (History)** — select a remote connection and process to inspect recorded CPU and memory; shown before the first remote sample:
 
 ![Metrics History](ezpm2gui/screenshots/13-metrics-history.png)
 
@@ -72,7 +78,7 @@ A modern web-based graphical user interface for the PM2 process manager, built w
 - **PM2 modules support** - Manage and configure PM2 modules
 - **Cron Jobs** - Schedule and manage automated tasks with visual cron expression builder
 - **Remote Server Management** - Connect and manage PM2 on remote servers via SSH
-- **End-to-end encrypted credentials** *(v1.9.0)* - Remote server passwords encrypted in-browser with RSA-OAEP + AES-256-GCM before transmission
+- **Encrypted SSH credentials** *(v1.9.0)* - Credential submissions encrypted in-browser with RSA-OAEP + AES-256-GCM before the GUI server establishes SSH connections
 - **Advanced Monitoring Dashboard** - Real-time performance charts with health scoring
 - **Multi-language support** *(v1.11.0)* - Full i18n with English, Nepali, and Chinese locales; language switcher in the navbar; community-extensible
 - **Live metrics sparklines** *(v1.11.1)* - Per-process rolling 1-hour CPU and memory micro-graphs; switch to History tab for SQLite-backed long-term charts
@@ -87,9 +93,9 @@ Monitor all your PM2 processes in real-time with detailed information on CPU usa
 ### Multi-Language Support
 EZ PM2 GUI ships with full internationalisation (i18n) powered by `i18next` and `react-i18next`:
 - Every page, component, dialog, toast, and tooltip is fully translated
-- **English** (default) and **Nepali** locales included out of the box
+- **English** (default), **Nepali**, and **Chinese** locales included out of the box
 - Language switcher in the navbar; selection persists across sessions
-- Community-extensible — add a new locale by following `CONTRIBUTING_TRANSLATIONS.md`
+- Community-extensible — locale files are in [src/client/src/locales](src/client/src/locales), with registration in [i18n.ts](src/client/src/i18n.ts)
 
 ### Remote Server Management
 Connect to and manage PM2 processes on remote servers via secure SSH connections:
@@ -97,7 +103,7 @@ Connect to and manage PM2 processes on remote servers via secure SSH connections
 - View and manage processes on remote servers
 - Stream logs from remote processes in real-time with polling
 - Execute PM2 commands on remote machines
-- **End-to-end credential encryption** — passwords are encrypted client-side (RSA-OAEP + AES-256-GCM hybrid scheme) before transmission; the server never sees plaintext passwords in transit
+- **Credential encryption** — the browser encrypts SSH credential submissions with RSA-OAEP + AES-256-GCM. The GUI server decrypts them to connect over SSH and stores passwords, private keys, and passphrases using AES-256-CBC. Set `EZPM2GUI_SECRET` to protect stored credentials.
 
 ### Cron Jobs
 Schedule and automate tasks using PM2's cron restart feature:
@@ -182,11 +188,11 @@ npm install ezpm2gui
 # Start the EZ PM2 GUI web interface
 ezpm2gui
 
-# Start on a specific port
-ezpm2gui --port 4000
+# Start on a specific port (Linux/macOS)
+PORT=4000 ezpm2gui
 
-# Start bound to all network interfaces
-ezpm2gui --host 0.0.0.0
+# Bind explicitly to the local loopback interface
+HOST=127.0.0.1 ezpm2gui
 
 # Generate a sample PM2 ecosystem config
 ezpm2gui-generate-ecosystem
@@ -195,16 +201,9 @@ ezpm2gui-generate-ecosystem
 ### As a Module (Local Installation)
 
 ```javascript
-const ezpm2gui = require('ezpm2gui');
-
-// Start the server with default options
-ezpm2gui.start();
-
-// Or with custom options
-ezpm2gui.start({
-  port: 3030,
-  host: '0.0.0.0'
-});
+const { createServer } = require('ezpm2gui');
+const server = createServer();
+server.listen(3030, '127.0.0.1');
 ```
 
 ### Access the UI
@@ -217,7 +216,7 @@ http://localhost:3101
 
 ## Requirements
 
-- Node.js 16.x or later
+- Node.js 24 is the tested runtime for this checkout (see [.nvmrc](.nvmrc))
 - PM2 installed globally (`npm install -g pm2`)
 
 ## Configuration
@@ -226,8 +225,9 @@ EZ PM2 GUI uses environment variables for configuration:
 
 - `PORT`: The port to run the server on (default: `3101`)
 - `HOST`: The host to bind to (default: `localhost`)
-- `EZPM2GUI_SECRET`: Encryption key for remote-server credentials stored on disk. If unset, a built-in legacy key is used (not recommended for anything exposed beyond localhost).
-- `EZPM2GUI_CONFIG_DIR`: Directory for runtime state (`auth.json`, session tokens, remote connections, cron jobs, metrics DB). If unset, files are written inside the npm package (`dist/server/config`) and **will be deleted on `npm i -g`**.
+- `PM2_HOME`: Use the same PM2 data directory as the processes you intend to manage
+- `EZPM2GUI_SECRET`: Stable encryption secret for saved SSH credentials; preserve it when migrating data. If unset, a built-in legacy key is used.
+- `EZPM2GUI_CONFIG_DIR`: Directory for runtime state (`auth.json`, session tokens, remote connections, cron jobs, metrics DB). If unset, files are written inside the npm package (`dist/server/config`) and can be lost on `npm i -g`.
 
 You can set these in a `.env` file at the project root (create it if it doesn't exist):
 
@@ -260,14 +260,9 @@ EZPM2GUI_SECRET=<random>
 EZPM2GUI_CONFIG_DIR=/etc/ezpm2gui
 ```
 
-If `EZPM2GUI_CONFIG_DIR` points at an empty directory, existing files from the package config folder are copied there once (so a password set before the move is not lost).
+On first use, packaged runtime state is copied only if the destination has no runtime state yet (an environment file is allowed). Existing destination state is never mixed with package data. Migration is recorded on disk so deleting a password or remote connection does not restore it after restart. SQLite metrics are copied as a consistent snapshot. Stop the old instance and back up its config before migrating; keep `EZPM2GUI_SECRET` unchanged. A failed migration stops startup and must be recovered from the backup before retrying.
 
-For the React client to connect to the correct port during a production build, also set:
-
-```env
-# src/client/.env
-REACT_APP_API_URL=http://localhost:3102
-```
+The production client connects to the server's origin; changing the server port does not require a client rebuild. The CLI currently uses environment variables, not `--host` / `--port` flags. In PowerShell, set `$env:PORT="3102"` before running `ezpm2gui`.
 
 ## Load Balancing with PM2
 
@@ -328,8 +323,9 @@ npm start
 ezpm2gui/
 ├── bin/                 # CLI entry points
 ├── dist/                # Compiled output
-├── docs/                # Documentation
-├── screenshots/         # Application screenshots
+├── ezpm2gui/            # Documentation website
+│   ├── userguides/      # HTML and Markdown user guides
+│   └── screenshots/     # Application screenshots
 ├── scripts/             # Build and utility scripts
 ├── src/                 # Source code
 │   ├── client/          # React frontend
@@ -352,16 +348,17 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
 3. Make your changes
 4. Run the tests to ensure everything works
-5. Commit your changes using our [commit guidelines](./docs/COMMIT_GUIDE.md)
+5. Commit your changes with a clear description
 6. Push to the branch (`git push origin feature/amazing-feature`)
 7. Open a Pull Request
 
 ### Coding Style
 
-This project follows standardized TypeScript conventions and uses ESLint for code quality. Before submitting a pull request, please ensure your code follows these guidelines by running:
+Before submitting a pull request, run the available checks:
 
 ```bash
-npm run lint
+npm test
+npm run build
 ```
 
 ## FAQ

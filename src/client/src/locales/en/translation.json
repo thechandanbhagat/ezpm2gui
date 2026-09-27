@@ -335,6 +335,7 @@
   },
   "metricsPage": {
     "title": "Metrics",
+    "subtitle": "Real-time performance metrics for your PM2 processes",
     "live": "Live",
     "history": "History",
     "min": "Min",
@@ -509,6 +510,7 @@
   },
   "modules": {
     "title": "PM2 Modules",
+    "subtitle": "Install, configure, and manage PM2 modules",
     "noModules": "No modules installed.",
     "installModule": "Install Module",
     "moduleName": "Module Name"
@@ -844,6 +846,7 @@
     "sectionIdentity": "identity",
     "sectionEntryPoint": "entry point",
     "sectionRuntime": "runtime",
+    "instances": "Instances",
     "sectionEnvironment": "environment",
     "sectionLog": "log",
     "fieldName": "name",

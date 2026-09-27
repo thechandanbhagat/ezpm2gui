@@ -335,6 +335,7 @@
   },
   "metricsPage": {
     "title": "指标",
+    "subtitle": "PM2 进程的实时性能指标",
     "live": "实时",
     "history": "历史",
     "min": "最小",
@@ -454,6 +455,7 @@
     "sectionIdentity": "标识",
     "sectionEntryPoint": "入口",
     "sectionRuntime": "运行时",
+    "instances": "实例数",
     "sectionEnvironment": "环境",
     "sectionLog": "日志",
     "fieldName": "名称",
