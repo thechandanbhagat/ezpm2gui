@@ -1,0 +1,13 @@
+Your application is failing, and the clues are buried in its logs. Easy P M Two G U I now turns that output into a focused diagnosis.
+
+Open the affected process and choose Analyze logs. Capture recent output, error messages, and stack traces, along with the process status and restart count.
+
+Before anything is sent, review the numbered snapshot. Common credentials are redacted. You can see the evidence the agent will receive and check for sensitive information.
+
+Use the tools you already have. Claude Code, Codex, Cursor, and GitHub Copilot reuse their existing CLI sign-in. For local inference, choose Ollama and a downloaded model.
+
+Cloud providers require explicit consent. Select an agent, approve sending the snapshot, and run the analysis.
+
+Here, the report connects the failed startup to a refused database connection. It cites the log lines, separates evidence from possible causes, and suggests the next checks. Your application stays unchanged.
+
+From noisy logs to a clear next step. Easy P M Two G U I.

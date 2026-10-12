@@ -6,11 +6,28 @@
 
 A modern web-based graphical user interface for the PM2 process manager, built with TypeScript, Tailwind CSS, and React.
 
-## Demo and User Guide
+## v1.12.0
 
-[Watch the narrated demo on YouTube](https://youtu.be/u1ckawU-sg4) — a 66-second walkthrough with soft background music.
+- Analyze application logs with installed Claude Code, Codex, Cursor, GitHub Copilot, or Ollama CLIs. Reuse existing CLI sign-in, review redacted snapshots, and approve cloud analysis before sending logs.
+- Open **Help** to watch the product walkthrough and AI log analysis demo inside the application.
+- Password and session changes now keep the app state synchronized, with improved contrast and readability across light and dark themes.
+
+Install or upgrade:
+
+```sh
+npm install -g ezpm2gui@1.12.0
+```
+
+## Demo Videos and User Guide
+
+Open **Help** in the application sidebar, or visit `/help`, to browse and play the published demo videos.
+
+- [Product walkthrough](https://youtu.be/u1ckawU-sg4) — a 66-second tour of process monitoring, logs, deployment, and settings with narration and soft background music.
+- [AI log analysis](https://youtu.be/EPwORhBHupU) — a 63-second walkthrough of installed CLI agents, the redacted log preview, local Ollama models, cloud consent, and a diagnostic report. The video uses clearly labeled sample logs and a simulated report.
 
 Read the [illustrated user guide](ezpm2gui/userguides/user-guide.md) or the [documentation website](https://ezpm2gui.vercel.app/). The local guide has been reviewed against v1.11.4 and includes setup, live and remote historical metrics, logs, deployment, and security settings.
+
+To add a published demo to Help, update the shared [video catalog](src/client/src/utils/demo-videos.ts), its preview image, and the titles and descriptions in the three locale files.
 
 ## Previous GitHub Releases
 
@@ -64,6 +81,8 @@ Read the [illustrated user guide](ezpm2gui/userguides/user-guide.md) or the [doc
 - **System metrics dashboard** - Monitor CPU, memory usage, and uptime
 - **Metrics page with live sparklines** - Per-process rolling 1-hour CPU and memory micro-graphs updated every 3s; switch to History tab for SQLite-backed long-term charts
 - **Enhanced log streaming** - View and filter logs from multiple processes simultaneously
+- **Optional AI log analysis** *(v1.12.0)* - Analyze raw local or remote PM2 log history using an installed Claude Code, Codex, Cursor Agent, GitHub Copilot CLI, or a downloaded Ollama model
+- **Help and demo videos** *(v1.12.0)* - Open Help from the sidebar to watch the product walkthrough and AI log analysis demo, with links to the user guide and documentation
 - **Log search highlighting** *(v1.9.0)* - Search terms are visually highlighted in the log viewer
 - **Log timestamp range filter** *(v1.9.0)* - Filter log output by start/end timestamp with snapshot mode
 - **Remote log polling** *(v1.9.0)* - Logs from remote servers fetched and displayed in real-time
@@ -86,6 +105,26 @@ Read the [illustrated user guide](ezpm2gui/userguides/user-guide.md) or the [doc
 - **Fully typed with TypeScript** - Robust and maintainable codebase
 
 ## Detailed Features
+
+### AI Log Analysis
+
+Open a process log viewer and choose **Analyze logs**. The dialog detects supported tools on the machine running the `ezpm2gui` Node server, loads recent raw stdout and stderr history (up to 200 lines each), and lets you review the redacted snapshot before running analysis. Viewer search/date filters do not affect this snapshot. Results describe suspected issues, supporting log lines, likely causes, and suggested checks; they do not modify applications or restart processes.
+
+Install a supported CLI on the machine running `ezpm2gui` and, for cloud providers, sign in once. The package detects the installed executable and invokes it for analysis, reusing the CLI's existing authentication. The npm package does not bundle agents, models, or credentials:
+
+| Provider | User setup | Processing |
+| --- | --- | --- |
+| [Claude Code](https://code.claude.com/docs/en/setup) | Install a current `claude` CLI and run `claude auth login` | Cloud |
+| [Codex](https://learn.chatgpt.com/docs/non-interactive-mode) | Install a current `codex` CLI and run `codex login` | Cloud |
+| [Cursor Agent](https://cursor.com/docs/cli/installation) | Install the separate `agent` / `cursor-agent` CLI and run `agent login` / `cursor-agent login` | Cloud |
+| [GitHub Copilot](https://docs.github.com/en/copilot/get-started/cli-quickstart) | Install a current `copilot` CLI and run `copilot login` with an account that has Copilot access | Cloud |
+| [Ollama](https://docs.ollama.com/) | Install the `ollama` CLI, start its daemon on `127.0.0.1:11434`, and download a local model with `ollama pull <model>`; analysis runs through `ollama run` | Local |
+
+Cloud providers require an explicit checkbox before dispatch and use the user's account, limits, and provider terms. Ollama analysis accepts verified downloaded local models only; its loopback daemon API is used to discover and validate those models, while the CLI runs inference. A tool installed in a browser user's laptop is available only if the GUI server runs there too; Docker deployments need the tool and its authentication inside the container.
+
+No separate API key or token is required when the CLI is already signed in. Supported credential environment variables remain optional alternatives. Analysis reuses only the credential and identity state needed from the installed CLI while keeping diagnostic configuration isolated from custom hooks and plugins. Credentials stay server-side and are never requested by the browser dialog. Provider detection checks required CLI capabilities and gives an upgrade/setup reason for unsupported installations.
+
+Common credential patterns are redacted, but automatic redaction cannot recognize every application-specific secret. Review the preview before submitting. Log snapshots are bounded by lines and bytes; stderr and stdout remain separate, and no event timestamps are invented. Analysis uses a temporary working directory, restricted provider tools, a timeout, and cancellation. The GUI does not save analysis snapshots or results. When no GUI password is configured, AI endpoints are restricted to loopback connections; configure a password before accessing analysis from another machine.
 
 ### Process Monitoring
 Monitor all your PM2 processes in real-time with detailed information on CPU usage, memory consumption, uptime, and status. The intuitive interface makes it easy to identify issues at a glance.

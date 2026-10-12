@@ -4,11 +4,8 @@ import { useTranslation } from 'react-i18next';
 import {
   XMarkIcon,
   SparklesIcon,
-  ChartBarIcon,
-  SignalIcon,
-  ClockIcon,
-  CircleStackIcon,
-  CpuChipIcon,
+  ShieldCheckIcon,
+  PlayCircleIcon,
   ArrowRightIcon,
 } from '@heroicons/react/24/outline';
 import { APP_RELEASE_SUBTITLE, APP_RELEASE_VERSION } from '../utils/release-info';
@@ -33,34 +30,22 @@ interface WhatsNewModalProps {
 // @group Constants : Feature highlights for the popup
 const HIGHLIGHTS: HighlightItem[] = [
   {
-    icon: SignalIcon,
+    icon: SparklesIcon,
     iconColor: 'text-[#a78bfa]',
-    titleKey: 'whatsNew.feature1Title',
-    descKey: 'whatsNew.feature1Desc',
+    titleKey: 'whatsNew.aiLogTitle',
+    descKey: 'whatsNew.aiLogDesc',
   },
   {
-    icon: ChartBarIcon,
+    icon: ShieldCheckIcon,
     iconColor: 'text-[#22d3ee]',
-    titleKey: 'whatsNew.feature2Title',
-    descKey: 'whatsNew.feature2Desc',
+    titleKey: 'whatsNew.snapshotTitle',
+    descKey: 'whatsNew.snapshotDesc',
   },
   {
-    icon: CpuChipIcon,
+    icon: PlayCircleIcon,
     iconColor: 'text-[#22c55e]',
-    titleKey: 'whatsNew.feature3Title',
-    descKey: 'whatsNew.feature3Desc',
-  },
-  {
-    icon: CircleStackIcon,
-    iconColor: 'text-[#a78bfa]',
-    titleKey: 'whatsNew.feature4Title',
-    descKey: 'whatsNew.feature4Desc',
-  },
-  {
-    icon: ClockIcon,
-    iconColor: 'text-[#f59e0b]',
-    titleKey: 'whatsNew.feature5Title',
-    descKey: 'whatsNew.feature5Desc',
+    titleKey: 'whatsNew.helpTitle',
+    descKey: 'whatsNew.helpDesc',
   },
 ];
 

@@ -31,6 +31,7 @@ import { remoteMetricsPoller } from './utils/remote-metrics-poller';
 import { requireAuth, authorizeSocket } from './middleware/requireAuth';
 import { setRevokeListener } from './utils/auth-tokens';
 import { getConfigDir } from './utils/config-dir';
+import logAnalysisRoutes from './routes/logAnalysis';
 
 /**
  * Create and configure the express server
@@ -94,6 +95,7 @@ export function createServer() {
   app.use('/api/update', updatesRoutes);
   app.use('/api/auth', pageAuthRoutes);
   app.use('/api/remote-metrics', remoteMetricsRoutes);
+  app.use('/api/log-analysis', logAnalysisRoutes);
 
   // Start remote metrics poller (30-second interval, polls all connected servers)
   remoteMetricsPoller.start();

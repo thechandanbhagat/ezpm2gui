@@ -9,9 +9,9 @@ interface PageHeaderProps {
 
 // @group PageHeader : Shared compact CLI page header — title, optional subtitle, optional action buttons
 const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, actions }) => (
-  <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#1e1e1e]">
-    <div>
-      <h1 className="text-[11px] font-mono font-bold text-[#e8e8e8] uppercase tracking-[0.1em] leading-tight">
+  <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-[#1e1e1e]">
+    <div className="min-w-0">
+      <h1 className="text-xl font-mono font-bold text-[#e8e8e8] uppercase tracking-[0.05em] leading-snug">
         ▸ {title}
       </h1>
       {subtitle && (

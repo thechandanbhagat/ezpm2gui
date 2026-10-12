@@ -50,6 +50,30 @@ const ACCENT_PALETTES: Record<AccentColor, AccentPalette> = {
   },
 };
 
+// Darker foregrounds and pale surfaces keep accent text readable in light mode.
+const LIGHT_ACCENT_PALETTES: Record<AccentColor, AccentPalette> = {
+  blue: {
+    main: '#155e75', hover: '#164e63', muted: '#155e75',
+    soft: 'rgba(21, 94, 117, 0.08)', strongBg: '#ecfeff',
+    border: 'rgba(21, 94, 117, 0.35)',
+  },
+  purple: {
+    main: '#6d28d9', hover: '#5b21b6', muted: '#6d28d9',
+    soft: 'rgba(109, 40, 217, 0.08)', strongBg: '#f5f3ff',
+    border: 'rgba(109, 40, 217, 0.35)',
+  },
+  green: {
+    main: '#166534', hover: '#14532d', muted: '#166534',
+    soft: 'rgba(22, 101, 52, 0.08)', strongBg: '#f0fdf4',
+    border: 'rgba(22, 101, 52, 0.35)',
+  },
+  orange: {
+    main: '#92400e', hover: '#78350f', muted: '#92400e',
+    soft: 'rgba(146, 64, 14, 0.08)', strongBg: '#fffbeb',
+    border: 'rgba(146, 64, 14, 0.35)',
+  },
+};
+
 // @group Utilities : Theme preference normalization
 export function normalizeThemePreference(value: string | null | undefined): AppTheme {
   return value === 'light' ? 'light' : 'dark';
@@ -69,6 +93,6 @@ export function normalizeAccentColor(value: string | null | undefined): AccentCo
   return 'blue';
 }
 
-export function getAccentPalette(accentColor: AccentColor): AccentPalette {
-  return ACCENT_PALETTES[accentColor];
+export function getAccentPalette(accentColor: AccentColor, theme: AppTheme = 'dark'): AccentPalette {
+  return (theme === 'light' ? LIGHT_ACCENT_PALETTES : ACCENT_PALETTES)[accentColor];
 }

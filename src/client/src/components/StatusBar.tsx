@@ -35,10 +35,10 @@ interface StatusBarProps {
 
 // @group Utilities : Per-type visual config — hardcoded dark CLI palette
 const TYPE_CONFIG = {
-  error:   { label: 'ERR',  labelClass: 'bg-red-700 text-[#e8e8e8]',          icon: ExclamationCircleIcon,   textClass: 'text-red-400' },
-  warn:    { label: 'WARN', labelClass: 'bg-amber-700 text-[#e8e8e8]',         icon: ExclamationTriangleIcon, textClass: 'text-amber-400' },
-  success: { label: 'OK',   labelClass: 'bg-emerald-800 text-[#22c55e]',       icon: CheckCircleIcon,         textClass: 'text-[#22c55e]' },
-  info:    { label: 'INFO', labelClass: 'bg-[#0d1a2a] text-[#22d3ee]',         icon: InformationCircleIcon,   textClass: 'text-[#22d3ee]' },
+  error:   { label: 'ERR',  labelClass: 'bg-red-700 text-white',          icon: ExclamationCircleIcon,   textClass: 'text-red-400' },
+  warn:    { label: 'WARN', labelClass: 'bg-amber-800 text-white',         icon: ExclamationTriangleIcon, textClass: 'text-amber-400' },
+  success: { label: 'OK',   labelClass: 'bg-emerald-800 text-white',       icon: CheckCircleIcon,         textClass: 'text-[#22c55e]' },
+  info:    { label: 'INFO', labelClass: 'bg-cyan-900 text-white',         icon: InformationCircleIcon,   textClass: 'text-[#22d3ee]' },
 };
 
 // @group StatusBar : Single-row persistent footer — tips at rest, notifications inline
@@ -90,9 +90,9 @@ const StatusBar: React.FC<StatusBarProps> = ({ notifications, onDismiss, status,
 
   // @group Render : Single thin bar — always dark CLI style, no dark: variants
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-[60] flex items-center h-[22px]
+    <div className="fixed bottom-0 left-0 right-0 z-[60] flex items-center h-7
                     bg-[#0a0a0a] border-t border-[#1a1a1a]
-                    font-mono text-[10px] select-none">
+                    font-mono text-xs select-none">
 
       {/* ── Left: connection + server + counts ── */}
       <div className="flex items-center shrink-0 h-full">

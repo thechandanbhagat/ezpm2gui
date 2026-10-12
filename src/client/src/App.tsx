@@ -22,10 +22,11 @@ import MetricsPage from './components/MetricsPage';
 import ServerSwitcher from './components/ServerSwitcher';
 import PasswordGate from './components/PasswordGate';
 import WhatsNew from './components/WhatsNew';
+import Help from './components/Help';
 import WhatsNewModal, { shouldShowWhatsNew, markWhatsNewSeen } from './components/WhatsNewModal';
 import StatusBar, { Notification } from './components/StatusBar';
 import LanguageSwitcher from './components/LanguageSwitcher';
-import { getToken } from './auth';
+import { AUTH_CONFIG_CHANGED_EVENT, AUTH_REQUIRED_EVENT, AUTH_SESSION_CHANGED_EVENT, getToken } from './auth';
 import {
   ACTIVE_SERVER_STORAGE_KEY,
   LOCAL_SERVER_ID,
@@ -71,6 +72,7 @@ import {
 
 // Connect to the page origin in production so a remote host is not baked as localhost
 const socket = io(getSocketUrl(), {
+  autoConnect: false,
   // Send the session token (if any) on every (re)connection attempt
   auth: (cb: (data: { token?: string }) => void) => cb({ token: getToken() || undefined }),
   // Reconnection settings
@@ -142,10 +144,12 @@ const App: React.FC = () => {
   // null = not yet fetched, false = no password set, true = password set
   const [passwordSet,  setPasswordSet]  = useState<boolean | null>(null);
   const [pinSet,       setPinSet]       = useState<boolean | null>(null);
+  const [sessionToken, setSessionToken] = useState<string | null>(getToken);
   // Persist unlock across tabs and page refreshes
   const [appUnlocked,  setAppUnlocked]  = useState<boolean>(
-    () => localStorage.getItem('ezpm2_unlocked') === '1'
+    () => !!getToken() && localStorage.getItem('ezpm2_unlocked') === '1'
   );
+  const canAccessApi = passwordSet !== null && (!passwordSet || (appUnlocked && !!sessionToken));
   const autoLockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // @group WhatsNew : Show popup once per session
@@ -154,7 +158,7 @@ const App: React.FC = () => {
   // @group Theme : Persisted dark/light mode state
   const [darkMode, setDarkMode] = useState<boolean>(getStoredDarkMode);
   const [accentColor, setAccentColor] = useState<AccentColor>(getStoredAccentColor);
-  const accentPalette = getAccentPalette(accentColor);
+  const accentPalette = getAccentPalette(accentColor, getThemePreference(darkMode));
 
   // @group Theme : Sync document theme hooks for Tailwind, MUI, accent colors, and CSS overrides
   useEffect(() => {
@@ -240,6 +244,7 @@ const App: React.FC = () => {
     processId: null
   });
   useEffect(() => {
+    if (!canAccessApi) return;
     // Track last data update timestamp to detect if data is actually flowing
     let lastDataUpdate = Date.now();
     let connectionErrorTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -331,6 +336,8 @@ const App: React.FC = () => {
       }
     });
 
+    socket.connect();
+
     return () => {
       // Cleanup
       if (connectionErrorTimeout) {
@@ -342,9 +349,11 @@ const App: React.FC = () => {
       socket.off('connect_error');
       socket.off('connect');
       socket.off('disconnect');
+      socket.disconnect();
+      setSocketConnected(false);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enqueueNotification, loadLocalProcessesAndMetrics]);
+  }, [canAccessApi, sessionToken, enqueueNotification, loadLocalProcessesAndMetrics]);
 
   // Filter processes when search, status, or namespace filter changes
   useEffect(() => {
@@ -374,6 +383,7 @@ const App: React.FC = () => {
 
   // @group ServerSwitcher : Fall back to local when persisted remote selection no longer exists
   useEffect(() => {
+    if (!canAccessApi) return;
     if (!remoteConnectionsLoaded || activeServerId === LOCAL_SERVER_ID) return;
 
     const nextServerId = resolveAvailableServerId(activeServerId, remoteConnections);
@@ -386,6 +396,7 @@ const App: React.FC = () => {
       console.error('Error restoring local processes after remote removal:', err);
     });
   }, [
+    canAccessApi,
     activeServerId,
     loadLocalProcessesAndMetrics,
     persistActiveServerId,
@@ -395,6 +406,7 @@ const App: React.FC = () => {
 
   // @group ServerSwitcher : Poll remote processes when a remote server is active
   useEffect(() => {
+    if (!canAccessApi) return;
     if (activeServerId === LOCAL_SERVER_ID || !remoteConnectionsLoaded) return;
     if (!isRemoteServerAvailable(activeServerId, remoteConnections)) return;
 
@@ -423,6 +435,7 @@ const App: React.FC = () => {
     const interval = setInterval(fetchRemoteProcesses, 3000);
     return () => clearInterval(interval);
   }, [
+    canAccessApi,
     activeServerId,
     enqueueNotification,
     loadLocalProcessesAndMetrics,
@@ -434,6 +447,7 @@ const App: React.FC = () => {
 
   // @group ServerSwitcher : Refresh remote connections list periodically so status dots stay current
   useEffect(() => {
+    if (!canAccessApi) return;
     const refresh = () => {
       void refreshRemoteConnections();
     };
@@ -446,10 +460,11 @@ const App: React.FC = () => {
       clearInterval(interval);
       window.removeEventListener(REMOTE_CONNECTIONS_CHANGED_EVENT, refresh);
     };
-  }, [refreshRemoteConnections]);
+  }, [canAccessApi, refreshRemoteConnections]);
 
   // @group Updates : Check for update once after 4 s — non-blocking, silent on failure
   useEffect(() => {
+    if (!canAccessApi) return;
     const timer = setTimeout(async () => {
       try {
         const res = await fetch('/api/update/check');
@@ -462,10 +477,11 @@ const App: React.FC = () => {
       }
     }, 4000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [canAccessApi]);
 
   // @group Updates : Load installed app version for footer/about display
   useEffect(() => {
+    if (!canAccessApi) return;
     fetch('/api/update/current')
       .then(res => res.json())
       .then(json => {
@@ -475,19 +491,45 @@ const App: React.FC = () => {
       .catch(() => {
         // silent — footer falls back to a loading placeholder
       });
-  }, []);
+  }, [canAccessApi]);
 
   // @group Auth : Fetch password-protection status on mount; also load autoLockMinutes
   const [autoLockMinutes, setAutoLockMinutes] = useState<number>(0);
   useEffect(() => {
+    let active = true;
+    const syncSession = () => {
+      const token = getToken();
+      setSessionToken(token);
+      setAppUnlocked(!!token);
+    };
+    const lockSession = () => {
+      setPasswordSet(true);
+      setAppUnlocked(false);
+    };
+    const syncConfig = (event: Event) => {
+      const config = (event as CustomEvent<{ passwordSet: boolean; pinSet: boolean; autoLockMinutes: number }>).detail;
+      setPasswordSet(config.passwordSet);
+      setPinSet(config.pinSet);
+      setAutoLockMinutes(config.autoLockMinutes);
+    };
+    window.addEventListener(AUTH_SESSION_CHANGED_EVENT, syncSession);
+    window.addEventListener(AUTH_REQUIRED_EVENT, lockSession);
+    window.addEventListener(AUTH_CONFIG_CHANGED_EVENT, syncConfig);
     fetch('/api/auth/status')
       .then(r => r.json())
       .then(j => {
+        if (!active) return;
         setPasswordSet(j.passwordSet ?? false);
         setPinSet(j.pinSet ?? false);
         setAutoLockMinutes(j.autoLockMinutes ?? 0);
       })
-      .catch(() => { setPasswordSet(false); setPinSet(false); });
+      .catch(() => { if (active) { setPasswordSet(false); setPinSet(false); } });
+    return () => {
+      active = false;
+      window.removeEventListener(AUTH_SESSION_CHANGED_EVENT, syncSession);
+      window.removeEventListener(AUTH_REQUIRED_EVENT, lockSession);
+      window.removeEventListener(AUTH_CONFIG_CHANGED_EVENT, syncConfig);
+    };
   }, []);
 
   // @group Auth : Sync localStorage when unlock state changes
@@ -595,6 +637,7 @@ const App: React.FC = () => {
 
   // @group WhatsNew : Auto-show on first visit this session (only when unlocked/no auth)
   useEffect(() => {
+    if (!canAccessApi) return;
     if (shouldShowWhatsNew()) {
       // Small delay so the app renders first
       const t = setTimeout(() => {
@@ -603,7 +646,7 @@ const App: React.FC = () => {
       }, 800);
       return () => clearTimeout(t);
     }
-  }, []);
+  }, [canAccessApi]);
   
   const toggleDarkMode = (): void => {
     const next = !darkMode;
@@ -684,7 +727,7 @@ const App: React.FC = () => {
     setNamespaceFilter(e.target.value);
   };
 
-  if (loading) {
+  if (passwordSet === null || (canAccessApi && loading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
         <div className="flex items-center gap-2.5">
@@ -710,21 +753,21 @@ const App: React.FC = () => {
       },
       text: {
         primary:   darkMode ? '#e8e8e8' : '#0f172a',
-        secondary: darkMode ? '#888888' : '#475569',
+        secondary: darkMode ? '#b8b8b8' : '#334155',
       },
       divider: darkMode ? '#1e1e1e' : '#d8dee9',
     },
     typography: {
       fontFamily: 'inherit',          // use the Tailwind / CSS font stack
-      h4: { fontSize: '1.0625rem', fontWeight: 600, lineHeight: 1.3 },  // 17px — page titles
-      h5: { fontSize: '0.9375rem', fontWeight: 600, lineHeight: 1.3 },  // 15px — section headers
-      h6: { fontSize: '0.875rem',  fontWeight: 600, lineHeight: 1.3 },  // 14px — subsections
-      subtitle1: { fontSize: '0.8125rem', lineHeight: 1.4 },            // 13px
-      subtitle2: { fontSize: '0.75rem',   fontWeight: 600, lineHeight: 1.4 }, // 12px
-      body1:     { fontSize: '0.875rem',  lineHeight: 1.5 },            // 14px
-      body2:     { fontSize: '0.8125rem', lineHeight: 1.5 },            // 13px
-      caption:   { fontSize: '0.75rem',   lineHeight: 1.4 },            // 12px
-      overline:  { fontSize: '0.6875rem', lineHeight: 1.4 },            // 11px
+      h4: { fontSize: '1.25rem', fontWeight: 600, lineHeight: 1.4 },
+      h5: { fontSize: '1.125rem', fontWeight: 600, lineHeight: 1.4 },
+      h6: { fontSize: '1rem', fontWeight: 600, lineHeight: 1.5 },
+      subtitle1: { fontSize: '1rem', lineHeight: 1.5 },
+      subtitle2: { fontSize: '0.875rem', fontWeight: 600, lineHeight: 1.5 },
+      body1:     { fontSize: '1rem', lineHeight: 1.625 },
+      body2:     { fontSize: '0.875rem', lineHeight: 1.6 },
+      caption:   { fontSize: '0.75rem', lineHeight: 1.5 },
+      overline:  { fontSize: '0.75rem', lineHeight: 1.5 },
     },
     shape: { borderRadius: 6 },
     components: {
@@ -778,14 +821,14 @@ const App: React.FC = () => {
       // Table — dense
       MuiTableCell: {
         styleOverrides: {
-          head: { fontWeight: 600, fontSize: '0.75rem' },
-          body: { fontSize: '0.8125rem' },
+          head: { fontWeight: 600, fontSize: '0.8125rem' },
+          body: { fontSize: '0.875rem' },
         },
       },
       // Tabs — compact
       MuiTab: {
         styleOverrides: {
-          root: { textTransform: 'none', minHeight: 36, fontSize: '0.8125rem', fontWeight: 500 },
+          root: { textTransform: 'none', minHeight: 36, fontSize: '0.875rem', fontWeight: 500 },
         },
       },
       MuiTabs: { styleOverrides: { root: { minHeight: 36 } } },
@@ -794,30 +837,29 @@ const App: React.FC = () => {
         styleOverrides: { root: { minHeight: 40, '&.Mui-expanded': { minHeight: 40 } } },
       },
       // Alerts — compact padding
-      MuiAlert: { styleOverrides: { root: { fontSize: '0.8125rem', padding: '6px 12px' } } },
+      MuiAlert: { styleOverrides: { root: { fontSize: '0.875rem', padding: '6px 12px' } } },
       // Dialogs — consistent radius
       MuiDialog: { styleOverrides: { paper: { borderRadius: 8 } } },
     },
   });
 
-  return (
-    <ThemeProvider theme={muiTheme}>
-    <Router>
-      {/* @group Auth : Password/PIN gate — rendered before anything else when locked */}
-      {(passwordSet === true || pinSet === true) && !appUnlocked && (
+  // Do not mount pages (or their polling effects) behind the lock screen.
+  if (!canAccessApi) {
+    return (
+      <ThemeProvider theme={muiTheme}>
         <PasswordGate
           darkMode={darkMode}
-          onUnlock={() => {
-            setAppUnlocked(true);
-            // Reconnect the socket so the freshly stored token is sent on the handshake
-            socket.disconnect();
-            socket.connect();
-          }}
+          onUnlock={() => setAppUnlocked(!!getToken())}
           pinSet={pinSet ?? false}
           passwordSet={passwordSet ?? false}
         />
-      )}
+      </ThemeProvider>
+    );
+  }
 
+  return (
+    <ThemeProvider theme={muiTheme}>
+    <Router>
       <div className="min-h-screen bg-[#0a0a0a]">
         <div className="flex">
 
@@ -842,14 +884,14 @@ const App: React.FC = () => {
               {/* @group Branding : App logo and wordmark */}
               <Link
                 to="/"
-                className="flex items-center gap-1.5 font-mono text-xs font-bold text-[#e8e8e8] tracking-tight no-underline"
+                className="flex shrink-0 items-center gap-1.5 whitespace-nowrap font-mono text-xs font-bold text-[#e8e8e8] tracking-tight no-underline"
               >
                 <img
                   src={`${process.env.PUBLIC_URL}/logo192.svg`}
                   alt=""
                   className="h-4 w-4 rounded-[3px] shrink-0"
                 />
-                <span>EZ PM2 GUI</span>
+                <span className="sr-only sm:not-sr-only">EZ PM2 GUI</span>
               </Link>
 
               {/* @group Auth : No-password banner — shown when password protection is not yet enabled */}
@@ -857,7 +899,7 @@ const App: React.FC = () => {
                 <Link
                   to="/settings?section=security"
                   title={t('header.enablePasswordProtection')}
-                  className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-full no-underline border transition-colors bg-[#2d1500] border-[#f59e0b]/30 text-[#f59e0b] font-mono text-[10px] hover:bg-[#3d1e00]"
+                  className="hidden xl:flex items-center gap-1 px-2 py-0.5 rounded-full no-underline border transition-colors bg-[#2d1500] border-[#f59e0b]/30 text-[#f59e0b] font-mono text-[10px] hover:bg-[#3d1e00]"
                 >
                   <ShieldExclamationIcon className="h-3.5 w-3.5" />
                   <span>{t('header.noPasswordSet')}</span>
@@ -871,7 +913,7 @@ const App: React.FC = () => {
               {activeServerId !== 'local' && (() => {
                 const conn = remoteConnections.find(c => c.id === activeServerId);
                 return (
-                  <div className="hidden sm:flex items-center gap-1.5 font-mono text-xs">
+                  <div className="hidden xl:flex items-center gap-1.5 font-mono text-xs">
                     <div className="w-1.5 h-1.5 rounded-full bg-[#22d3ee] animate-pulse shrink-0" />
                     <span className="text-[#22d3ee] font-medium">
                       <strong>{conn?.name || 'Remote Server'}</strong>
@@ -888,7 +930,7 @@ const App: React.FC = () => {
               })()}
 
               {/* Right side */}
-              <div className="flex items-center gap-1.5">
+              <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
 
                 {/* @group Updates : Pulse badge — visible when a newer npm version exists */}
                 {updateAvailable && (
@@ -926,7 +968,7 @@ const App: React.FC = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   title={t('header.starTooltip')}
-                  className="flex items-center gap-1 px-2 py-0.5 rounded no-underline border transition-colors bg-[#111] border-[#1e1e1e] text-[#888] hover:border-[#f59e0b]/60 hover:text-[#f59e0b] font-mono text-[10px]"
+                  className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded no-underline border transition-colors bg-[#111] border-[#1e1e1e] text-[#888] hover:border-[#f59e0b]/60 hover:text-[#f59e0b] font-mono text-[10px]"
                 >
                   <StarIcon className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">{t('header.star')}</span>
@@ -1014,14 +1056,14 @@ const App: React.FC = () => {
           )}
 
           {/* ── Desktop Sidebar ── */}
-          <div className={`hidden sm:flex flex-col fixed left-0 top-9 z-[40] h-[calc(100vh-2.25rem-22px)] border-r overflow-y-auto transition-[width] duration-200 bg-[#0d0d0d] border-[#1e1e1e] ${
+          <div className={`hidden sm:flex flex-col fixed left-0 top-9 z-[40] h-[calc(100vh-2.25rem-1.75rem)] border-r overflow-y-auto transition-[width] duration-200 bg-[#0d0d0d] border-[#1e1e1e] ${
             sidebarCollapsed ? 'w-[44px]' : 'w-[200px]'
           }`}>
             <SidebarMenu collapsed={sidebarCollapsed} />
           </div>
 
           {/* ── Main Content ── */}
-          <main className={`flex-1 pt-9 min-h-screen transition-[margin] duration-200 bg-[#0a0a0a] ${
+          <main className={`flex-1 min-w-0 pt-9 min-h-screen transition-[margin] duration-200 bg-[#0a0a0a] ${
             sidebarCollapsed ? 'sm:ml-[44px]' : 'sm:ml-[200px]'
           }`}>
             <div className="px-3 py-3 pb-8">
@@ -1084,6 +1126,7 @@ const App: React.FC = () => {
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/load-balancing-guide" element={<LoadBalancingGuide />} />
                 <Route path="/whats-new" element={<WhatsNew />} />
+                <Route path="/help" element={<Help />} />
               </Routes>
             </div>{/* /px-3 py-3 */}
           </main>

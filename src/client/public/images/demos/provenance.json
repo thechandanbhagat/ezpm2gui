@@ -1,0 +1,12 @@
+{
+  "ai-log-analysis.jpg": {
+    "origin": "demo/log-analysis/poster.png",
+    "description": "Existing title frame from the narrated AI log analysis demo.",
+    "video": "https://youtu.be/EPwORhBHupU"
+  },
+  "product-walkthrough.jpg": {
+    "origin": "demo/screenshots/scene-1.png",
+    "description": "Existing real application capture with isolated sample workloads.",
+    "video": "https://youtu.be/u1ckawU-sg4"
+  }
+}

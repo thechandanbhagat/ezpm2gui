@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import PageHeader from './PageHeader';
 import { useTranslation } from 'react-i18next';
-import { setToken, clearToken } from '../auth';
+import { setToken, clearToken, notifyAuthConfigChanged, withAuthSessionChange } from '../auth';
 import {
   ACCENT_CHANGED_EVENT,
   ACCENT_STORAGE_KEY,
@@ -187,6 +187,7 @@ const Settings: React.FC = () => {
       const json = await res.json();
       if (json.success) {
         setPinSet(true);
+        notifyAuthConfigChanged({ passwordSet: true, pinSet: true, autoLockMinutes });
         setPinNew('');
         setPinConfirm('');
         setSecSuccess(pinSet ? t('settings.messages.pinChanged') : t('settings.messages.pinEnabled'));
@@ -218,6 +219,7 @@ const Settings: React.FC = () => {
       const json = await res.json();
       if (json.success) {
         setPinSet(false);
+        notifyAuthConfigChanged({ passwordSet: true, pinSet: false, autoLockMinutes });
         setPinRemovePassword('');
         setSecSuccess(t('settings.messages.pinRemoved'));
       } else {
@@ -246,16 +248,20 @@ const Settings: React.FC = () => {
     try {
       const body: Record<string, string> = { password: secNewPassword };
       if (secPasswordSet) body.currentPassword = secCurrentPassword;
-      const res  = await fetch('/api/auth/set', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+      const json = await withAuthSessionChange(async () => {
+        const res = await fetch('/api/auth/set', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const result = await res.json();
+        // Adopt the replacement token before handling failures from requests
+        // that were already in flight when the server enabled authentication.
+        if (result.success && result.token) setToken(result.token);
+        return result;
       });
-      const json = await res.json();
       if (json.success) {
-        // Setting/changing the password revokes old sessions server-side — store
-        // the fresh token so this client stays signed in instead of being locked out.
-        if (json.token) setToken(json.token);
+        notifyAuthConfigChanged({ passwordSet: true, pinSet: !!pinSet, autoLockMinutes });
         setSecPasswordSet(true);
         setSecNewPassword('');
         setSecConfirmPassword('');
@@ -290,7 +296,10 @@ const Settings: React.FC = () => {
       if (json.success) {
         // Password removed — enforcement is off and the old token was revoked.
         clearToken();
+        notifyAuthConfigChanged({ passwordSet: false, pinSet: false, autoLockMinutes: 0 });
         setSecPasswordSet(false);
+        setPinSet(false);
+        setAutoLockMinutes(0);
         setSecRemovePassword('');
         setSecSuccess(t('settings.messages.passwordRemoved'));
       } else {
@@ -1089,10 +1098,10 @@ const Settings: React.FC = () => {
     <div className="max-w-3xl mx-auto space-y-4">
       <PageHeader title={t('settings.title')} subtitle={t('settings.subtitle')} />
 
-      <div className="flex gap-4 items-start">
+      <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-start">
 
         {/* ── Left sidebar nav ── */}
-        <div className="bg-[#111] border border-[#1e1e1e] rounded-sm w-40 shrink-0 overflow-hidden">
+        <div className="bg-[#111] border border-[#1e1e1e] rounded-sm w-full md:w-44 shrink-0 overflow-hidden">
           {SECTIONS.map((s) => (
             <button
               key={s.id}
@@ -1113,7 +1122,7 @@ const Settings: React.FC = () => {
 
         {/* ── Right content ── */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex flex-wrap items-center gap-2 mb-3">
             <span className="text-[11px] font-mono font-bold text-[#e8e8e8] uppercase tracking-[0.1em]">
               ▸ {SECTIONS.find(s => s.id === activeSection)?.label}
             </span>

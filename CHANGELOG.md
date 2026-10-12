@@ -6,11 +6,21 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased]
+## [1.12.0] - 2026-10-12
 
 ### Added
+- **AI log analysis with installed CLIs** — analyze recent raw local or remote PM2 logs using Claude Code, Codex, Cursor Agent, GitHub Copilot CLI, or a downloaded local Ollama model. Cloud CLIs reuse the user's existing sign-in; no separate API key is required when already authenticated.
+- **Reviewable log snapshots** — preview bounded, numbered stdout and stderr with common credentials redacted before analysis. Cloud providers require explicit consent; diagnostic reports suggest checks without modifying applications.
+- **Help page and demo library** — browse and play the published product walkthrough and AI log analysis demo from the application sidebar, with links to documentation and the user guide.
 - **`EZPM2GUI_CONFIG_DIR`** — optional directory for runtime state (`auth.json`, session tokens, remote connections, cron jobs, metrics DB). Set it in the systemd `EnvironmentFile` (e.g. `/etc/ezpm2gui`) so `npm i -g` no longer wipes the GUI password and remotes. Unset, files still live in `dist/server/config`. Existing package config is copied into an empty override directory once on first start.
-- **`EZPM2GUI_SECRET` documented** — encryption key for at-rest remote credentials; README now lists it next to `PORT`/`HOST`.
+- **`EZPM2GUI_SECRET` documented** — encryption key for at-rest remote credentials; README lists it next to `PORT`/`HOST`.
+
+### Changed
+- Improved text contrast, responsive sizing, and shared theme colors across the application and documentation website.
+
+### Fixed
+- Password setup, session rotation, locking, and expiry now update the mounted app without a page reload. Stale unauthorized responses cannot clear a newer session.
+- Generated runtime configuration, sessions, and metrics databases are excluded from the npm package; only default project templates are shipped from the build's configuration directory.
 
 ## [1.10.0] - 2026-05-28
 

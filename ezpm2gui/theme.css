@@ -1,0 +1,55 @@
+/* Shared website palette: readable text on page, card, code, and tinted surfaces. */
+:root {
+  color-scheme: dark;
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface-2: #21262d;
+  --border: #30363d;
+  --border-muted: #21262d;
+  --primary: #56d364;
+  --primary-dk: #3fb950;
+  --primary-lt: #7ee787;
+  --primary-glow: rgba(63, 185, 80, .12);
+  --on-primary: #0d1117;
+  --blue: #79b8ff;
+  --purple: #c9a5ff;
+  --orange: #e3b341;
+  --red: #ff7b72;
+  --text: #f0f6fc;
+  --text-body: #d1d9e2;
+  --text-muted: #b3beca;
+  --text-subtle: #9ba8b8;
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, .5);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, .6);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, .7);
+}
+
+body.light,
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #ffffff;
+  --surface: #f6f8fa;
+  --surface-2: #eaeef2;
+  --border: #d0d7de;
+  --border-muted: #eaeef2;
+  --primary: #176b32;
+  --primary-dk: #125629;
+  --primary-lt: #125629;
+  --primary-glow: rgba(23, 107, 50, .08);
+  --on-primary: #ffffff;
+  --blue: #0759ad;
+  --purple: #6639a6;
+  --orange: #805400;
+  --red: #b42318;
+  --text: #18212d;
+  --text-body: #283544;
+  --text-muted: #465465;
+  --text-subtle: #566475;
+  --shadow-sm: 0 1px 4px rgba(24, 33, 45, .08);
+  --shadow-md: 0 4px 16px rgba(24, 33, 45, .10);
+  --shadow-lg: 0 12px 32px rgba(24, 33, 45, .12);
+}
+
+::selection { background: var(--blue); color: var(--bg); }
+a { text-underline-offset: .2em; }
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }

@@ -96,6 +96,11 @@ console.log('\n4. Copying server configuration file...');
 try {
   fs.mkdirSync(serverConfigDistDir, { recursive: true });
   fs.copyFileSync(serverConfigSrc, serverConfigDist);
+  // npm includes dist/, so carry its runtime-state exclusions into the build.
+  fs.copyFileSync(
+    path.join(rootDir, 'src', 'server', 'config', '.npmignore'),
+    path.join(serverConfigDistDir, '.npmignore')
+  );
   console.log('✓ Server configuration file copied successfully');
 } catch (error) {
   console.error('✗ Failed to copy server configuration file:');

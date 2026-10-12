@@ -1,6 +1,6 @@
 {
   "name": "ezpm2gui",
-  "version": "1.11.4",
+  "version": "1.12.0",
   "main": "dist/server/index.js",
   "bin": {
     "ezpm2gui": "bin/ezpm2gui.js",
@@ -27,7 +27,9 @@
     "build:client": "cd src/client && npm run build",
     "build:bin": "tsc --project tsconfig.bin.json",
     "prepare": "npm run build",
-    "test": "ts-node tests/unit/server-selection.test.ts && ts-node tests/unit/theme.test.ts && ts-node tests/unit/app-version.test.ts && ts-node tests/unit/socket-url.test.ts && ts-node tests/unit/config-dir.test.ts",
+    "test": "npm run test:unit && npm run test:client",
+    "test:unit": "ts-node tests/unit/server-selection.test.ts && ts-node tests/unit/theme.test.ts && ts-node tests/unit/app-version.test.ts && ts-node tests/unit/socket-url.test.ts && ts-node tests/unit/config-dir.test.ts && ts-node tests/unit/cli-authentication.test.ts && ts-node tests/unit/log-analysis-providers.test.ts && ts-node tests/unit/log-analysis-routes.test.ts",
+    "test:client": "npm --prefix src/client test -- --watchAll=false --watchman=false --runInBand",
     "postinstall": "node scripts/postinstall.js"
   },
   "keywords": [
