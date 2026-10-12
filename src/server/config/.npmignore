@@ -1,0 +1,3 @@
+# Ship the build's default project templates, never local runtime state.
+*
+!project-configs.json

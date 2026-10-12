@@ -11,7 +11,8 @@
     "loadBalancing": "Load Balancing",
     "settings": "Settings",
     "management": "Management",
-    "localServer": "Local Server"
+    "localServer": "Local Server",
+    "help": "Help"
   },
   "header": {
     "noPasswordSet": "No password set — go to Settings / Security to enable",
@@ -741,7 +742,13 @@
     "pageSubtitle": "Latest updates and improvements to EZ PM2 GUI",
     "configureSecurity": "Configure Security",
     "configureSecurityDesc": "Set up PIN and password protection from Settings.",
-    "openSettings": "Open Settings"
+    "openSettings": "Open Settings",
+    "aiLogTitle": "AI Log Analysis",
+    "aiLogDesc": "Use installed AI CLIs with their existing sign-in, or analyze logs with a local Ollama model.",
+    "snapshotTitle": "Review Before Analysis",
+    "snapshotDesc": "Preview redacted log snapshots and explicitly approve cloud-backed analysis.",
+    "helpTitle": "Help & Demo Videos",
+    "helpDesc": "Watch the application walkthrough and AI log analysis demo from the new Help page."
   },
   "scriptEditor": {
     "title": "Inline Script",
@@ -881,5 +888,83 @@
     "deployedSuccessfully": "deployed successfully",
     "portInUse": "port {{port}} is already in use",
     "failedToDeploy": "failed to deploy"
+  },
+  "logAnalysis": {
+    "title": "Analyze application logs",
+    "description": "Review a recent log snapshot, choose an installed AI provider, and investigate suspected issues.",
+    "analyze": "Analyze logs",
+    "provider": "Provider",
+    "model": "Local model",
+    "detecting": "Detecting installed providers…",
+    "noProviders": "No providers detected",
+    "local": "Local inference",
+    "cloud": "Cloud inference",
+    "unavailable": "Unavailable",
+    "noModels": "No local models detected",
+    "refreshProviders": "Refresh providers",
+    "providerError": "Provider detection failed. Retry after checking the EZ PM2 GUI server.",
+    "snapshotError": "Could not load the log snapshot. Check the process or remote connection and retry.",
+    "analysisError": "Analysis failed. Check the provider installation and sign-in, then retry.",
+    "retry": "Retry",
+    "close": "Close",
+    "cancel": "Cancel analysis",
+    "cancelled": "Analysis cancelled.",
+    "analyzing": "Analyzing the snapshot…",
+    "complete": "Analysis complete.",
+    "serverMachine": "Providers run on the machine hosting EZ PM2 GUI.",
+    "noProviderHelp": "Install a supported provider on the EZ PM2 GUI server, then refresh providers.",
+    "setupTitle": "Installation and sign-in guidance",
+    "setup": {
+      "ollama": "Install the Ollama CLI, start its daemon on 127.0.0.1:11434, and download a local model with ollama pull <model>. Analysis runs through ollama run.",
+      "claude": "Install Claude Code and sign in with claude auth login.",
+      "codex": "Install the Codex CLI and sign in with codex login.",
+      "cursor": "Install the Cursor Agent CLI on this server and sign in once with agent login or cursor-agent login. Existing CLI authentication is reused; CURSOR_API_KEY is optional.",
+      "copilot": "Install the GitHub Copilot CLI on this server and sign in once with copilot login. Existing CLI authentication is reused; a supported credential environment variable is optional."
+    },
+    "cloudNotice": "{{provider}} runs from a local CLI but sends this snapshot to its cloud service. Redaction is best effort; review the preview for remaining sensitive information.",
+    "cloudConsent": "I allow this snapshot to be sent to {{provider}} for this analysis.",
+    "loadingSnapshot": "Loading and redacting recent logs…",
+    "snapshotSummary": "{{count}} lines · redacted values: {{redactions}}",
+    "snapshotScope": "Recent raw history: up to 200 stdout lines and 200 stderr lines, independent of viewer filters. Numbered in stdout then stderr order; only timestamps in the log text are actual event times.",
+    "localSource": "Local process",
+    "remoteSource": "Remote process",
+    "restarts": "{{count}} restarts",
+    "truncated": "The snapshot or output was shortened to stay within analysis limits.",
+    "emptySnapshot": "No recent log lines are available. Generate application logs, then close and reopen this dialog.",
+    "preview": "Review the redacted snapshot",
+    "retryAnalysis": "Use Analyze logs to retry.",
+    "resultTitle": "Suspected issues",
+    "advisory": "AI findings are advisory. Check the cited log evidence before changing the application.",
+    "resultSummary": "{{count}} lines analyzed · redacted values: {{redactions}}"
+  },
+  "help": {
+    "title": "Help & demos",
+    "subtitle": "Watch a walkthrough, then try the feature in your workspace.",
+    "player": "Video player",
+    "loadingPlayer": "Loading YouTube player…",
+    "playVideo": "Play {{title}}",
+    "play": "Play demo",
+    "retryPlayer": "Retry playback",
+    "playerError": "The video player could not load. Retry or watch this demo on YouTube.",
+    "english": "English",
+    "watchOnYoutube": "Watch on YouTube",
+    "allDemos": "All demos",
+    "playbackHint": "Choose a demo, then press Play. If the player is unavailable, use Watch on YouTube.",
+    "moreHelp": "Guides and release notes",
+    "userGuide": "Illustrated user guide",
+    "documentation": "Documentation",
+    "whatsNew": "What’s new",
+    "videos": {
+      "ai": {
+        "title": "AI log analysis",
+        "description": "Investigate a failed startup with installed CLI agents: review redacted logs, choose local Ollama or a cloud provider, and read an evidence-based report. Uses sample logs and a simulated analysis.",
+        "action": "Open logs"
+      },
+      "walkthrough": {
+        "title": "Product walkthrough",
+        "description": "A tour of process monitoring, confirmed restarts, live metrics, streaming logs, deployment, and appearance settings.",
+        "action": "Open processes"
+      }
+    }
   }
 }

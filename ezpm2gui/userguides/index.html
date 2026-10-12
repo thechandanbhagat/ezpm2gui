@@ -10,40 +10,15 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="../theme.css">
   <style>
     /* @group Tokens : CSS variables */
     :root {
-      --bg:          #0d1117;
-      --surface:     #161b22;
-      --surface-2:   #21262d;
-      --border:      #30363d;
-      --primary:     #3fb950;
-      --primary-dk:  #2ea043;
-      --primary-lt:  #56d364;
-      --primary-glow:rgba(63,185,80,.12);
-      --blue:        #58a6ff;
-      --orange:      #e3b341;
-      --red:         #f85149;
-      --text:        #e6edf3;
-      --text-muted:  #8b949e;
-      --text-subtle: #6e7681;
-      --shadow-sm:   0 1px 4px rgba(0,0,0,.5);
-      --shadow-md:   0 4px 16px rgba(0,0,0,.6);
       --r-sm: 4px; --r-md: 8px; --r-lg: 12px; --r-xl: 20px; --r-full: 9999px;
       --t: 0.25s ease;
       --nav-h: 60px;
       --sidebar-w: 240px;
     }
-    [data-theme="light"] {
-      --bg:          #ffffff;
-      --surface:     #f6f8fa;
-      --surface-2:   #eaeef2;
-      --border:      #d0d7de;
-      --text:        #1f2328;
-      --text-muted:  #656d76;
-      --text-subtle: #848d97;
-    }
-
     /* @group Reset */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; scroll-padding-top: 80px; }
@@ -51,7 +26,7 @@
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: var(--bg);
       color: var(--text);
-      font-size: 15px;
+      font-size: 16px;
       line-height: 1.65;
       overflow-x: hidden;
       opacity: 0;
@@ -65,8 +40,12 @@
 
     /* @group InlineCode */
     code {
-      font-family: 'Courier New', monospace;
-      font-size: .85em;
+      display: inline-block;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+      vertical-align: baseline;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: .9em;
       color: var(--primary);
       background: var(--primary-glow);
       border: 1px solid rgba(63,185,80,.2);
@@ -80,13 +59,13 @@
       border-radius: var(--r-md);
       padding: 1rem 1.25rem;
       overflow-x: auto;
-      font-family: 'Courier New', monospace;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       font-size: .875rem;
       color: var(--text);
       line-height: 1.75;
       margin: .75rem 0;
     }
-    pre code { background: none; border: none; color: inherit; padding: 0; font-size: inherit; }
+    pre code { display: inline; background: none; border: none; color: inherit; padding: 0; font-size: inherit; }
 
     /* @group Navigation */
     .nav {
@@ -227,7 +206,7 @@
       line-height: 1;
     }
     .btn-primary {
-      background: var(--primary); color: #0d1117; border-color: var(--primary);
+      background: var(--primary); color: var(--on-primary); border-color: var(--primary);
     }
     .btn-primary:hover {
       background: var(--primary-lt);
@@ -273,7 +252,7 @@
       display: block;
       padding: .35rem .6rem;
       border-radius: var(--r-sm);
-      font-size: .82rem; font-weight: 600;
+      font-size: .875rem; font-weight: 600;
       color: var(--text-muted);
       transition: .15s ease;
       margin-top: .5rem;
@@ -294,6 +273,7 @@
     @media (max-width: 900px) { .toc { position: static; max-height: none; } }
 
     /* @group Content */
+    .content { min-width: 0; overflow-wrap: anywhere; }
     .content section { margin-bottom: 3.5rem; }
     .section-anchor { display: block; height: 80px; margin-top: -80px; visibility: hidden; }
 
@@ -370,7 +350,7 @@
       margin-left: .8rem;
       font-size: .75rem;
       color: var(--text-subtle);
-      font-family: 'Courier New', monospace;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }
     .shot img {
       display: block;
@@ -379,12 +359,13 @@
     }
     .shot-caption {
       padding: .55rem .9rem;
-      font-size: .78rem;
-      color: var(--text-subtle);
+      font-size: .875rem;
+      line-height: 1.6;
+      color: var(--text-muted);
       background: var(--surface);
       border-top: 1px solid var(--border);
       text-align: center;
-      font-style: italic;
+      font-style: normal;
     }
 
     /* @group Cards */
@@ -447,7 +428,7 @@
 
     /* @group Table */
     .table-wrap { overflow-x: auto; margin: .9rem 0; }
-    table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+    table { width: 100%; border-collapse: collapse; font-size: .9375rem; }
     th {
       background: var(--surface-2);
       color: var(--text-muted);
@@ -459,7 +440,8 @@
       text-transform: uppercase;
       letter-spacing: .05em;
     }
-    td { padding: .6rem 1rem; border-bottom: 1px solid var(--border); color: var(--text-muted); }
+    td { padding: .75rem 1rem; border-bottom: 1px solid var(--border); color: var(--text-body); }
+    th:first-child, td:first-child { min-width: 11rem; }
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: var(--primary-glow); }
 
@@ -487,7 +469,7 @@
     }
     footer a { color: var(--primary); }
     footer a:hover { text-decoration: underline; }
-    footer .footer-sep { color: var(--border); margin: 0 .5rem; }
+    footer .footer-sep { color: var(--text-subtle); margin: 0 .5rem; }
 
     /* @group Scrollbar */
     ::-webkit-scrollbar { width: 5px; }
@@ -499,11 +481,13 @@
     .demo-video iframe { display: block; width: 100%; height: 100%; border: 0; }
     figure.shot { margin: 1.5rem 0; }
     .content h3 { scroll-margin-top: 96px; margin-top: 2rem; }
-    .content p { color: var(--text-muted); line-height: 1.75; margin: .8rem 0; }
-    .content ol, .content ul { margin: 1rem 0; padding-left: 1.5rem; }
+    .content p { max-width: 72ch; color: var(--text-body); font-size: 1rem; line-height: 1.8; margin: .9rem 0; }
+    .content ol, .content ul { max-width: 72ch; margin: 1rem 0; padding-left: 1.5rem; }
     .content ol { list-style: decimal; }
     .content ul { list-style: disc; }
-    .content li { color: var(--text-muted); line-height: 1.75; margin-bottom: .55rem; }
+    .content li { color: var(--text-body); font-size: 1rem; line-height: 1.8; margin-bottom: .65rem; }
+    .content a { text-decoration: underline; }
+    .content strong { color: var(--text); font-weight: 600; }
     @media (max-width: 640px) { .content pre { max-width: 100%; overflow-x: auto; } }
     @media (max-width: 900px) { .toc ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .2rem 1rem; } }
     @media (max-width: 480px) { .toc ul { grid-template-columns: 1fr; } }

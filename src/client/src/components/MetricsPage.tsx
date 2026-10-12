@@ -1,3 +1,4 @@
+import { useTheme } from '@mui/material/styles';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
@@ -152,6 +153,7 @@ interface MetricsPageProps {
 
 // @group MetricsPage : Main component
 const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const [tab, setTab] = useState<'live' | 'history'>('live');
 
@@ -294,15 +296,15 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
     },
     scales: {
       x: {
-        ticks: { font: { size: 10, family: 'monospace' }, maxTicksLimit: 8, maxRotation: 0, color: '#555' },
-        grid: { color: '#1e1e1e' },
+        ticks: { font: { size: 12, family: 'monospace' }, maxTicksLimit: 8, maxRotation: 0, color: theme.palette.text.secondary },
+        grid: { color: theme.palette.divider },
       },
       y: {
         min: 0,
         ...(yMax !== undefined ? { max: yMax } : {}),
-        ticks: { font: { size: 10, family: 'monospace' }, color: '#555' },
-        grid: { color: '#1e1e1e' },
-        title: { display: true, text: yLabel, font: { size: 10, family: 'monospace' }, color: '#555' },
+        ticks: { font: { size: 12, family: 'monospace' }, color: theme.palette.text.secondary },
+        grid: { color: theme.palette.divider },
+        title: { display: true, text: yLabel, font: { size: 12, family: 'monospace' }, color: theme.palette.text.secondary },
       },
     },
   });

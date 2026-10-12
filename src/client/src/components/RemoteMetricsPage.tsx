@@ -1,3 +1,4 @@
+import { useTheme } from '@mui/material/styles';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import {
@@ -69,6 +70,7 @@ function fmtTs(ts: number, rangeMs: number): string {
 
 // @group RemoteMetricsPage : Main analysis page component
 const RemoteMetricsPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const [connections,    setConnections]= useState<ConnectionInfo[]>([]);
   const [selectedConn,   setSelectedConn]   = useState<string>('');
@@ -165,19 +167,19 @@ const RemoteMetricsPage: React.FC = () => {
     scales: {
       x: {
         ticks: {
-          font: { size: 10, family: 'monospace' },
+          font: { size: 12, family: 'monospace' },
           maxTicksLimit: 8,
           maxRotation: 0,
-          color: '#555',
+          color: theme.palette.text.secondary,
         },
-        grid: { color: '#1e1e1e' },
+        grid: { color: theme.palette.divider },
       },
       y: {
         min: 0,
         ...(yMax !== undefined ? { max: yMax } : {}),
-        ticks: { font: { size: 10, family: 'monospace' }, color: '#555' },
-        grid: { color: '#1e1e1e' },
-        title: { display: true, text: yLabel, font: { size: 10, family: 'monospace' }, color: '#555' },
+        ticks: { font: { size: 12, family: 'monospace' }, color: theme.palette.text.secondary },
+        grid: { color: theme.palette.divider },
+        title: { display: true, text: yLabel, font: { size: 12, family: 'monospace' }, color: theme.palette.text.secondary },
       },
     },
   });

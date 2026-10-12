@@ -15,6 +15,7 @@ import {
   CpuChipIcon,
   PlayIcon,
   ArrowPathIcon,
+  QuestionMarkCircleIcon,
 } from '@heroicons/react/24/outline';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
@@ -173,6 +174,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ onItemClick, collapsed = fals
     { label: t('nav.cluster'),          path: '/cluster',            icon: ServerStackIcon },
     { label: t('nav.cronJobs'),         path: '/cron-jobs',          icon: ClockIcon },
     { label: t('nav.loadBalancing'),    path: '/load-balancing-guide', icon: ScaleIcon },
+    { label: t('nav.help'),             path: '/help',               icon: QuestionMarkCircleIcon },
   ];
 
   // @group Render : Sidebar layout with sections
@@ -197,6 +199,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ onItemClick, collapsed = fals
                 to={item.path}
                 onClick={handleItemClick}
                 title={collapsed ? item.label : undefined}
+                aria-label={item.label}
                 className={`
                   flex items-center gap-2 font-mono text-[11px]
                   transition-colors duration-100

@@ -11,7 +11,8 @@
     "loadBalancing": "负载均衡",
     "settings": "设置",
     "management": "管理",
-    "localServer": "本地服务器"
+    "localServer": "本地服务器",
+    "help": "帮助"
   },
   "header": {
     "noPasswordSet": "尚未设置密码 — 前往 设置 / 安全 启用密码保护",
@@ -723,7 +724,13 @@
     "pageSubtitle": "EZ PM2 GUI 的最新更新和改进",
     "configureSecurity": "配置安全",
     "configureSecurityDesc": "从设置中配置 PIN 和密码保护。",
-    "openSettings": "打开设置"
+    "openSettings": "打开设置",
+    "aiLogTitle": "AI 日志分析",
+    "aiLogDesc": "使用已安装 AI CLI 的现有登录状态，或通过本地 Ollama 模型分析日志。",
+    "snapshotTitle": "分析前审查",
+    "snapshotDesc": "预览已脱敏的日志快照，并明确授权云端分析。",
+    "helpTitle": "帮助与演示视频",
+    "helpDesc": "在新的帮助页面观看应用功能演示和 AI 日志分析演示。"
   },
   "scriptEditor": {
     "title": "内联脚本",
@@ -819,5 +826,83 @@
     "failedProcessAction": "无法{{action}}进程。{{error}}",
     "failedConnectTo": "无法连接到 {{name}}：{{error}}",
     "failedRefreshProcessData": "刷新进程数据失败"
+  },
+  "logAnalysis": {
+    "title": "分析应用日志",
+    "description": "查看最近的日志快照，选择已安装的 AI 提供商，并排查疑似问题。",
+    "analyze": "分析日志",
+    "provider": "提供商",
+    "model": "本地模型",
+    "detecting": "正在检测已安装的提供商…",
+    "noProviders": "未检测到提供商",
+    "local": "本地推理",
+    "cloud": "云端推理",
+    "unavailable": "不可用",
+    "noModels": "未检测到本地模型",
+    "refreshProviders": "刷新提供商",
+    "providerError": "提供商检测失败。检查 EZ PM2 GUI 服务器后重试。",
+    "snapshotError": "无法加载日志快照。请检查进程或远程连接后重试。",
+    "analysisError": "分析失败。请检查提供商安装和登录状态后重试。",
+    "retry": "重试",
+    "close": "关闭",
+    "cancel": "取消分析",
+    "cancelled": "分析已取消。",
+    "analyzing": "正在分析快照…",
+    "complete": "分析完成。",
+    "serverMachine": "提供商在运行 EZ PM2 GUI 的机器上执行。",
+    "noProviderHelp": "请在 EZ PM2 GUI 服务器上安装受支持的提供商，然后刷新。",
+    "setupTitle": "安装和登录指南",
+    "setup": {
+      "ollama": "安装 Ollama CLI，在 127.0.0.1:11434 启动守护进程，并使用 ollama pull <model> 下载本地模型。分析通过 ollama run 执行。",
+      "claude": "安装 Claude Code，并使用 claude auth login 登录。",
+      "codex": "安装 Codex CLI，并使用 codex login 登录。",
+      "cursor": "在此服务器上安装 Cursor Agent CLI，并使用 agent login 或 cursor-agent login 登录一次。会复用现有 CLI 登录状态；CURSOR_API_KEY 为可选项。",
+      "copilot": "在此服务器上安装 GitHub Copilot CLI，并使用 copilot login 登录一次。会复用现有 CLI 登录状态；受支持的凭据环境变量为可选项。"
+    },
+    "cloudNotice": "{{provider}} 通过本地 CLI 运行，但会将此快照发送到云端服务。脱敏无法保证完全覆盖；请检查预览中是否仍有敏感信息。",
+    "cloudConsent": "我同意将此快照发送到 {{provider}}，用于本次分析。",
+    "loadingSnapshot": "正在加载并脱敏最近的日志…",
+    "snapshotSummary": "{{count}} 行 · {{redactions}} 处脱敏",
+    "snapshotScope": "最近的原始历史记录：最多 200 行 stdout 和 200 行 stderr，不受查看器筛选影响。编号顺序为 stdout 然后 stderr；只有日志文本中的时间戳代表实际事件时间。",
+    "localSource": "本地进程",
+    "remoteSource": "远程进程",
+    "restarts": "{{count}} 次重启",
+    "truncated": "快照或输出已缩短，以符合分析限制。",
+    "emptySnapshot": "没有可用的最近日志。应用产生日志后，请关闭并重新打开此对话框。",
+    "preview": "查看脱敏后的快照",
+    "retryAnalysis": "使用“分析日志”重试。",
+    "resultTitle": "疑似问题",
+    "advisory": "AI 结果仅供参考。修改应用之前，请核对引用的日志证据。",
+    "resultSummary": "已分析 {{count}} 行 · {{redactions}} 处脱敏"
+  },
+  "help": {
+    "title": "帮助与演示",
+    "subtitle": "观看操作演示，然后在您的工作区中使用这些功能。",
+    "player": "视频播放器",
+    "loadingPlayer": "正在加载 YouTube 播放器…",
+    "playVideo": "播放{{title}}",
+    "play": "播放演示",
+    "retryPlayer": "重试播放",
+    "playerError": "无法加载视频播放器。请重试，或在 YouTube 上观看此演示。",
+    "english": "英语",
+    "watchOnYoutube": "在 YouTube 上观看",
+    "allDemos": "所有演示",
+    "playbackHint": "选择演示后点击播放。如果播放器不可用，请在 YouTube 上观看。",
+    "moreHelp": "指南与版本说明",
+    "userGuide": "图文用户指南",
+    "documentation": "文档",
+    "whatsNew": "更新内容",
+    "videos": {
+      "ai": {
+        "title": "AI 日志分析",
+        "description": "使用已安装的 CLI 代理排查启动失败：查看已脱敏的日志，选择本地 Ollama 或云服务，并阅读基于证据的报告。演示使用示例日志和模拟分析。",
+        "action": "打开日志"
+      },
+      "walkthrough": {
+        "title": "应用功能演示",
+        "description": "介绍进程监控、确认后重启、实时指标、日志流、应用部署和外观设置。",
+        "action": "打开进程"
+      }
+    }
   }
 }

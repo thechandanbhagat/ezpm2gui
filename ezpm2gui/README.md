@@ -1,6 +1,6 @@
 # Documentation website
 
-The active website is `index.html`, styled by `styles-new.css`. The illustrated user guide is available as both `userguides/index.html` and `userguides/user-guide.md`.
+The active website is `index.html`, styled by `styles-new.css`. Both pages load `theme.css` for their shared light/dark palette. The illustrated user guide is available as both `userguides/index.html` and `userguides/user-guide.md`.
 
 Preview from the repository root:
 
@@ -11,6 +11,8 @@ python3 -m http.server 4173 --bind 127.0.0.1 --directory ezpm2gui
 Open `http://127.0.0.1:4173/`. This static website does not require the PM2 dashboard server to be running.
 
 The demo uses [this YouTube video](https://youtu.be/u1ckawU-sg4), embedded through YouTube's privacy-enhanced player on the landing page and user guide. Each player also has a direct YouTube link.
+
+Keep readable text colors in `theme.css`: body, secondary text, links, inline code, and button labels must retain at least 4.5:1 contrast against their actual backgrounds in both themes. Guide prose is 16px with a 72ch maximum measure; captions are 14px. Check desktop and mobile layouts after typography changes.
 
 When changing a workflow, update both guide formats, the landing-page summary if relevant, and the matching screenshot. Keep screenshot references relative so they work in both GitHub and static hosting. Files such as `index-old.html`, `styles.css`, and the older script variants are legacy alternatives; the active landing page does not load them.
 

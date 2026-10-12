@@ -6,6 +6,9 @@ import {
   CpuChipIcon,
   SparklesIcon,
   SignalIcon,
+  DocumentMagnifyingGlassIcon,
+  ShieldCheckIcon,
+  PlayCircleIcon,
   ArrowTopRightOnSquareIcon,
 } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
@@ -33,6 +36,53 @@ const RELEASES: Release[] = [
   {
     version: APP_RELEASE_VERSION,
     date: APP_RELEASE_DATE,
+    headline: 'AI Log Analysis & Demo Library',
+    changes: [
+      {
+        title: 'Installed CLI Log Analysis',
+        description:
+          'Analyze application logs with installed Claude, Codex, Cursor, or GitHub Copilot CLIs, reusing their existing sign-in.',
+        icon: SparklesIcon,
+        color: 'text-[#a78bfa]',
+        tag: 'New',
+      },
+      {
+        title: 'Review Redacted Snapshots',
+        description:
+          'Preview a bounded snapshot of raw stdout and stderr logs with detected secrets redacted before requesting an analysis.',
+        icon: DocumentMagnifyingGlassIcon,
+        color: 'text-[#22d3ee]',
+        tag: 'New',
+      },
+      {
+        title: 'Local Ollama Models',
+        description:
+          'Run analysis through the installed Ollama CLI using a downloaded local model.',
+        icon: CpuChipIcon,
+        color: 'text-[#22c55e]',
+        tag: 'New',
+      },
+      {
+        title: 'Explicit Cloud Consent',
+        description:
+          'Cloud-backed CLI providers require your consent before sending the reviewed log snapshot for analysis.',
+        icon: ShieldCheckIcon,
+        color: 'text-[#f59e0b]',
+        tag: 'New',
+      },
+      {
+        title: 'Help & Demo Videos',
+        description:
+          'The new Help page brings together the application walkthrough and AI log analysis demo, with YouTube playback inside the app.',
+        icon: PlayCircleIcon,
+        color: 'text-[#a78bfa]',
+        tag: 'New',
+      },
+    ],
+  },
+  {
+    version: '1.11.4',
+    date: 'June 2026',
     headline: 'Live Metrics & Remote Monitoring',
     changes: [
       {

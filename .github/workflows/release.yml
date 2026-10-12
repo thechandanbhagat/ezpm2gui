@@ -24,7 +24,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version-file: '.nvmrc'
           registry-url: 'https://registry.npmjs.org'
           cache: 'npm'
 
@@ -34,6 +34,9 @@ jobs:
 
       - name: Install client dependencies
         run: cd src/client && npm ci --legacy-peer-deps
+
+      - name: Test
+        run: npm test
 
       # @group Build : Full three-step build (server TS + React client + bin TS)
       - name: Build

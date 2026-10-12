@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -13,12 +13,17 @@
   --ez-border: #1e1e1e;
   --ez-border-strong: #333333;
   --ez-text: #e8e8e8;
-  --ez-text-muted: #888888;
-  --ez-text-subtle: #555555;
-  --ez-text-faint: #444444;
+  --ez-text-muted: #b8b8b8;
+  --ez-text-subtle: #a3a3a3;
+  --ez-text-faint: #929292;
   --ez-primary-action: #e8e8e8;
   --ez-primary-action-hover: #cfcfcf;
   --ez-primary-action-text: #0a0a0a;
+  --ez-danger-text: #f87171;
+  --ez-warning-text: #fbbf24;
+  --ez-success-text: #4ade80;
+  --ez-info-text: #67e8f9;
+  --ez-purple-text: #c4b5fd;
   --ez-danger-soft: #1a0000;
   --ez-success-soft: #0a1f0a;
   --ez-warning-soft: #1a1000;
@@ -38,17 +43,17 @@
 
   html {
     @apply scroll-smooth;
-    font-size: 16px;
+    font-size: 100%;
   }
 
   body {
-    background-color: #0a0a0a;
-    color: #e8e8e8;
-    font-family: 'JetBrains Mono', monospace;
+    background-color: var(--ez-bg-page);
+    color: var(--ez-text);
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     margin: 0;
-    line-height: 1.45;
+    line-height: 1.6;
     font-feature-settings: "rlig" 1, "calt" 1, "kern" 1;
   }
 
@@ -79,7 +84,7 @@
 
   /* Cards */
   .card {
-    background: #111111;
+    background: var(--ez-bg-surface);
     border: 1px solid #1e1e1e;
     border-radius: 2px;
   }
@@ -88,80 +93,80 @@
 
   /* Buttons */
   .btn-primary {
-    background: #e8e8e8;
-    color: #0a0a0a;
-    font-family: 'JetBrains Mono', monospace;
+    background: var(--ez-primary-action);
+    color: var(--ez-primary-action-text);
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
     border-radius: 2px;
     padding: 4px 12px;
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     font-weight: 600;
     border: none;
     cursor: pointer;
     transition: background-color 0.15s ease;
   }
-  .btn-primary:hover { background: #cfcfcf; }
+  .btn-primary:hover { background: var(--ez-primary-action-hover); }
 
   .btn-secondary {
     background: transparent;
     border: 1px solid #333333;
-    color: #888888;
-    font-family: 'JetBrains Mono', monospace;
+    color: var(--ez-text-muted);
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
     border-radius: 2px;
     padding: 4px 12px;
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     cursor: pointer;
     transition: border-color 0.15s ease, color 0.15s ease;
   }
-  .btn-secondary:hover { border-color: #555555; color: #aaaaaa; }
+  .btn-secondary:hover { border-color: var(--ez-text-subtle); color: var(--ez-text); }
 
   .btn-ghost {
     background: transparent;
-    color: #555555;
-    font-family: 'JetBrains Mono', monospace;
+    color: var(--ez-text-subtle);
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
     border: none;
     padding: 4px 8px;
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     cursor: pointer;
     transition: color 0.15s ease;
   }
-  .btn-ghost:hover { color: #888888; }
+  .btn-ghost:hover { color: var(--ez-text-muted); }
 
   .btn-danger {
-    background: #7f1d1d;
+    background: var(--ez-danger-soft);
     border: 1px solid rgba(239, 68, 68, 0.30);
-    color: #ef4444;
-    font-family: 'JetBrains Mono', monospace;
+    color: var(--ez-danger-text);
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
     border-radius: 2px;
     padding: 4px 12px;
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     cursor: pointer;
     transition: background-color 0.15s ease;
   }
-  .btn-danger:hover { background: #991b1b; }
+  .btn-danger:hover { background: var(--ez-danger-soft); }
 
   /* Inputs */
   .input-field {
     @apply w-full px-2.5 py-1.5;
-    background: #111111;
+    background: var(--ez-bg-surface);
     border: 1px solid #1e1e1e;
     border-radius: 2px;
-    color: #e8e8e8;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.75rem;
+    color: var(--ez-text);
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 0.8125rem;
     transition: border-color 0.15s ease;
   }
-  .input-field::placeholder { color: #555555; }
+  .input-field::placeholder { color: var(--ez-text-subtle); }
   .input-field:focus {
     outline: none;
-    border-color: #555555;
+    border-color: var(--ez-text-subtle);
   }
 
   /* Badges */
   .badge {
     @apply inline-flex items-center px-2 py-0.5;
     border-radius: 9999px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.75rem;
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 0.8125rem;
     font-weight: 500;
   }
   .badge-success {
@@ -185,25 +190,25 @@
     border: 1px solid rgb(21 94 117); /* cyan-800 */
   }
   .badge-neutral {
-    background: #1a1a1a;
-    color: #888888;
-    border: 1px solid #2a2a2a;
+    background: var(--ez-neutral-soft);
+    color: var(--ez-text-muted);
+    border: 1px solid var(--ez-border);
   }
 
   /* Table helpers */
   .table-th {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 9px;
-    color: #555555;
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 0.75rem;
+    color: var(--ez-text-subtle);
     text-transform: uppercase;
-    letter-spacing: 0.2em;
+    letter-spacing: 0.08em;
     border-bottom: 1px solid #1e1e1e;
     @apply px-2.5 py-1.5 text-left;
   }
   .table-td {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    color: #888888;
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 0.875rem;
+    color: var(--ez-text-muted);
     border-bottom: 1px solid #111111;
     @apply px-2.5 py-1.5;
   }
@@ -241,12 +246,17 @@ html[data-theme="light"] {
   --ez-border: #d8dee9;
   --ez-border-strong: #cbd5e1;
   --ez-text: #0f172a;
-  --ez-text-muted: #475569;
-  --ez-text-subtle: #64748b;
-  --ez-text-faint: #94a3b8;
+  --ez-text-muted: #334155;
+  --ez-text-subtle: #475569;
+  --ez-text-faint: #526077;
   --ez-primary-action: #111827;
   --ez-primary-action-hover: #1e293b;
   --ez-primary-action-text: #ffffff;
+  --ez-danger-text: #b91c1c;
+  --ez-warning-text: #92400e;
+  --ez-success-text: #166534;
+  --ez-info-text: #155e75;
+  --ez-purple-text: #6d28d9;
   --ez-danger-soft: #fef2f2;
   --ez-success-soft: #f0fdf4;
   --ez-warning-soft: #fffbeb;
@@ -286,15 +296,72 @@ html[data-theme="light"] [class~="bg-[#3d1e00]"] { background-color: #fffbeb !im
 html[data-theme="light"] [class~="bg-[#16003a]"],
 html[data-theme="light"] [class~="bg-[#1a0a3a]"] { background-color: #f5f3ff !important; }
 
-/* @group Theme > LightMode : Tailwind arbitrary text remaps */
-html[data-theme="light"] [class~="text-[#e8e8e8]"] { color: var(--ez-text) !important; }
-html[data-theme="light"] [class~="text-[#888]"] { color: var(--ez-text-muted) !important; }
-html[data-theme="light"] [class~="text-[#555]"],
-html[data-theme="light"] [class~="text-[#444]"] { color: var(--ez-text-subtle) !important; }
-html[data-theme="light"] [class~="text-[#333]"] { color: var(--ez-text-faint) !important; }
-html[data-theme="light"] [class~="text-[#aaa]"],
-html[data-theme="light"] [class~="text-[#ccc]"] { color: #1e293b !important; }
-html[data-theme="light"] [class~="text-[#0a0a0a]"] { color: #ffffff !important; }
+/* @group Typography : Bridge compact legacy utilities to a readable rem scale.
+   Keep these after Tailwind so all existing screens share the same type roles. */
+[class~="text-[9px]"] {
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+[class~="text-[10px]"],
+[class~="text-[0.625rem]"] {
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+[class~="text-[11px]"] {
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+[class~="tracking-[0.15em]"],
+[class~="tracking-[0.2em]"] { letter-spacing: 0.08em; }
+
+/* @group Theme : Text roles apply in both themes, including legacy hex utilities. */
+html [class~="text-[#e8e8e8]"],
+html [class~="text-[#aaa]"],
+html [class~="text-[#ccc]"] { color: var(--ez-text) !important; }
+html [class~="text-[#888]"],
+html [class~="text-[#999]"] { color: var(--ez-text-muted) !important; }
+html [class~="text-[#555]"],
+html [class~="text-[#666]"],
+html [class~="text-[#444]"] { color: var(--ez-text-subtle) !important; }
+html [class~="text-[#333]"],
+html [class~="text-[#2a2a2a]"],
+html [class~="text-[#222]"] { color: var(--ez-text-faint) !important; }
+html [class~="text-[#0a0a0a]"] { color: var(--ez-primary-action-text) !important; }
+
+html [class~="placeholder-[#333]"]::placeholder,
+html [class~="placeholder-[#444]"]::placeholder,
+html [class~="placeholder-[#555]"]::placeholder,
+.input-field::placeholder {
+  color: var(--ez-text-subtle);
+  opacity: 1;
+}
+
+html [class~="text-[#ef4444]"],
+html [class~="text-[#f87171]"],
+html [class~="text-[#ff6666]"],
+html [class~="text-[#fb7185]"],
+html [class~="text-red-400"] { color: var(--ez-danger-text) !important; }
+html [class~="text-[#f59e0b]"],
+html [class~="text-[#fbbf24]"],
+html [class~="text-amber-400"] { color: var(--ez-warning-text) !important; }
+html [class~="text-[#22d3ee]"],
+html [class~="text-[#67e8f9]"],
+html [class~="text-[#38bdf8]"] { color: var(--ez-info-text) !important; }
+html [class~="text-[#a78bfa]"],
+html [class~="text-[#c4b5fd]"] { color: var(--ez-purple-text) !important; }
+html [class~="text-[#4ade80]"],
+html [class~="text-[#34d399]"],
+html [class~="text-[#66ff99]"] { color: var(--ez-success-text) !important; }
+
+html [class~="hover:text-[#e8e8e8]"]:hover,
+html [class~="hover:text-[#aaa]"]:hover,
+html [class~="hover:text-[#888]"]:hover { color: var(--ez-text) !important; }
+html [class~="hover:text-[#ef4444]"]:hover,
+html [class~="hover:text-[#ff6666]"]:hover { color: var(--ez-danger-text) !important; }
+
+html[data-theme="light"] [class~="bg-green-950"] { background-color: var(--ez-success-soft); }
+html[data-theme="light"] [class~="bg-red-950"] { background-color: var(--ez-danger-soft); }
+html[data-theme="light"] [class~="bg-amber-950"] { background-color: var(--ez-warning-soft); }
 
 /* @group Theme > LightMode : Tailwind arbitrary border remaps */
 html[data-theme="light"] [class~="border-[#111]"],
@@ -355,7 +422,6 @@ html[data-theme="light"] .MuiPopover-paper {
   border-color: var(--ez-border) !important;
 }
 
-html[data-theme="light"] .MuiTypography-root,
 html[data-theme="light"] .MuiDialogTitle-root,
 html[data-theme="light"] .MuiDialogContent-root {
   color: var(--ez-text) !important;
@@ -393,6 +459,12 @@ html[data-theme="light"] .MuiButton-contained {
 html[data-theme="light"] .MuiButton-outlined {
   color: var(--ez-text-muted) !important;
   border-color: var(--ez-border-strong) !important;
+}
+
+/* MUI lowers placeholder opacity by default, which defeats the text palette. */
+.MuiInputBase-input::placeholder {
+  color: var(--ez-text-subtle);
+  opacity: 1 !important;
 }
 
 html[data-theme="light"] ::-webkit-scrollbar-thumb { background: #cbd5e1; }

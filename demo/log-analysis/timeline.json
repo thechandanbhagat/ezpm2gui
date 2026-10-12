@@ -1,0 +1,57 @@
+{
+  "timeline": [
+    {
+      "index": 1,
+      "start": 2.8,
+      "title": "From logs to diagnosis",
+      "caption": "Start with the service that failed: checkout-api, eight restarts.",
+      "actualStart": 2.809
+    },
+    {
+      "index": 2,
+      "start": 9.3,
+      "title": "Capture the evidence",
+      "caption": "Raw output, stack traces, process status, and restart count.",
+      "actualStart": 9.301
+    },
+    {
+      "index": 3,
+      "start": 18.9,
+      "title": "Review before sending",
+      "caption": "A numbered snapshot. Common secrets redacted. Review what the agent receives.",
+      "actualStart": 18.902
+    },
+    {
+      "index": 4,
+      "start": 29.4,
+      "title": "Use your installed agent",
+      "caption": "Reuse CLI sign-in. Choose a downloaded Ollama model for local inference.",
+      "actualStart": 29.402
+    },
+    {
+      "index": 5,
+      "start": 40.9,
+      "title": "Choose what is sent",
+      "caption": "Cloud analysis starts only after explicit consent.",
+      "actualStart": 40.901
+    },
+    {
+      "index": 6,
+      "start": 47,
+      "title": "Follow the evidence",
+      "caption": "Cited log lines \u2192 possible causes \u2192 practical checks. You decide what changes.",
+      "actualStart": 47.002
+    }
+  ],
+  "leadSeconds": 1.0,
+  "plannedDuration": 63,
+  "voiceDelaySeconds": 1,
+  "browserErrors": [],
+  "failedApi": [],
+  "synthetic": true,
+  "simulatedProviders": true,
+  "simulatedAnalysis": true,
+  "startupWallSeconds": 1.27,
+  "activeDurationSeconds": 63.0,
+  "captureTimingNote": "Video begins after page creation; lead measured from 64.0s media duration minus 63.0s active walkthrough."
+}

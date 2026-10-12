@@ -1,34 +1,5 @@
 /* @group Configuration : Design tokens and CSS variables */
 :root {
-  /* Background layers */
-  --bg:          #0d1117;
-  --surface:     #161b22;
-  --surface-2:   #21262d;
-  --border:      #30363d;
-  --border-muted:#21262d;
-
-  /* Brand */
-  --primary:     #3fb950;
-  --primary-dk:  #2ea043;
-  --primary-lt:  #56d364;
-  --primary-glow:rgba(63, 185, 80, 0.12);
-
-  /* Accent */
-  --blue:        #58a6ff;
-  --purple:      #bc8cff;
-  --orange:      #e3b341;
-  --red:         #f85149;
-
-  /* Text */
-  --text:        #e6edf3;
-  --text-muted:  #8b949e;
-  --text-subtle: #6e7681;
-
-  /* Shadows */
-  --shadow-sm:   0 1px 4px rgba(0, 0, 0, .5);
-  --shadow-md:   0 4px 16px rgba(0, 0, 0, .6);
-  --shadow-lg:   0 12px 32px rgba(0, 0, 0, .7);
-
   /* Radii */
   --r-sm:  4px;
   --r-md:  8px;
@@ -44,18 +15,6 @@
   /* Layout */
   --max-w:  1200px;
   --nav-h:  60px;
-}
-
-/* @group LightTheme : Light mode overrides */
-body.light {
-  --bg:          #ffffff;
-  --surface:     #f6f8fa;
-  --surface-2:   #eaeef2;
-  --border:      #d0d7de;
-  --border-muted:#eaeef2;
-  --text:        #1f2328;
-  --text-muted:  #656d76;
-  --text-subtle: #848d97;
 }
 
 /* @group Reset : Global box-sizing and base styles */
@@ -151,7 +110,7 @@ button { font-family: inherit; cursor: pointer; border: none; }
 
 .btn-primary {
   background: var(--primary);
-  color: #0d1117;
+  color: var(--on-primary);
   border-color: var(--primary);
 }
 .btn-primary:hover {
@@ -436,7 +395,7 @@ body.light .navbar { background: rgba(255, 255, 255, .9); }
   display: inline-flex;
   align-items: center;
   gap: .5rem;
-  font-family: 'Courier New', monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: .8rem;
   color: var(--primary);
   background: var(--surface);
@@ -473,7 +432,7 @@ body.light .navbar { background: rgba(255, 255, 255, .9); }
   flex: 1;
   text-align: center;
   font-size: .72rem;
-  font-family: 'Courier New', monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   color: var(--text-subtle);
   background: var(--bg);
   border: 1px solid var(--border);
@@ -520,8 +479,8 @@ body.light .navbar { background: rgba(255, 255, 255, .9); }
   margin-bottom: .45rem;
 }
 .feature-card p {
-  font-size: .86rem;
-  color: var(--text-muted);
+  font-size: 1rem;
+  color: var(--text-body);
   line-height: 1.65;
 }
 
@@ -589,8 +548,8 @@ body.light .navbar { background: rgba(255, 255, 255, .9); }
   margin-bottom: .2rem;
 }
 .screenshot-label p {
-  font-size: .8rem;
-  color: var(--text-muted);
+  font-size: .9375rem;
+  color: var(--text-body);
   line-height: 1.5;
 }
 
@@ -672,13 +631,13 @@ body.light .tab-btn.active { background: #fff; }
   margin-bottom: .75rem;
 }
 .step-body p {
-  font-size: .875rem;
-  color: var(--text-muted);
+  font-size: 1rem;
+  color: var(--text-body);
   margin-top: .6rem;
 }
 .step-body p code {
-  font-family: 'Courier New', monospace;
-  font-size: .83em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .9em;
   color: var(--primary);
   background: var(--primary-glow);
   border: 1px solid rgba(63, 185, 80, .2);
@@ -694,7 +653,7 @@ body.light .tab-btn.active { background: #fff; }
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   overflow: hidden;
-  font-family: 'Courier New', monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 body.light .code-block { background: #f6f8fa; }
 
@@ -741,7 +700,7 @@ body.light .code-block { background: #f6f8fa; }
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   padding: 1rem 1.25rem;
-  font-family: 'Courier New', monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: .875rem;
   color: var(--text);
   line-height: 1.8;
@@ -816,8 +775,8 @@ body.light .code-multi { background: #f6f8fa; }
   color: var(--text);
 }
 .doc-card p {
-  font-size: .845rem;
-  color: var(--text-muted);
+  font-size: 1rem;
+  color: var(--text-body);
   line-height: 1.6;
   flex: 1;
 }

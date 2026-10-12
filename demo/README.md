@@ -2,6 +2,15 @@
 
 A 1080p product walkthrough captured from the locally built application. It uses three isolated sample PM2 workloads; the displayed service names and log messages are demo data, while the process status and resource metrics come from the running application.
 
+The [AI log analysis demo](log-analysis/README.md) shows the installed CLI workflow, redacted snapshot, local Ollama model selection, cloud consent, and diagnostic report. It uses Lucy narration, the real application interface, and clearly labeled synthetic data with a simulated report.
+
+## Published videos
+
+- [Product walkthrough](https://youtu.be/u1ckawU-sg4) — 66 seconds.
+- [AI log analysis](https://youtu.be/EPwORhBHupU) — 63 seconds.
+
+Both videos are available in the application's **Help** page at `/help`.
+
 ## Deliverables
 
 [Watch the demo on YouTube](https://youtu.be/u1ckawU-sg4).

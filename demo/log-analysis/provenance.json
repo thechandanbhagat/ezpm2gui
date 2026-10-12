@@ -1,0 +1,65 @@
+{
+  "feature": "Installed CLI AI log analysis",
+  "visual_source": "Real built ezpm2gui UI served by scripts/demo/log-analysis-fixture.cjs",
+  "fixture": {
+    "synthetic_logs": true,
+    "simulated_provider_availability": true,
+    "simulated_analysis": true,
+    "redaction": "Actual prepareSnapshot implementation",
+    "real_pm2_access": false,
+    "real_agent_inference": false
+  },
+  "disclosure": "DEMO DATA \u00b7 SIMULATED PROVIDERS / SAMPLE AI REPORT",
+  "voice": {
+    "provider": "ElevenLabs",
+    "voice_id": "lcMyyd2HUfFzxdCaC4Ta",
+    "voice_name": "Lucy - Fresh & Casual",
+    "model_id": "eleven_multilingual_v2",
+    "flow_id": "cu7HGefdWFbRQ4JNscBv",
+    "node_id": "K8xXmnhEuWlcT8cZ9NlU",
+    "selected_generation_id": "4K3RkQlc2eazvACDNztF",
+    "duration_seconds": 58.88580498866213,
+    "takes": [
+      {
+        "generation_id": "mmIQa6u2LVHRWScNc7B3",
+        "duration_seconds": 56.47092970521542,
+        "file": "audio/take-01.mp3"
+      },
+      {
+        "generation_id": "4K3RkQlc2eazvACDNztF",
+        "duration_seconds": 58.88580498866213,
+        "file": "audio/take-02.mp3"
+      },
+      {
+        "generation_id": "JX4eknOjHm8QqXv6NPM0",
+        "duration_seconds": 58.142766439909295,
+        "file": "audio/take-03.mp3"
+      },
+      {
+        "generation_id": "lpjf7QVmxENSbY2vC5Qy",
+        "duration_seconds": 57.213968253968254,
+        "file": "audio/take-04.mp3"
+      }
+    ]
+  },
+  "music": {
+    "provider": "ElevenLabs",
+    "source": "../audio/elevenlabs-music.mp3",
+    "reuse": true,
+    "mix": "Soft bed with speech-driven ducking"
+  },
+  "narration_file": "narration.txt",
+  "planned_output": "ezpm2gui-log-analysis-demo.mp4",
+  "resolution": "1920x1080",
+  "planned_duration_seconds": 63,
+  "created_date": "2026-10-12",
+  "output": "ezpm2gui-log-analysis-demo.mp4",
+  "duration_seconds": 63,
+  "verification": {
+    "browser_errors": 0,
+    "failed_api_requests": 0,
+    "full_decode_passed": true,
+    "encoded_integrated_lufs": -16.27,
+    "encoded_true_peak_db_tp": -4.77
+  }
+}

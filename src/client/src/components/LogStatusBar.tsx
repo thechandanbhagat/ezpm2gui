@@ -153,10 +153,10 @@ const LogStatusBar: React.FC<LogStatusBarProps> = ({ logWindows, onClose, onClea
           height: PANEL_H,
           display: 'flex',
           flexDirection: 'column',
-          bgcolor: '#0a0a0a',
-          borderTop: '1px solid #1e1e1e',
-          borderLeft: '1px solid #1e1e1e',
-          borderRight: '1px solid #1e1e1e',
+          bgcolor: 'var(--ez-bg-page)',
+          borderTop: '1px solid var(--ez-border)',
+          borderLeft: '1px solid var(--ez-border)',
+          borderRight: '1px solid var(--ez-border)',
         }}>
           {/* Panel header */}
           <Box sx={{
@@ -166,32 +166,32 @@ const LogStatusBar: React.FC<LogStatusBarProps> = ({ logWindows, onClose, onClea
             px: 1.5,
             flexShrink: 0,
             height: 30,
-            bgcolor: '#0d0d0d',
-            borderBottom: '1px solid #1e1e1e',
+            bgcolor: 'var(--ez-bg-sidebar)',
+            borderBottom: '1px solid var(--ez-border)',
           }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               {/* Live / paused indicator */}
               <Box sx={{
                 width: 6, height: 6, borderRadius: '50%',
-                bgcolor: isPaused ? '#555' : '#22c55e',
+                bgcolor: isPaused ? 'var(--ez-text-subtle)' : 'var(--ez-accent)',
                 boxShadow: isPaused ? 'none' : '0 0 5px rgba(34,197,94,0.5)',
               }} />
-              <Typography sx={{ fontFamily: 'monospace', fontSize: '0.68rem', color: '#888' }}>
+              <Typography sx={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'var(--ez-text-muted)' }}>
                 {activeWindow?.processName}
-                <Box component="span" sx={{ color: '#333', mx: 0.5 }}>·</Box>
+                <Box component="span" sx={{ color: 'var(--ez-text-faint)', mx: 0.5 }}>·</Box>
                 {activeWindow?.connectionName}
               </Typography>
               <Box sx={{ display: 'flex', gap: 0.75 }}>
                 {countOf(activeKey, 'stdout') > 0 && (
                   <Box sx={{ px: 0.6, py: 0, borderRadius: '2px', bgcolor: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.25)' }}>
-                    <Typography sx={{ fontSize: '0.6rem', color: '#22c55e', fontFamily: 'monospace', lineHeight: '16px' }}>
+                    <Typography sx={{ fontSize: '0.75rem', color: 'var(--ez-accent)', fontFamily: 'monospace', lineHeight: '16px' }}>
                       OUT {countOf(activeKey, 'stdout')}
                     </Typography>
                   </Box>
                 )}
                 {countOf(activeKey, 'stderr') > 0 && (
                   <Box sx={{ px: 0.6, py: 0, borderRadius: '2px', bgcolor: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)' }}>
-                    <Typography sx={{ fontSize: '0.6rem', color: '#ef4444', fontFamily: 'monospace', lineHeight: '16px' }}>
+                    <Typography sx={{ fontSize: '0.75rem', color: 'var(--ez-danger-text)', fontFamily: 'monospace', lineHeight: '16px' }}>
                       ERR {countOf(activeKey, 'stderr')}
                     </Typography>
                   </Box>
@@ -201,22 +201,22 @@ const LogStatusBar: React.FC<LogStatusBarProps> = ({ logWindows, onClose, onClea
 
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <Tooltip title={isPaused ? t('logPanel.resume') : t('logPanel.pause')}>
-                <IconButton size="small" onClick={handlePause} sx={{ color: '#555', '&:hover': { color: '#888' } }}>
+                <IconButton size="small" onClick={handlePause} sx={{ color: 'var(--ez-text-subtle)', '&:hover': { color: 'var(--ez-text-muted)' } }}>
                   {isPaused ? <PlayIcon sx={{ fontSize: 13 }} /> : <PauseIcon sx={{ fontSize: 13 }} />}
                 </IconButton>
               </Tooltip>
               <Tooltip title={t('logPanel.clear')}>
-                <IconButton size="small" onClick={() => onClear(activeKey)} sx={{ color: '#555', '&:hover': { color: '#888' } }}>
+                <IconButton size="small" onClick={() => onClear(activeKey)} sx={{ color: 'var(--ez-text-subtle)', '&:hover': { color: 'var(--ez-text-muted)' } }}>
                   <ClearIcon sx={{ fontSize: 13 }} />
                 </IconButton>
               </Tooltip>
               <Tooltip title={t('logPanel.collapse')}>
-                <IconButton size="small" onClick={() => setActiveKey(null)} sx={{ color: '#555', '&:hover': { color: '#888' } }}>
+                <IconButton size="small" onClick={() => setActiveKey(null)} sx={{ color: 'var(--ez-text-subtle)', '&:hover': { color: 'var(--ez-text-muted)' } }}>
                   <CollapseIcon sx={{ fontSize: 14 }} />
                 </IconButton>
               </Tooltip>
               <Tooltip title={t('logPanel.closeSession')}>
-                <IconButton size="small" onClick={() => onClose(activeKey)} sx={{ color: '#555', '&:hover': { color: '#ef4444' } }}>
+                <IconButton size="small" onClick={() => onClose(activeKey)} sx={{ color: 'var(--ez-text-subtle)', '&:hover': { color: 'var(--ez-danger-text)' } }}>
                   <CloseIcon sx={{ fontSize: 13 }} />
                 </IconButton>
               </Tooltip>
@@ -230,11 +230,11 @@ const LogStatusBar: React.FC<LogStatusBarProps> = ({ logWindows, onClose, onClea
             py: 0.5,
             '&::-webkit-scrollbar': { width: 4 },
             '&::-webkit-scrollbar-track': { bgcolor: 'transparent' },
-            '&::-webkit-scrollbar-thumb': { bgcolor: '#1e1e1e', borderRadius: 2 },
+            '&::-webkit-scrollbar-thumb': { bgcolor: 'var(--ez-border)', borderRadius: 2 },
           }}>
             {activeLogs.length === 0 ? (
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                <Typography sx={{ color: '#555', fontSize: '0.72rem', fontFamily: 'monospace' }}>
+                <Typography sx={{ color: 'var(--ez-text-subtle)', fontSize: '0.875rem', fontFamily: 'monospace' }}>
                   {isPaused ? t('logPanel.paused') : t('logPanel.waiting')}
                 </Typography>
               </Box>
@@ -251,12 +251,12 @@ const LogStatusBar: React.FC<LogStatusBarProps> = ({ logWindows, onClose, onClea
                     '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' },
                   }}
                 >
-                  <Typography component="span" sx={{ color: '#333', fontSize: '0.65rem', flexShrink: 0, fontFamily: 'monospace', pt: '1px' }}>
+                  <Typography component="span" sx={{ color: 'var(--ez-text-faint)', fontSize: '0.75rem', flexShrink: 0, fontFamily: 'monospace', pt: '1px' }}>
                     {fmt(log.timestamp)}
                   </Typography>
                   <Typography component="span" sx={{
-                    color: log.type === 'stderr' ? '#ef4444' : '#22c55e',
-                    fontSize: '0.62rem',
+                    color: log.type === 'stderr' ? 'var(--ez-danger-text)' : 'var(--ez-accent)',
+                    fontSize: '0.75rem',
                     flexShrink: 0,
                     fontFamily: 'monospace',
                     pt: '1px',
@@ -265,8 +265,8 @@ const LogStatusBar: React.FC<LogStatusBarProps> = ({ logWindows, onClose, onClea
                     {log.type === 'stderr' ? 'ERR' : 'OUT'}
                   </Typography>
                   <Typography component="span" sx={{
-                    color: log.type === 'stderr' ? '#fca5a5' : '#e8e8e8',
-                    fontSize: '0.72rem',
+                    color: log.type === 'stderr' ? 'var(--ez-danger-text)' : 'var(--ez-text)',
+                    fontSize: '0.875rem',
                     fontFamily: 'monospace',
                     wordBreak: 'break-word',
                     flex: 1,
@@ -285,8 +285,8 @@ const LogStatusBar: React.FC<LogStatusBarProps> = ({ logWindows, onClose, onClea
       {/* ── Tab bar ── */}
       <Box sx={{
         height: TAB_H,
-        bgcolor: '#0d0d0d',
-        borderTop: '1px solid #1e1e1e',
+        bgcolor: 'var(--ez-bg-sidebar)',
+        borderTop: '1px solid var(--ez-border)',
         display: 'flex',
         alignItems: 'center',
         flexShrink: 0,
@@ -294,10 +294,10 @@ const LogStatusBar: React.FC<LogStatusBarProps> = ({ logWindows, onClose, onClea
       }}>
         {/* Section label — always visible, left-pinned */}
         <Typography sx={{
-          fontSize: '0.58rem', color: '#555', fontFamily: 'monospace',
+          fontSize: '0.75rem', color: 'var(--ez-text-subtle)', fontFamily: 'monospace',
           textTransform: 'uppercase', letterSpacing: '0.1em',
           px: 1, whiteSpace: 'nowrap', flexShrink: 0,
-          borderRight: '1px solid #1a1a1a',
+          borderRight: '1px solid var(--ez-border)',
           alignSelf: 'stretch', display: 'flex', alignItems: 'center',
         }}>
           LOGS
@@ -312,9 +312,9 @@ const LogStatusBar: React.FC<LogStatusBarProps> = ({ logWindows, onClose, onClea
             px: 0.25,
             height: '100%',
             cursor: 'pointer',
-            color: '#555',
+            color: 'var(--ez-text-subtle)',
             flexShrink: 0,
-            '&:hover': { color: '#888', bgcolor: 'rgba(255,255,255,0.03)' },
+            '&:hover': { color: 'var(--ez-text-muted)', bgcolor: 'rgba(255,255,255,0.03)' },
           }}
         >
           <ChevronLeftIcon sx={{ fontSize: 16 }} />
@@ -335,7 +335,7 @@ const LogStatusBar: React.FC<LogStatusBarProps> = ({ logWindows, onClose, onClea
             height: '100%',
             '&::-webkit-scrollbar': { height: 3 },
             '&::-webkit-scrollbar-track': { bgcolor: 'transparent' },
-            '&::-webkit-scrollbar-thumb': { bgcolor: '#1e1e1e', borderRadius: 2 },
+            '&::-webkit-scrollbar-thumb': { bgcolor: 'var(--ez-border)', borderRadius: 2 },
           }}
         >
           {Object.entries(logWindows).map(([key, win]) => {
@@ -356,24 +356,24 @@ const LogStatusBar: React.FC<LogStatusBarProps> = ({ logWindows, onClose, onClea
                   borderRadius: '2px',
                   cursor: 'pointer',
                   flexShrink: 0,
-                  bgcolor: isActive ? '#111' : 'transparent',
-                  border: isActive ? '1px solid #1e1e1e' : '1px solid transparent',
+                  bgcolor: isActive ? 'var(--ez-bg-surface)' : 'transparent',
+                  border: isActive ? '1px solid var(--ez-border)' : '1px solid transparent',
                   transition: 'background 0.1s',
-                  '&:hover': { bgcolor: isActive ? '#141414' : 'rgba(255,255,255,0.03)' },
+                  '&:hover': { bgcolor: isActive ? 'var(--ez-bg-surface-muted)' : 'rgba(255,255,255,0.03)' },
                 }}
               >
                 {/* Live pulse dot */}
                 <Box sx={{
                   width: 5, height: 5, borderRadius: '50%', flexShrink: 0,
-                  bgcolor: '#22c55e',
+                  bgcolor: 'var(--ez-accent)',
                   boxShadow: '0 0 4px rgba(34,197,94,0.5)',
                 }} />
 
                 {/* Process name */}
                 <Typography sx={{
-                  fontSize: '0.65rem',
+                  fontSize: '0.75rem',
                   fontFamily: 'monospace',
-                  color: isActive ? '#e8e8e8' : '#888',
+                  color: isActive ? 'var(--ez-text)' : 'var(--ez-text-muted)',
                   fontWeight: isActive ? 600 : 400,
                   whiteSpace: 'nowrap',
                 }}>
@@ -381,26 +381,26 @@ const LogStatusBar: React.FC<LogStatusBarProps> = ({ logWindows, onClose, onClea
                 </Typography>
 
                 {/* Connection name */}
-                <Typography sx={{ fontSize: '0.6rem', color: '#333', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
+                <Typography sx={{ fontSize: '0.75rem', color: 'var(--ez-text-faint)', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
                   {win.connectionName}
                 </Typography>
 
                 {/* Counts */}
                 {outCount > 0 && (
-                  <Typography sx={{ fontSize: '0.6rem', color: '#22c55e', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
+                  <Typography sx={{ fontSize: '0.75rem', color: 'var(--ez-accent)', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
                     {outCount}
                   </Typography>
                 )}
                 {errCount > 0 && (
-                  <Typography sx={{ fontSize: '0.6rem', color: '#ef4444', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
+                  <Typography sx={{ fontSize: '0.75rem', color: 'var(--ez-danger-text)', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
                     {errCount}
                   </Typography>
                 )}
 
                 {/* Expand / collapse chevron */}
                 {isActive
-                  ? <CollapseIcon sx={{ fontSize: 11, color: '#555', ml: 0.25 }} />
-                  : <ExpandIcon   sx={{ fontSize: 11, color: '#333', ml: 0.25 }} />
+                  ? <CollapseIcon sx={{ fontSize: 11, color: 'var(--ez-text-subtle)', ml: 0.25 }} />
+                  : <ExpandIcon   sx={{ fontSize: 11, color: 'var(--ez-text-faint)', ml: 0.25 }} />
                 }
 
                 {/* Close × */}
@@ -410,12 +410,12 @@ const LogStatusBar: React.FC<LogStatusBarProps> = ({ logWindows, onClose, onClea
                   sx={{
                     fontSize: '13px',
                     lineHeight: 1,
-                    color: '#555',
+                    color: 'var(--ez-text-subtle)',
                     cursor: 'pointer',
                     ml: 0.25,
                     display: 'flex',
                     alignItems: 'center',
-                    '&:hover': { color: '#ef4444' },
+                    '&:hover': { color: 'var(--ez-danger-text)' },
                   }}
                 >
                   ×
@@ -434,9 +434,9 @@ const LogStatusBar: React.FC<LogStatusBarProps> = ({ logWindows, onClose, onClea
             px: 0.25,
             height: '100%',
             cursor: 'pointer',
-            color: '#555',
+            color: 'var(--ez-text-subtle)',
             flexShrink: 0,
-            '&:hover': { color: '#888', bgcolor: 'rgba(255,255,255,0.03)' },
+            '&:hover': { color: 'var(--ez-text-muted)', bgcolor: 'rgba(255,255,255,0.03)' },
           }}
         >
           <ChevronRightIcon sx={{ fontSize: 16 }} />

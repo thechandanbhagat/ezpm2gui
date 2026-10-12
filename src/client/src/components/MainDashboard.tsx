@@ -84,7 +84,7 @@ const MainDashboard: React.FC<MainDashboardProps> = ({
       {/* ── Page header ── */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-[11px] font-mono font-bold text-[#e8e8e8] uppercase tracking-[0.1em]">
+          <h1 className="text-xl font-mono font-bold text-[#e8e8e8] uppercase tracking-[0.05em]">
             ▸ {t('mainDashboard.title')}
           </h1>
           <p className="text-[10px] font-mono text-[#555] mt-0.5">
@@ -94,7 +94,7 @@ const MainDashboard: React.FC<MainDashboardProps> = ({
       </div>
 
       {/* ── Analytics row ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
+      <div className="grid grid-cols-2 lg:grid-cols-4 2xl:grid-cols-8 gap-2">
 
         {/* Process stat cards */}
         <ProcessStatCard

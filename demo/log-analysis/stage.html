@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>EZ PM2 GUI — AI log analysis demo</title>
+  <style>
+    :root {
+      --ink: #0e1110;
+      --panel: #171b18;
+      --cream: #f1eedf;
+      --muted: #a3aaa0;
+      --line: #363e34;
+      --lime: #c0f06b;
+      --mono: "SFMono-Regular", Menlo, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; }
+    body {
+      background: var(--ink);
+      color: var(--cream);
+      font-family: "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .brand {
+      position: absolute; left: 80px; top: 35px; z-index: 9;
+      display: flex; align-items: center; gap: 12px;
+      font-size: 19px; font-weight: 650; letter-spacing: 2.5px;
+    }
+    .brand-mark { width: 25px; height: 25px; border: 2px solid var(--lime); position: relative; }
+    .brand-mark::after { content: ""; position: absolute; top: 5px; left: 5px; width: 11px; height: 11px; background: var(--lime); }
+    .brand span { color: var(--lime); }
+    .demo-label {
+      position: absolute; right: 80px; top: 39px; z-index: 10;
+      color: #b0b5aa; font: 14px var(--mono); letter-spacing: 1.2px;
+      padding-left: 18px;
+    }
+    .demo-label::before { content: ""; position: absolute; left: 0; top: 4px; width: 6px; height: 6px; background: var(--lime); }
+    #headline {
+      position: absolute; left: 80px; top: 80px; width: 1540px; margin: 0;
+      font-size: 56px; line-height: 1.04; letter-spacing: -2.2px; font-weight: 650;
+    }
+    #counter {
+      position: absolute; right: 80px; top: 93px;
+      display: flex; gap: 10px; align-items: baseline;
+      font: 24px var(--mono); letter-spacing: 1px; color: var(--lime);
+    }
+    #counter .total { color: #737d6d; font-size: 18px; }
+    .window {
+      position: absolute; left: 80px; top: 160px; width: 1760px; height: 822px;
+      overflow: hidden; border: 1px solid #404b3a; border-radius: 9px;
+      background: #111519; box-shadow: 0 25px 60px #0006;
+    }
+    .chrome {
+      height: 30px; display: flex; align-items: center; gap: 7px;
+      padding: 0 16px; background: #22271f; border-bottom: 1px solid #35412e;
+    }
+    .chrome i { width: 7px; height: 7px; border-radius: 50%; background: #596350; }
+    .chrome i:first-child { background: #b7d489; }
+    .chrome small { margin-left: 15px; color: #bdc7b4; font: 11px var(--mono); letter-spacing: 1.5px; }
+    .chrome .window-note { margin-left: auto; color: #839078; font: 10px var(--mono); letter-spacing: 1.2px; }
+    iframe {
+      display: block; width: 1760px; height: 790px; border: 0;
+      background: #111519;
+    }
+    .caption-row { position: absolute; left: 80px; top: 1005px; right: 80px; display: flex; align-items: center; }
+    #caption { margin: 0; max-width: 1580px; color: #c8d0c0; font-size: 23px; letter-spacing: -.15px; line-height: 1.25; }
+    .caption-rule { width: 36px; height: 2px; margin-right: 18px; background: var(--lime); flex-shrink: 0; }
+    .progress { position: absolute; left: 80px; right: 80px; bottom: 18px; display: flex; height: 3px; gap: 7px; }
+    .progress i { flex: 1; background: #2f382b; transition: background .25s ease; }
+    .progress i.active { background: var(--lime); }
+    #cursor {
+      position: absolute; width: 18px; height: 18px; z-index: 8;
+      border: 2px solid #f1ffda; background: #a4e94cb8; border-radius: 50%;
+      pointer-events: none; opacity: 0;
+      box-shadow: 0 0 0 6px #bcf06b25;
+      transition: left .3s ease, top .3s ease, opacity .15s ease, box-shadow .15s ease;
+    }
+    #cursor.click { box-shadow: 0 0 0 15px #bcf06b50; }
+    .cover {
+      position: absolute; inset: 0; z-index: 4;
+      display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
+      padding: 80px 120px; background: var(--ink);
+      transition: opacity .5s ease;
+    }
+    .cover::before { content: ""; position: absolute; left: 80px; top: 145px; bottom: 118px; width: 5px; background: var(--lime); }
+    .cover.hidden { opacity: 0; pointer-events: none; }
+    .kicker { margin: 30px 0 35px; color: var(--lime); font: 19px var(--mono); letter-spacing: 3px; }
+    .cover h2 { margin: 0 0 32px; max-width: 1640px; font-size: 130px; line-height: 1.02; letter-spacing: -6px; font-weight: 650; }
+    .cover h2 span { color: var(--lime); }
+    .cover p { margin: 0; max-width: 1350px; color: #b8c1ae; font-size: 32px; line-height: 1.4; letter-spacing: -.3px; }
+    .cover code { display: block; margin-top: 44px; padding: 17px 25px; background: var(--lime); color: #15210b; font: 25px var(--mono); }
+    .stamp { position: absolute; left: 120px; bottom: 78px; color: #84917a; font: 16px var(--mono); letter-spacing: 1.5px; }
+    @media (prefers-reduced-motion: reduce) { *, *::before { transition: none !important; } }
+  </style>
+</head>
+<body>
+  <div class="brand"><i class="brand-mark" aria-hidden="true"></i>EZ <span>PM2</span> GUI</div>
+  <div class="demo-label">DEMO DATA · SIMULATED PROVIDERS / SAMPLE AI REPORT</div>
+  <h1 id="headline">From logs to diagnosis</h1>
+  <div id="counter"><span class="current">01</span><span class="total">/ 06</span></div>
+  <div class="window">
+    <div class="chrome"><i></i><i></i><i></i><small>EZ PM2 GUI / LOG ANALYSIS</small><span class="window-note">REAL APPLICATION UI</span></div>
+    <iframe id="app" title="EZ PM2 GUI feature walkthrough" src="http://127.0.0.1:3117"></iframe>
+  </div>
+  <div class="caption-row"><span class="caption-rule" aria-hidden="true"></span><p id="caption">Turn a noisy log stream into a focused investigation.</p></div>
+  <div class="progress" aria-hidden="true"><i class="active"></i><i></i><i></i><i></i><i></i><i></i></div>
+  <div id="track" hidden></div>
+  <div id="cursor" aria-hidden="true"></div>
+  <div id="cover" class="cover">
+    <div class="kicker">INTRODUCING AI LOG ANALYSIS</div>
+    <h2>Less log noise.<br><span>A clearer next step.</span></h2>
+    <p>Use an installed AI agent to investigate your PM2 application logs.</p>
+    <code>Capture → review → analyze</code>
+    <div class="stamp">EZ PM2 GUI / LOCAL CLI INTEGRATION</div>
+  </div>
+  <script>
+    window.setScene = ({ index = 1, title, caption } = {}) => {
+      const chapter = Math.max(1, Math.min(6, Number(index) || 1));
+      if (title !== undefined) document.querySelector('#headline').textContent = title;
+      if (caption !== undefined) document.querySelector('#caption').textContent = caption;
+      document.querySelector('#counter .current').textContent = String(chapter).padStart(2, '0');
+      document.querySelectorAll('.progress i').forEach((segment, i) => segment.classList.toggle('active', i < chapter));
+      document.querySelector('#track').style.width = `${chapter / 6 * 100}%`;
+      document.querySelector('#cover').classList.add('hidden');
+    };
+    window.showOutro = () => {
+      const cover = document.querySelector('#cover');
+      cover.querySelector('.kicker').textContent = 'AI LOG ANALYSIS / EZ PM2 GUI';
+      cover.querySelector('h2').innerHTML = 'From noisy logs<br><span>to a clear next step.</span>';
+      cover.querySelector('p').textContent = 'Your installed agent. Your reviewed snapshot. Evidence you can act on.';
+      cover.querySelector('code').textContent = 'npm install -g ezpm2gui';
+      cover.querySelector('.stamp').textContent = 'OPEN SOURCE / github.com/thechandanbhagat/ezpm2gui';
+      document.querySelector('#cursor').style.opacity = '0';
+      cover.classList.remove('hidden');
+    };
+    window.hideCover = () => document.querySelector('#cover').classList.add('hidden');
+  </script>
+</body>
+</html>

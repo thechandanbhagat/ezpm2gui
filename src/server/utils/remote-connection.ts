@@ -25,6 +25,13 @@ export interface CommandResult {
   code: number | null;
 }
 
+export interface RemoteCommandOptions {
+  signal?: AbortSignal;
+  timeoutMs?: number;
+  maxOutputBytes?: number;
+  logCommand?: boolean;
+}
+
 /**
  * Class to manage SSH connections to remote servers
  */
@@ -165,7 +172,8 @@ export class RemoteConnection extends EventEmitter {
    * @param command The command to execute
    * @param forceSudo Whether to force using sudo for this specific command
    */
-  async executeCommand(command: string, forceSudo?: boolean): Promise<CommandResult> {    
+  async executeCommand(command: string, forceSudo?: boolean, options: RemoteCommandOptions = {}): Promise<CommandResult> {
+    if (options.signal?.aborted) throw new Error('Remote command cancelled');
     // Connect if not already connected
     if (!this._isConnected) {
       await this.connect();
@@ -178,14 +186,35 @@ export class RemoteConnection extends EventEmitter {
       ? `sudo -S ${command}`
       : command;
 
-    console.log(`Executing command: ${useElevatedPrivileges ? '[sudo] ' : ''}${command}`);
+    if (options.logCommand !== false) console.log(`Executing command: ${useElevatedPrivileges ? '[sudo] ' : ''}${command}`);
 
     return new Promise((resolve, reject) => {
+      let activeChannel: ClientChannel | undefined;
+      let settled = false;
+      let outputBytes = 0;
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const finish = (error?: Error, result?: CommandResult) => {
+        if (settled) return;
+        settled = true;
+        if (timer) clearTimeout(timer);
+        options.signal?.removeEventListener('abort', cancel);
+        if (error) {
+          activeChannel?.close();
+          reject(error);
+        } else resolve(result!);
+      };
+      const cancel = () => finish(new Error('Remote command cancelled'));
+      options.signal?.addEventListener('abort', cancel, { once: true });
+      if (options.signal?.aborted) { cancel(); return; }
+      if (options.timeoutMs) timer = setTimeout(() => finish(new Error('Remote command timed out')), options.timeoutMs);
       this.client.exec(finalCommand, (err, channel) => {
+        if (settled) { channel?.close(); return; }
         if (err) {
-          console.error('Error executing command:', err);
-          return reject(err);
+          if (options.logCommand !== false) console.error('Error executing command:', err);
+          finish(err);
+          return;
         }
+        activeChannel = channel;
 
         // Write password to sudo's stdin, then close stdin
         if (useElevatedPrivileges && this.config.password) {
@@ -193,16 +222,28 @@ export class RemoteConnection extends EventEmitter {
           channel.stdin.end();
         }
 
-        let stdout = '';
-        let stderr = '';
+        const stdout: Buffer[] = [];
+        const stderr: Buffer[] = [];
         let exitCode: number | null = null;
 
         channel.on('data', (data: Buffer) => {
-          stdout += data.toString();
+          if (settled) return;
+          outputBytes += data.length;
+          if (options.maxOutputBytes && outputBytes > options.maxOutputBytes) {
+            finish(new Error('Remote command output exceeded the limit'));
+            return;
+          }
+          stdout.push(Buffer.from(data));
         });
 
         channel.stderr.on('data', (data: Buffer) => {
-          stderr += data.toString();
+          if (settled) return;
+          outputBytes += data.length;
+          if (options.maxOutputBytes && outputBytes > options.maxOutputBytes) {
+            finish(new Error('Remote command output exceeded the limit'));
+            return;
+          }
+          stderr.push(Buffer.from(data));
         });
 
         channel.on('exit', (code) => {
@@ -210,16 +251,16 @@ export class RemoteConnection extends EventEmitter {
         });
 
         channel.on('close', () => {
-          resolve({
-            stdout,
-            stderr,
+          finish(undefined, {
+            stdout: Buffer.concat(stdout).toString('utf8'),
+            stderr: Buffer.concat(stderr).toString('utf8'),
             code: exitCode
           });
         });
 
         channel.on('error', (err) => {
-          console.error('Channel error:', err);
-          reject(err);
+          if (options.logCommand !== false) console.error('Channel error:', err);
+          finish(err);
         });
       });
     });
@@ -491,17 +532,17 @@ export class RemoteConnection extends EventEmitter {
    * The first successful invocation is cached so later calls (and streaming
    * commands) reuse the same shell/binary path without re-probing.
    */
-  async executePM2Command(pm2Args: string): Promise<CommandResult> {
+  async executePM2Command(pm2Args: string, options?: RemoteCommandOptions): Promise<CommandResult> {
     // Fast path: reuse the builder we already know works on this host
     if (this.resolvedBuilderIndex >= 0) {
-      return this.executeCommand(RemoteConnection.PM2_BUILDERS[this.resolvedBuilderIndex](pm2Args));
+      return this.executeCommand(RemoteConnection.PM2_BUILDERS[this.resolvedBuilderIndex](pm2Args), undefined, options);
     }
 
     let lastError: any = null;
     for (let i = 0; i < RemoteConnection.PM2_BUILDERS.length; i++) {
       const command = RemoteConnection.PM2_BUILDERS[i](pm2Args);
       try {
-        const result = await this.executeCommand(command);
+        const result = await this.executeCommand(command, undefined, options);
         if (result.code === 0) {
           this.resolvedBuilderIndex = i; // Cache for all future calls on this connection
           console.log(`[executePM2Command] Resolved pm2 via builder[${i}]: ${command.substring(0, 60)}`);
@@ -509,6 +550,7 @@ export class RemoteConnection extends EventEmitter {
         }
         lastError = new Error(`Command failed (code ${result.code}): ${result.stderr}`);
       } catch (error) {
+        if (options?.signal?.aborted) throw error;
         lastError = error;
       }
     }

@@ -17,8 +17,8 @@ assert.equal(formatVersionLabel(null), 'v...');
 assert.equal(formatVersionLabel(undefined), 'v...');
 
 // @group UnitTests : Shared What's New release label
-assert.equal(APP_RELEASE_VERSION, '1.11.1');
-assert.equal(APP_RELEASE_DATE, 'June 2026');
-assert.equal(APP_RELEASE_SUBTITLE, 'EZ PM2 GUI · June 2026');
+assert.equal(APP_RELEASE_VERSION, '1.12.0');
+assert.equal(APP_RELEASE_DATE, 'October 2026');
+assert.equal(APP_RELEASE_SUBTITLE, 'EZ PM2 GUI · October 2026');
 
 console.log('app-version tests passed');
