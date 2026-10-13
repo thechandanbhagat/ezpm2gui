@@ -36,6 +36,61 @@ const RELEASES: Release[] = [
   {
     version: APP_RELEASE_VERSION,
     date: APP_RELEASE_DATE,
+    headline: 'Saved AI Conversations & TSLN',
+    changes: [
+      {
+        title: 'Persistent AI Conversations',
+        description:
+          'Investigate logs in a right sidebar with separate Markdown chats, suggested follow-up questions, and SQLite history that can be reopened later.',
+        icon: SparklesIcon,
+        color: 'text-[#a78bfa]',
+        tag: 'New',
+      },
+      {
+        title: 'Local and Cloud Model Selection',
+        description:
+          'Select Ollama local or cloud models and optional models for installed CLI providers, with explicit consent before cloud analysis.',
+        icon: CpuChipIcon,
+        color: 'text-[#22c55e]',
+        tag: 'Improved',
+      },
+      {
+        title: 'TSLN Log Evidence',
+        description:
+          'Reduce repeated prompt fields with a reversible TSLN-based profile. Every prepared evidence row stays intact, and JSON is kept when it is smaller.',
+        icon: DocumentMagnifyingGlassIcon,
+        color: 'text-[#22d3ee]',
+        tag: 'New',
+      },
+      {
+        title: 'Cached Provider Discovery',
+        description:
+          'Installed providers are scanned once by the backend. Refresh providers manually after installing a tool or adding a model.',
+        icon: ClockIcon,
+        color: 'text-[#f59e0b]',
+        tag: 'Improved',
+      },
+      {
+        title: 'Sidebar Server Connections',
+        description:
+          'Connect disconnected servers from the process sidebar and see their processes immediately. Repeated outage notifications no longer stack.',
+        icon: SignalIcon,
+        color: 'text-[#22d3ee]',
+        tag: 'Fix',
+      },
+      {
+        title: 'TSLN Guide and Research Paper',
+        description:
+          'Open Help for the rendered implementation guide and TSLN paper, with documentation hosted at ezpm2gui.chandanbhagat.com.np.',
+        icon: PlayCircleIcon,
+        color: 'text-[#a78bfa]',
+        tag: 'New',
+      },
+    ],
+  },
+  {
+    version: '1.12.0',
+    date: 'October 2026',
     headline: 'AI Log Analysis & Demo Library',
     changes: [
       {

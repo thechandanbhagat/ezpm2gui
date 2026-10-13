@@ -17,24 +17,33 @@ async function main() {
   try {
     const source: NodeJS.ProcessEnv = { HOME: home, AGENT_CLI_CREDENTIAL_STORE: 'file', CURSOR_API_KEY: 'synthetic-optional' };
     const child: NodeJS.ProcessEnv = { CURSOR_API_KEY: source.CURSOR_API_KEY };
-    const finish = await prepareCliAuthentication('cursor', source, child, workspace, 'darwin');
-    cleanups.push(finish);
-    assert.notEqual(child.HOME, source.HOME);
-    assert.ok(path.relative(workspace, child.HOME!).startsWith('..'));
-    assert.equal(child.DIRENV_DISABLE, '1');
-    assert.equal(child.CURSOR_API_KEY, source.CURSOR_API_KEY);
-    assert.equal(child.AGENT_CLI_CREDENTIAL_STORE, 'file');
-    const linkedAuth = path.join(child.HOME!, '.cursor', 'auth.json');
-    assert.equal(await fs.promises.readlink(linkedAuth), path.join(cursor, 'auth.json'));
-    assert.equal(fs.existsSync(path.join(child.HOME!, '.cursor', 'hooks.json')), false);
-    assert.deepEqual(await fs.promises.readdir(child.CURSOR_CONFIG_DIR!), []);
-    assert.deepEqual(await fs.promises.readdir(child.CURSOR_DATA_DIR!), []);
-    // Model-independent fixture: the CLI's direct auth-file write reaches its original store.
-    await fs.promises.writeFile(linkedAuth, '{"accessToken":"synthetic-refreshed","metadata":"keep"}', { mode: 0o600 });
-    assert.equal(JSON.parse(await fs.promises.readFile(path.join(cursor, 'auth.json'), 'utf8')).accessToken, 'synthetic-refreshed');
-    await finish();
-    assert.equal(fs.existsSync(child.HOME!), false);
-    assert.equal(fs.existsSync(path.join(cursor, 'auth.json')), true);
+    let finish: (() => Promise<void>) | undefined;
+    try {
+      finish = await prepareCliAuthentication('cursor', source, child, workspace, 'darwin');
+    } catch (error) {
+      assert.equal(process.platform, 'win32');
+      assert.equal((error as NodeJS.ErrnoException).code, 'EPERM');
+      assert.equal(fs.existsSync(child.HOME!), false, 'Denied fixture symlinks must clean up isolated credentials');
+    }
+    if (finish) {
+      cleanups.push(finish);
+      assert.notEqual(child.HOME, source.HOME);
+      assert.ok(path.relative(workspace, child.HOME!).startsWith('..'));
+      assert.equal(child.DIRENV_DISABLE, '1');
+      assert.equal(child.CURSOR_API_KEY, source.CURSOR_API_KEY);
+      assert.equal(child.AGENT_CLI_CREDENTIAL_STORE, 'file');
+      const linkedAuth = path.join(child.HOME!, '.cursor', 'auth.json');
+      assert.equal(await fs.promises.readlink(linkedAuth), path.join(cursor, 'auth.json'));
+      assert.equal(fs.existsSync(path.join(child.HOME!, '.cursor', 'hooks.json')), false);
+      assert.deepEqual(await fs.promises.readdir(child.CURSOR_CONFIG_DIR!), []);
+      assert.deepEqual(await fs.promises.readdir(child.CURSOR_DATA_DIR!), []);
+      // Model-independent fixture: the CLI's direct auth-file write reaches its original store.
+      await fs.promises.writeFile(linkedAuth, '{"accessToken":"synthetic-refreshed","metadata":"keep"}', { mode: 0o600 });
+      assert.equal(JSON.parse(await fs.promises.readFile(path.join(cursor, 'auth.json'), 'utf8')).accessToken, 'synthetic-refreshed');
+      await finish();
+      assert.equal(fs.existsSync(child.HOME!), false);
+      assert.equal(fs.existsSync(path.join(cursor, 'auth.json')), true);
+    }
 
     for (const [platform, extras, expectedKey, expectedValue] of [
       ['linux', { XDG_CONFIG_HOME: path.join(fixture, 'custom-xdg') }, 'XDG_CONFIG_HOME', path.join(fixture, 'custom-xdg')],
@@ -75,7 +84,9 @@ async function main() {
     assert.equal(settings.disableAllHooks, true);
     assert.equal(settings.storeTokenPlaintext, true);
     assert.equal(settings.enabledPlugins, undefined);
-    assert.equal((await fs.promises.stat(path.join(copilot.COPILOT_HOME!, 'config.json'))).mode & 0o777, 0o600);
+    const savedAuthStat = await fs.promises.stat(path.join(copilot.COPILOT_HOME!, 'config.json'));
+    assert.ok(savedAuthStat.isFile());
+    if (process.platform !== 'win32') assert.equal(savedAuthStat.mode & 0o777, 0o600);
     assert.deepEqual((await fs.promises.readdir(copilot.COPILOT_HOME!)).sort(), ['config.json', 'settings.json']);
 
     await fs.promises.writeFile(path.join(copilotHome, 'settings.json'), '{"storeTokenPlaintext":false}');

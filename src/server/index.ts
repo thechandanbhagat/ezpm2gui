@@ -32,6 +32,7 @@ import { requireAuth, authorizeSocket } from './middleware/requireAuth';
 import { setRevokeListener } from './utils/auth-tokens';
 import { getConfigDir } from './utils/config-dir';
 import logAnalysisRoutes from './routes/logAnalysis';
+import { listProviders } from './services/LogAnalysisService';
 
 /**
  * Create and configure the express server
@@ -489,12 +490,16 @@ if (require.main === module) {
   const server = createServer();
   server.listen(PORT, HOST as string, () => {
     console.log(`Server running on http://${HOST}:${PORT}`);
+    void listProviders().catch(error => {
+      console.error('Initial AI provider discovery failed. Use Refresh providers to retry.', error);
+    });
   });
 
   // Handle shutdown gracefully
   process.on('SIGINT', async () => {
     console.log('\nGracefully shutting down...');
     try {
+      await logAnalysisRoutes.closeHistory();
       await disconnectFromPM2();
       await remoteConnectionManager.closeAllConnections();
     } catch (error) {
@@ -507,6 +512,7 @@ if (require.main === module) {
   process.on('SIGTERM', async () => {
     console.log('\nGracefully shutting down...');
     try {
+      await logAnalysisRoutes.closeHistory();
       await disconnectFromPM2();
       await remoteConnectionManager.closeAllConnections();
     } catch (error) {

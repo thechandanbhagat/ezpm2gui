@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   ChartBarIcon,
@@ -19,6 +19,11 @@ import {
 } from '@heroicons/react/24/outline';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
+import { RemoteConnection } from '../types/remote';
+import { AUTH_CONFIG_CHANGED_EVENT, AUTH_REQUIRED_EVENT, AUTH_SESSION_CHANGED_EVENT, getToken } from '../auth';
+import { REMOTE_CONNECTIONS_CHANGED_EVENT, RemoteConnectionsChangedDetail } from '../utils/server-selection';
+
+const TREE_REFRESH_MS = 5000;
 
 interface SidebarMenuProps {
   onItemClick?: () => void;
@@ -32,6 +37,13 @@ interface SidebarProcess {
   status: string;
 }
 
+interface SidebarProcessResponse {
+  pm_id: number;
+  name: string;
+  status?: string;
+  pm2_env?: { status?: string };
+}
+
 // @group Types : Server group for log sidebar tree
 interface SidebarServerGroup {
   serverId: string;
@@ -42,10 +54,17 @@ interface SidebarServerGroup {
   loading: boolean;
 }
 
+interface SidebarConnectionState {
+  pending: boolean;
+  error?: string;
+}
+
 // @group SidebarMenu : Navigation menu for the application sidebar
 const SidebarMenu: React.FC<SidebarMenuProps> = ({ onItemClick, collapsed = false }) => {
   const location = useLocation();
   const { t } = useTranslation();
+  const translation = useRef(t);
+  translation.current = t;
   const navigate  = useNavigate();
   const currentPath = location.pathname;
 
@@ -61,64 +80,167 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ onItemClick, collapsed = fals
   const [expandedServers, setExpandedServers] = useState<Set<string>>(new Set(['local']));
   const [treeLoading,     setTreeLoading]     = useState(false);
   const [actionLoading,   setActionLoading]   = useState<{ [key: string]: boolean }>({});
+  const [connectionStates, setConnectionStates] = useState<Record<string, SidebarConnectionState>>({});
+  const connectionRequests = useRef(new Map<string, AbortController>());
+  const mounted = useRef(false);
 
   useEffect(() => {
-    let cancelled = false;
+    mounted.current = true;
+    const requests = connectionRequests.current;
+    let active = true;
+    let fetching = false;
+    let refreshPending = false;
+    let suspended = false;
+    let version = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let controller: AbortController | undefined;
+    const reportedErrors = new Set<string>();
 
-    const load = async () => {
+    const reportError = (scope: string, error: unknown) => {
+      if (reportedErrors.has(scope)) return;
+      reportedErrors.add(scope);
+      console.error(`Failed to refresh sidebar ${scope}:`, error);
+    };
+
+    const mapProcesses = (processes: SidebarProcessResponse[]): SidebarProcess[] => processes.map(process => ({
+      id: process.pm_id,
+      name: process.name,
+      status: process.pm2_env?.status ?? process.status ?? 'unknown',
+    }));
+
+    const load = async (): Promise<void> => {
+      if (!active || suspended || fetching) return;
+      fetching = true;
+      refreshPending = false;
+      if (timer) clearTimeout(timer);
+      const requestVersion = version;
+      const requestToken = getToken();
+      const requestController = new AbortController();
+      controller = requestController;
+      const current = () => active && !suspended && version === requestVersion && getToken() === requestToken;
       setTreeLoading(true);
       try {
-        const [localRes, remoteRes] = await Promise.all([
-          axios.get('/api/processes'),
-          axios.get('/api/remote/connections').catch(() => ({ data: [] })),
+        const [localResult, connectionsResult] = await Promise.allSettled([
+          axios.get<SidebarProcessResponse[]>('/api/processes', { signal: requestController.signal }),
+          axios.get<RemoteConnection[]>('/api/remote/connections', { signal: requestController.signal }),
+        ]);
+        if (!current()) return;
+        if (localResult.status === 'rejected') reportError('local processes', localResult.reason);
+        else reportedErrors.delete('local processes');
+        if (connectionsResult.status === 'rejected') {
+          reportError('connections', connectionsResult.reason);
+          return;
+        }
+        reportedErrors.delete('connections');
+        const connections = connectionsResult.value.data;
+        const connectionIds = new Set(connections.map(connection => connection.id));
+        requests.forEach((request, connectionId) => {
+          if (!connectionIds.has(connectionId)) {
+            request.abort();
+            requests.delete(connectionId);
+          }
+        });
+        setConnectionStates(previous => Object.fromEntries(Object.entries(previous).filter(([connectionId]) => connectionIds.has(connectionId))));
+        const localProcesses = localResult.status === 'fulfilled' ? mapProcesses(localResult.value.data) : undefined;
+        setServerGroups(previous => [
+          { serverId: 'local', serverName: translation.current('nav.localServer'), isRemote: false, connected: true,
+            processes: localProcesses ?? previous.find(group => group.serverId === 'local')?.processes ?? [], loading: false },
+          ...connections.map(connection => {
+            const previousGroup = previous.find(group => group.serverId === connection.id);
+            const processes = connection.connected && previousGroup?.connected ? previousGroup.processes : [];
+            return { serverId: connection.id, serverName: connection.name, isRemote: true, connected: connection.connected,
+              processes, loading: connection.connected && processes.length === 0 };
+          }),
         ]);
 
-        const localProcesses: SidebarProcess[] = localRes.data.map((p: any) => ({
-          id: p.pm_id,
-          name: p.name,
-          status: p.pm2_env?.status ?? p.status ?? 'unknown',
+        const connected = connections.filter(connection => connection.connected);
+        const results = await Promise.allSettled(connected.map(async connection => {
+          const response = await axios.get<SidebarProcessResponse[]>(`/api/remote/${connection.id}/processes`, { signal: requestController.signal });
+          return { id: connection.id, processes: mapProcesses(response.data) };
         }));
-
-        const groups: SidebarServerGroup[] = [
-          { serverId: 'local', serverName: t('nav.localServer'), isRemote: false, connected: true, processes: localProcesses, loading: false },
-        ];
-
-        const connections: any[] = remoteRes.data;
-        for (const conn of connections) {
-          groups.push({ serverId: conn.id, serverName: conn.name, isRemote: true, connected: conn.connected, processes: [], loading: conn.connected });
-        }
-
-        if (!cancelled) setServerGroups(groups);
-
-        // Fetch remote processes in parallel
-        const remoteConnected = connections.filter((c: any) => c.connected);
-        if (remoteConnected.length > 0) {
-          const results = await Promise.allSettled(
-            remoteConnected.map((conn: any) =>
-              axios.get(`/api/remote/${conn.id}/processes`).then(r => ({ id: conn.id, data: r.data }))
-            )
-          );
-          if (!cancelled) {
-            setServerGroups(prev => prev.map(g => {
-              const r = results.find(res => res.status === 'fulfilled' && (res.value as any).id === g.serverId);
-              if (!r || r.status !== 'fulfilled') return { ...g, loading: false };
-              const processes: SidebarProcess[] = (r.value as any).data.map((p: any) => ({
-                id: p.pm_id, name: p.name, status: p.pm2_env?.status ?? p.status ?? 'unknown',
-              }));
-              return { ...g, processes, loading: false };
-            }));
-          }
-        }
-      } catch {
-        // fail silently — tree is non-critical
+        if (!current()) return;
+        results.forEach((result, index) => {
+          const scope = `remote ${connected[index].id}`;
+          if (result.status === 'rejected') reportError(scope, result.reason);
+          else reportedErrors.delete(scope);
+        });
+        setServerGroups(previous => previous.map(group => {
+          const result = results.find(response => response.status === 'fulfilled' && response.value.id === group.serverId);
+          return { ...group, processes: result?.status === 'fulfilled' ? result.value.processes : group.processes, loading: false };
+        }));
+      } catch (error) {
+        if (current()) reportError('data', error);
       } finally {
-        if (!cancelled) setTreeLoading(false);
+        fetching = false;
+        if (current()) setTreeLoading(false);
+        if (active && !suspended) {
+          if (refreshPending) void load();
+          else timer = setTimeout(() => { void load(); }, TREE_REFRESH_MS);
+        }
       }
     };
 
-    load();
-    return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const refresh = () => {
+      version += 1;
+      refreshPending = true;
+      controller?.abort();
+      if (!fetching) void load();
+    };
+    const connectionsChanged = (event: Event) => {
+      const detail = (event as CustomEvent<RemoteConnectionsChangedDetail>).detail;
+      if (detail?.deletedConnectionId || detail?.connected === false) {
+        const connectionId = detail.deletedConnectionId ?? detail.connectionId;
+        if (connectionId) {
+          requests.get(connectionId)?.abort();
+          requests.delete(connectionId);
+          setConnectionStates(previous => Object.fromEntries(Object.entries(previous).filter(([id]) => id !== connectionId)));
+        }
+        setServerGroups(previous => previous
+          .filter(group => group.serverId !== detail.deletedConnectionId)
+          .map(group => group.serverId === detail.connectionId ? { ...group, connected: false, processes: [], loading: false } : group));
+      }
+      refresh();
+    };
+    const resetSession = (shouldSuspend: boolean) => {
+      requests.forEach(request => request.abort());
+      requests.clear();
+      setConnectionStates({});
+      suspended = shouldSuspend;
+      if (suspended) {
+        setServerGroups([]);
+        setTreeLoading(false);
+        if (timer) clearTimeout(timer);
+      }
+      refresh();
+    };
+    const sessionChanged = () => resetSession(getToken() === null);
+    const authRequired = () => resetSession(true);
+    const authConfigChanged = (event: Event) => {
+      const config = (event as CustomEvent<{ passwordSet: boolean }>).detail;
+      if (config?.passwordSet === false) {
+        suspended = false;
+        refresh();
+      } else if (config?.passwordSet === true && getToken() === null) {
+        resetSession(true);
+      }
+    };
+    window.addEventListener(REMOTE_CONNECTIONS_CHANGED_EVENT, connectionsChanged);
+    window.addEventListener(AUTH_SESSION_CHANGED_EVENT, sessionChanged);
+    window.addEventListener(AUTH_REQUIRED_EVENT, authRequired);
+    window.addEventListener(AUTH_CONFIG_CHANGED_EVENT, authConfigChanged);
+    void load();
+    return () => {
+      mounted.current = false;
+      requests.forEach(request => request.abort());
+      requests.clear();
+      active = false;
+      controller?.abort();
+      if (timer) clearTimeout(timer);
+      window.removeEventListener(REMOTE_CONNECTIONS_CHANGED_EVENT, connectionsChanged);
+      window.removeEventListener(AUTH_SESSION_CHANGED_EVENT, sessionChanged);
+      window.removeEventListener(AUTH_REQUIRED_EVENT, authRequired);
+      window.removeEventListener(AUTH_CONFIG_CHANGED_EVENT, authConfigChanged);
+    };
   }, []);
 
   const toggleServer = (id: string) => {
@@ -127,6 +249,42 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ onItemClick, collapsed = fals
       if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
+  };
+
+  const connectServer = async (serverId: string): Promise<void> => {
+    if (connectionRequests.current.has(serverId)) return;
+    const requestController = new AbortController();
+    const requestToken = getToken();
+    connectionRequests.current.set(serverId, requestController);
+    setConnectionStates(previous => ({ ...previous, [serverId]: { pending: true } }));
+    const current = () => mounted.current && !requestController.signal.aborted &&
+      connectionRequests.current.get(serverId) === requestController && getToken() === requestToken;
+    try {
+      const response = await axios.post<unknown>(`/api/remote/${encodeURIComponent(serverId)}/connect`, undefined, {
+        signal: requestController.signal,
+      });
+      if (!current()) return;
+      if (!response.data || typeof response.data !== 'object' || !('success' in response.data) || response.data.success !== true) {
+        throw new Error(translation.current('sidebar.connectFailed'));
+      }
+      setExpandedServers(previous => new Set([...previous, serverId]));
+      window.dispatchEvent(new CustomEvent<RemoteConnectionsChangedDetail>(REMOTE_CONNECTIONS_CHANGED_EVENT, {
+        detail: { connectionId: serverId, connected: true },
+      }));
+    } catch (error) {
+      if (!current()) return;
+      const responseError = axios.isAxiosError(error) ? error.response?.data?.error : undefined;
+      const message = typeof responseError === 'string' && responseError.trim()
+        ? responseError : error instanceof Error && error.message ? error.message : translation.current('sidebar.connectFailed');
+      setConnectionStates(previous => ({ ...previous, [serverId]: { pending: false, error: message } }));
+    } finally {
+      if (connectionRequests.current.get(serverId) === requestController) {
+        connectionRequests.current.delete(serverId);
+        if (mounted.current && !requestController.signal.aborted) {
+          setConnectionStates(previous => ({ ...previous, [serverId]: { ...previous[serverId], pending: false } }));
+        }
+      }
+    }
   };
 
   const handleProcessAction = async (e: React.MouseEvent, serverId: string, proc: SidebarProcess, action: 'start' | 'stop' | 'restart') => {
@@ -241,20 +399,23 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ onItemClick, collapsed = fals
             ) : (
               serverGroups.map(group => {
                 const expanded = expandedServers.has(group.serverId);
+                const connectionState = connectionStates[group.serverId];
                 return (
                   <div key={group.serverId}>
                     {/* Server header row */}
                     <button
+                      type="button"
+                      aria-expanded={expanded}
                       onClick={() => toggleServer(group.serverId)}
                       className="w-full flex items-center gap-1.5 px-2 py-1.5 text-left text-[#555] hover:text-[#888] hover:bg-[#111] transition-colors"
                     >
                       {expanded
-                        ? <ChevronDownIcon className="h-3 w-3 shrink-0" />
-                        : <ChevronRightIcon className="h-3 w-3 shrink-0" />
+                        ? <ChevronDownIcon aria-hidden="true" className="h-3 w-3 shrink-0" />
+                        : <ChevronRightIcon aria-hidden="true" className="h-3 w-3 shrink-0" />
                       }
                       {group.isRemote
-                        ? <CloudIcon className="h-3.5 w-3.5 text-[#22d3ee] shrink-0" />
-                        : <ServerIcon className="h-3.5 w-3.5 text-[#22c55e] shrink-0" />
+                        ? <CloudIcon aria-hidden="true" className="h-3.5 w-3.5 text-[#22d3ee] shrink-0" />
+                        : <ServerIcon aria-hidden="true" className="h-3.5 w-3.5 text-[#22c55e] shrink-0" />
                       }
                       <span className="flex-1 font-mono text-[11px] text-[#888] truncate">
                         {group.serverName}
@@ -264,12 +425,29 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ onItemClick, collapsed = fals
                       )}
                     </button>
 
+                    {group.isRemote && !group.connected && (
+                      <div className="pl-8 pr-2 pb-1 font-mono text-[10px]">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <span className="text-[color:var(--ez-text-subtle)]">{t('sidebar.notConnected')}</span>
+                          <button
+                            type="button"
+                            onClick={() => { void connectServer(group.serverId); }}
+                            disabled={connectionState?.pending}
+                            aria-label={t(connectionState?.pending ? 'sidebar.connectingTo' : 'sidebar.connectTo', { name: group.serverName })}
+                            className="inline-flex items-center gap-1 rounded border border-[color:var(--ez-border)] px-2 py-1 text-[color:var(--ez-accent)] hover:bg-[color:var(--ez-accent-soft)] hover:text-[color:var(--ez-accent-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ez-accent)] disabled:cursor-wait disabled:opacity-70"
+                          >
+                            {connectionState?.pending && <ArrowPathIcon aria-hidden="true" className="h-3 w-3 animate-spin motion-reduce:animate-none" />}
+                            {t(connectionState?.pending ? 'sidebar.connecting' : 'sidebar.connect')}
+                          </button>
+                        </div>
+                        {connectionState?.error && <p role="alert" className="mt-1 break-words text-[color:var(--ez-danger-text)]">{connectionState.error}</p>}
+                      </div>
+                    )}
+
                     {/* Process list */}
-                    {expanded && (
+                    {expanded && group.connected && (
                       <div className="pb-0.5">
-                        {!group.connected ? (
-                          <p className="pl-8 pr-2 py-1 font-mono text-[10px] text-[#444] italic">{t('sidebar.notConnected')}</p>
-                        ) : group.loading ? (
+                        {group.loading ? (
                           <p className="pl-8 pr-2 py-1 font-mono text-[10px] text-[#444] animate-pulse">{t('sidebar.loading')}</p>
                         ) : group.processes.length === 0 ? (
                           <p className="pl-8 pr-2 py-1 font-mono text-[10px] text-[#444] italic">{t('sidebar.noProcesses')}</p>

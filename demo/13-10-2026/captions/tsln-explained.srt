@@ -1,0 +1,108 @@
+1
+00:00:00,350 --> 00:00:04,019
+Logs can repeat timestamps, messages, and JSON field names
+
+2
+00:00:04,135 --> 00:00:05,215
+hundreds of times.
+
+3
+00:00:05,911 --> 00:00:09,893
+EZ PM2 GUI uses a local TSLN based
+
+4
+00:00:09,928 --> 00:00:12,924
+profile to reduce that repetition in AI prompts.
+
+5
+00:00:13,527 --> 00:00:16,349
+TSLN means Time Series Lean Notation.
+
+6
+00:00:16,859 --> 00:00:20,436
+Our profile declares the columns once, then writes one row
+per
+
+7
+00:00:20,494 --> 00:00:21,318
+evidence line.
+
+8
+00:00:21,643 --> 00:00:24,929
+An equals sign repeats the previous value in the same
+column.
+
+9
+00:00:25,440 --> 00:00:28,272
+Every row, stream, and line number remains.
+
+10
+00:00:28,783 --> 00:00:32,243
+Timestamps stay exact text, and the empty symbol marks an
+
+11
+00:00:32,336 --> 00:00:33,648
+unparsed timestamp.
+
+12
+00:00:34,089 --> 00:00:37,537
+Nothing is sorted, grouped, or dropped by compression, so
+
+13
+00:00:37,618 --> 00:00:39,302
+repeated events remain countable.
+
+14
+00:00:39,906 --> 00:00:41,403
+The backend redacts first.
+
+15
+00:00:41,844 --> 00:00:45,618
+It encodes and decodes the candidate, verifies an exact
+match,
+
+16
+00:00:45,896 --> 00:00:48,358
+then compares complete prompt representations.
+
+17
+00:00:49,054 --> 00:00:52,456
+Compression is selected only for fewer UTF-8 bytes;
+
+18
+00:00:52,781 --> 00:00:54,697
+otherwise, JSON stays.
+
+19
+00:00:55,138 --> 00:00:56,752
+Savings depend on the logs.
+
+20
+00:00:57,193 --> 00:01:00,119
+Fewer bytes do not guarantee equivalent token savings.
+
+21
+00:01:00,560 --> 00:01:02,348
+The captured tail stays bounded.
+
+22
+00:01:02,789 --> 00:01:05,935
+Saved snapshots and the preview keep their original
+redacted
+
+23
+00:01:05,993 --> 00:01:06,527
+rows.
+
+24
+00:01:07,224 --> 00:01:10,811
+Open Help and demos for the implementation guide and the
+TSLN
+
+25
+00:01:10,881 --> 00:01:14,817
+paper, published on engrXiv by Chandan Bhagat and Manas
+
+26
+00:01:14,875 --> 00:01:15,815
+Mudbari.

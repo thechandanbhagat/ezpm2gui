@@ -38,7 +38,7 @@ import {
   Visibility as VisibilityIcon
 } from '@mui/icons-material';
 import { RemoteConnection, PM2Process, SystemInfo } from '../types/remote';
-import { REMOTE_CONNECTIONS_CHANGED_EVENT } from '../utils/server-selection';
+import { REMOTE_CONNECTIONS_CHANGED_EVENT, RemoteConnectionsChangedDetail } from '../utils/server-selection';
 import { io } from 'socket.io-client';
 import LogStatusBar from './LogStatusBar';
 
@@ -288,9 +288,9 @@ const getIconButtonSx = (hoverColor = THEME.textMuted) => ({
 });
 
 // @group Utilities : Notify the app shell when connection definitions change
-const notifyRemoteConnectionsChanged = (deletedConnectionId?: string): void => {
+const notifyRemoteConnectionsChanged = (detail: RemoteConnectionsChangedDetail = {}): void => {
   window.dispatchEvent(new CustomEvent(REMOTE_CONNECTIONS_CHANGED_EVENT, {
-    detail: { deletedConnectionId }
+    detail
   }));
 };
 
@@ -393,12 +393,13 @@ const RemoteConnections: React.FC = () => {
       const response = await fetch(`/api/remote/${connectionId}/connect`, { method: 'POST' });
 
       if (response.ok) {
-        await loadProcesses(connectionId);
-        await loadSystemInfo(connectionId);
         setConnections(prev =>
           prev.map(conn => conn.id === connectionId ? { ...conn, connected: true } : conn)
         );
         setExpandedConnections(prev => new Set([...prev, connectionId]));
+        notifyRemoteConnectionsChanged({ connectionId, connected: true });
+        await loadProcesses(connectionId);
+        await loadSystemInfo(connectionId);
       } else {
         try {
           const errorData = await response.json();
@@ -429,6 +430,7 @@ const RemoteConnections: React.FC = () => {
           delete newProcesses[connectionId];
           return newProcesses;
         });
+        notifyRemoteConnectionsChanged({ connectionId, connected: false });
       }
     } catch (error) {
       console.error('Disconnect failed:', error);
@@ -648,7 +650,7 @@ const RemoteConnections: React.FC = () => {
       const response = await fetch(`/api/remote/connections/${connectionId}`, { method: 'DELETE' });
       if (response.ok) {
         await loadConnections();
-        notifyRemoteConnectionsChanged(connectionId);
+        notifyRemoteConnectionsChanged({ deletedConnectionId: connectionId });
       }
     } catch (error) {
       console.error('Failed to delete connection:', error);

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Why EZ PM2 GUI uses TSLN for AI log analysis — EZ PM2 GUI</title>
+  <meta name="description" content="Why EZ PM2 GUI uses a TSLN-based log profile for AI analysis, with examples, evidence safeguards, measured savings, and limits.">
+  <link rel="canonical" href="https://ezpm2gui.chandanbhagat.com.np/userguides/tsln-log-analysis.html">
+  <link rel="icon" type="image/svg+xml" href="../images/logo.svg">
+  <link rel="stylesheet" href="../theme.css">
+  <style>
+    :root { --space: 1rem; --radius: .5rem; --measure: 72ch; }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-padding-top: var(--space); }
+    body { margin: 0; background: var(--bg); color: var(--text-body); font: 1rem/1.65 Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    a { color: var(--blue); }
+    .skip-link { position: absolute; top: -4rem; left: var(--space); padding: var(--space); background: var(--surface); }
+    .skip-link:focus { top: var(--space); }
+    .nav { border-bottom: 1px solid var(--border); background: var(--surface); }
+    .nav-inner { max-width: 1200px; margin-inline: auto; padding: var(--space); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space); }
+    .logo { color: var(--text); font-weight: 800; text-decoration: none; }
+    .nav-actions { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space); }
+    .theme-btn { min-height: 44px; padding: .5rem 1rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-2); color: var(--text); font: inherit; cursor: pointer; }
+    main, footer { max-width: var(--measure); margin-inline: auto; padding: calc(var(--space) * 2) var(--space); }
+    .breadcrumbs { color: var(--text-muted); margin-bottom: calc(var(--space) * 2); font-size: .875rem; }
+    h1, h2, h3 { color: var(--text); line-height: 1.25; }
+    h1 { font-size: clamp(2rem, 5vw, 2.5rem); margin-top: 0; }
+    h2 { font-size: 1.5rem; margin-top: calc(var(--space) * 3); }
+    h3 { font-size: 1.25rem; margin-top: calc(var(--space) * 2); }
+    article p, article ul, article ol { margin-block: var(--space); overflow-wrap: anywhere; }
+    article ul, article ol { padding-inline-start: calc(var(--space) * 1.5); }
+    article li { margin-block: .5rem; }
+    code { font: .875em/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: var(--surface-2); color: var(--primary); padding: .125rem .25rem; border-radius: .25rem; }
+    pre { max-width: 100%; padding: var(--space); border: 1px solid var(--border); border-left: .25rem solid var(--primary); border-radius: var(--radius); overflow-x: auto; background: var(--surface-2); }
+    pre code { color: var(--text); padding: 0; background: none; white-space: pre; }
+    .table-wrap { max-width: 100%; overflow-x: auto; margin-block: var(--space); border-radius: var(--radius); }
+    table { width: 100%; border-collapse: collapse; text-align: start; }
+    th, td { padding: .75rem; border: 1px solid var(--border); }
+    th { background: var(--surface); color: var(--text); }
+    footer { border-top: 1px solid var(--border); color: var(--text-muted); font-size: .875rem; }
+    footer p { margin-block: .5rem; }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <nav class="nav" aria-label="Documentation navigation">
+    <div class="nav-inner">
+      <a href="../index.html" class="logo">EZ PM2 GUI</a>
+      <div class="nav-actions">
+        <a href="index.html">User Guide</a>
+        <a href="../index.html#documentation">Resources</a>
+        <button class="theme-btn" id="themeToggle" type="button" aria-label="Switch to light theme">Light theme</button>
+      </div>
+    </div>
+  </nav>
+  <main id="main">
+    <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../index.html">Documentation</a> / <a href="index.html">User Guide</a> / TSLN log analysis</nav>
+    <article><div><h1 id="why-ez-pm2-gui-uses-tsln-for-ai-log-analysis">Why EZ PM2 GUI uses TSLN for AI log analysis</h1><p>EZ PM2 GUI uses a TSLN-based log profile to make AI log snapshots smaller while keeping the evidence needed to diagnose a problem. TSLN means <strong>Time-Series Lean Notation</strong>. The approach draws on the schema-first representation and repeat markers described in <a href="https://doi.org/10.31224/6375">the TSLN paper by Chandan Bhagat and Manas Mudbari</a>, published on engrXiv.</p><p>This explanation is for users and contributors who want to understand the choice, its safeguards, and its limits. Review it whenever the encoder, prompt format, or snapshot limits change.</p><h2 id="why-repeated-logs-benefit">Why repeated logs benefit</h2><p>A process can produce hundreds of identical messages, often with the same timestamp. Numbered JSON repeats field names such as <code>line</code>, <code>stream</code>, and <code>message</code> for every row. It also repeats the entire timestamp and message. Sending those repetitions gives the model more text to read without adding different evidence.</p><p>The log profile declares its columns once and uses an unquoted <code>=</code> when a field matches the previous row in the same column. Every captured row still has its own evidence line number. Repeated messages remain countable rather than disappearing into a summary.</p><p>For example, these two messages have the same timestamp, stream, and text:</p><pre><code class="language-text lang-text">2026-10-13T12:04:50: No user context in headers
+2026-10-13T12:04:50: No user context in headers</code></pre><p>Their representation inside a larger compressed snapshot is:</p><pre><code class="language-text lang-text"># TSLN-based log profile/1
+# Schema: d:line s:stream i:timestamp i:separator i:message
+---
+1|&quot;stdout&quot;|&quot;2026-10-13T12:04:50&quot;|&quot;: &quot;|&quot;No user context in headers&quot;
+2|=|=|=|=</code></pre><p>The model receives decoding instructions with the snapshot. Line 2 reconstructs the same full message as line 1. A two-row snapshot by itself usually stays JSON because the profile header and instructions cost more space than they save.</p><h2 id="how-the-application-uses-it">How the application uses it</h2><p>The server first collects and redacts the log snapshot. It then compares numbered JSON with the complete compressed prompt representation, including its header, instructions, and metadata labels. It selects the profile only when that representation uses fewer UTF-8 bytes; ties and larger representations stay JSON.</p><p>Compression happens when building the provider prompt, so all supported analysis providers use the same decision. The saved SQLite snapshot and the preview retain their redacted rows. Follow-up questions can use those saved rows without depending on a compressed storage format.</p><h2 id="preserving-diagnostic-evidence">Preserving diagnostic evidence</h2><p>The profile preserves:</p><ul><li>Every prepared row, its stream, and its evidence line number.</li><li>Exact timestamp text and the separator before the message.</li><li>Untimed stack frames, whitespace, and message text.</li><li>The original row order, including stdout followed by stderr.</li></ul><p>Strings use JSON quoting and escaping. A literal <code>&quot;=&quot;</code> is message text; an unquoted <code>=</code> is a repeat marker. The unquoted <code>∅</code> marks a missing timestamp, while a quoted <code>&quot;∅&quot;</code> remains literal text. Pipes, quotes, backslashes, and newlines inside quoted strings remain reversible.</p><p>Before dispatching compressed rows, the encoder decodes them and checks that they exactly match the original numbered evidence. A mismatch stops analysis rather than sending altered evidence to the provider. Redaction runs before compression, and all snapshot content remains untrusted data in the diagnostic prompt.</p><h2 id="why-this-is-a-local-tsln-profile">Why this is a local TSLN profile</h2><p>Application logs are irregular text. Some lines have timestamps without time zones; stack frames often have none. The current profile therefore keeps timestamps as text instead of converting them to numeric deltas, rounding them, or inferring a time zone.</p><p>It uses the type codes and repeat-marker idea from the <a href="https://github.com/turboline-ai/tsln/blob/main/Reference.md">TSLN 1.0 reference</a>, with explicit JSON string quoting for arbitrary log text. Its header identifies a local log profile. Compatibility with other TSLN encoders or decoders is not assumed.</p><h2 id="measured-savings-and-limits">Measured savings and limits</h2><p>The repository&#x27;s synthetic test contains 200 identical timestamped stdout messages:</p><div class="table-wrap" tabindex="0" role="region" aria-label="Scrollable comparison table"><table><thead><tr><th scope="col">Representation</th><th style="text-align:right" scope="col">UTF-8 bytes</th></tr></thead><tbody><tr><td>Numbered JSON rows</td><td style="text-align:right">24,493</td></tr><tr><td>Local profile, including decoding instructions</td><td style="text-align:right">2,955</td></tr><tr><td>Reduction</td><td style="text-align:right">87.9%</td></tr></tbody></table></div><p>These are measurements from that fixture, not guaranteed savings for production logs. Unique messages may compress less or stay JSON. Provider tokenizers differ, so byte reduction does not establish an equivalent token, price, latency, or diagnostic-accuracy improvement. Full prompt savings also depend on metadata, the question, and conversation history.</p><p>The capture window remains bounded: a 64 KiB tail of each log file supplies up to 200 recent nonblank lines per stream, then at most 400 prepared rows fit within a 60 KiB serialized snapshot budget. Compression cannot recover rows already omitted by those limits. Line numbers refer to the prepared excerpt, not positions in the full log file. Separate stdout and stderr tails do not establish cross-stream chronology.</p><h2 id="references-and-implementation">References and implementation</h2><ul><li><a href="https://doi.org/10.31224/6375">TSLN paper on engrXiv — DOI 10.31224/6375</a>.</li><li><a href="https://github.com/turboline-ai/tsln/blob/main/TSLN_Whitepaper.pdf">Author repository&#x27;s whitepaper copy</a>.</li><li><a href="https://github.com/turboline-ai/tsln/blob/main/Reference.md">TSLN 1.0 reference</a>.</li><li><a href="https://github.com/thechandanbhagat/ezpm2gui/blob/main/src/server/services/LogAnalysisTsln.ts">Log profile encoder and decoder</a>.</li><li><a href="https://github.com/thechandanbhagat/ezpm2gui/blob/main/src/server/services/LogAnalysisService.ts">Provider prompt selection</a>.</li><li><a href="https://github.com/thechandanbhagat/ezpm2gui/blob/main/tests/unit/log-analysis-tsln.test.ts">Round-trip and size tests</a>, and <a href="https://github.com/thechandanbhagat/ezpm2gui/blob/main/tests/unit/log-analysis-tsln-prompt.test.ts">provider integration tests</a>.</li></ul></div></article>
+  </main>
+  <footer>
+    <p><a href="tsln-log-analysis.md">View the Markdown source</a> · <a href="index.html#logs">Log streaming guide</a></p>
+    <p>Maintained by EZ PM2 GUI maintainers. Review the source when the encoder, prompt format, or snapshot limits change.</p>
+  </footer>
+  <script>
+    const root = document.documentElement;
+    const button = document.getElementById('themeToggle');
+    const saved = localStorage.getItem('ezpm2-theme');
+    let dark = saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const applyTheme = () => {
+      root.setAttribute('data-theme', dark ? 'dark' : 'light');
+      button.textContent = dark ? 'Light theme' : 'Dark theme';
+      button.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
+    };
+    applyTheme();
+    button.addEventListener('click', () => {
+      dark = !dark;
+      applyTheme();
+      localStorage.setItem('ezpm2-theme', dark ? 'dark' : 'light');
+    });
+  </script>
+</body>
+</html>

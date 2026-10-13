@@ -213,8 +213,8 @@ async function main() {
       if (request.endpoint === '/api/chat') { inference = true; return {}; }
       return request.endpoint === '/api/tags' ? { models: [tag] } : show;
     } });
-    await rejectsStatus(cloud.analyzeSnapshot({ ...input('ollama'), model: tag.name }), 400, /local|cloud/);
-    assert.equal(inference, false, 'A cloud alias or unverified model must never receive the snapshot');
+    await rejectsStatus(cloud.analyzeSnapshot({ ...input('ollama'), model: tag.name, allowCloud: false }), 400, /local|cloud/);
+    assert.equal(inference, false, 'Cloud consent and local weight verification must precede inference');
   }
   let release: (text: string) => void;
   const busy = createLogAnalysisService({ resolveExecutable: executable, env: { GITHUB_TOKEN: 'test-token' }, runProcess: async request => {
@@ -321,7 +321,7 @@ async function main() {
   assert.equal(malicious.executable, undefined);
 
   // Standard Windows npm shims are bypassed, never interpreted by cmd.exe.
-  const npmFixture = fs.mkdtempSync(path.join(os.tmpdir(), 'ezpm2gui npm $(literal)-'));
+  const npmFixture = await fs.promises.realpath(fs.mkdtempSync(path.join(os.tmpdir(), 'ezpm2gui npm $(literal)-')));
   try {
     const directory = path.join(npmFixture, 'copilot');
     fs.mkdirSync(directory);
@@ -335,8 +335,16 @@ async function main() {
     fs.writeFileSync(path.join(npmFixture, 'outside.js'), '// must not execute');
     manifest('@github/copilot', '../outside.js');
     assert.equal(await resolveNpmCliEntrypoint(directory, 'copilot', '@github/copilot'), undefined);
-    fs.symlinkSync(path.join(npmFixture, 'outside.js'), path.join(directory, 'linked.js'));
-    manifest('@github/copilot', 'linked.js');
+    if (process.platform === 'win32') {
+      const outsideDirectory = path.join(npmFixture, 'outside-directory');
+      fs.mkdirSync(outsideDirectory);
+      fs.writeFileSync(path.join(outsideDirectory, 'index.js'), '// must not execute');
+      fs.symlinkSync(outsideDirectory, path.join(directory, 'linked-directory'), 'junction');
+      manifest('@github/copilot', 'linked-directory/index.js');
+    } else {
+      fs.symlinkSync(path.join(npmFixture, 'outside.js'), path.join(directory, 'linked.js'));
+      manifest('@github/copilot', 'linked.js');
+    }
     assert.equal(await resolveNpmCliEntrypoint(directory, 'copilot', '@github/copilot'), undefined);
   } finally { fs.rmSync(npmFixture, { recursive: true, force: true }); }
 
