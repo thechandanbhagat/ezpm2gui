@@ -1,6 +1,6 @@
 {
   "name": "ezpm2gui",
-  "version": "1.12.0",
+  "version": "1.13.0",
   "main": "dist/server/index.js",
   "bin": {
     "ezpm2gui": "bin/ezpm2gui.js",
@@ -28,7 +28,7 @@
     "build:bin": "tsc --project tsconfig.bin.json",
     "prepare": "npm run build",
     "test": "npm run test:unit && npm run test:client",
-    "test:unit": "ts-node tests/unit/server-selection.test.ts && ts-node tests/unit/theme.test.ts && ts-node tests/unit/app-version.test.ts && ts-node tests/unit/socket-url.test.ts && ts-node tests/unit/config-dir.test.ts && ts-node tests/unit/cli-authentication.test.ts && ts-node tests/unit/log-analysis-providers.test.ts && ts-node tests/unit/log-analysis-routes.test.ts",
+    "test:unit": "ts-node tests/unit/server-selection.test.ts && ts-node tests/unit/theme.test.ts && ts-node tests/unit/app-version.test.ts && ts-node tests/unit/socket-url.test.ts && ts-node tests/unit/config-dir.test.ts && ts-node tests/unit/cli-authentication.test.ts && ts-node tests/unit/log-analysis-providers.test.ts && ts-node tests/unit/log-analysis-provider-cache.test.ts && ts-node tests/unit/log-analysis-cloud.test.ts && ts-node tests/unit/log-analysis-tsln.test.ts && ts-node tests/unit/log-analysis-tsln-prompt.test.ts && ts-node tests/unit/tsln-documentation.test.ts && ts-node tests/unit/log-analysis-routes.test.ts && ts-node tests/unit/log-analysis-history.test.ts",
     "test:client": "npm --prefix src/client test -- --watchAll=false --watchman=false --runInBand",
     "postinstall": "node scripts/postinstall.js"
   },

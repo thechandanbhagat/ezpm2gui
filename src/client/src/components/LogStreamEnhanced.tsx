@@ -12,7 +12,7 @@ import PageHeader from './PageHeader';
 import { useTranslation } from 'react-i18next';
 import { stripAnsi } from '../utils/ansi';
 import { getSocketUrl } from '../utils/socket-url';
-import LogAnalysisDialog from './LogAnalysisDialog';
+import { useLogAnalysis } from './LogAnalysisContext';
 
 interface LogStreamEnhancedProps {
   processId?: number | string;
@@ -56,7 +56,7 @@ const LogStreamEnhanced: React.FC<LogStreamEnhancedProps> = ({
   const [isStreaming,     setIsStreaming]      = useState(false);
   const [selectedLogType, setSelectedLogType] = useState<'out' | 'err'>(propLogType as 'out' | 'err');
   const [processName,     setProcessName]     = useState('');
-  const [analysisOpen, setAnalysisOpen] = useState(false);
+  const { openAnalysis } = useLogAnalysis();
 
   // Date-range filter state — staged (input) vs applied (active filter)
   const [dateFrom,    setDateFrom]    = useState('');
@@ -363,7 +363,7 @@ const LogStreamEnhanced: React.FC<LogStreamEnhancedProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-1">
-            <button type="button" onClick={() => setAnalysisOpen(true)} disabled={initPid === null}
+            <button type="button" onClick={() => { if (initPid !== null) openAnalysis({ processId: initPid, processName, connectionId: isRemoteRoute ? serverId : undefined }); }} disabled={initPid === null}
               className="h-7 px-2.5 text-xs font-mono rounded-sm border border-[var(--ez-border)] text-[var(--ez-text)] hover:bg-[var(--ez-bg-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ez-accent)] disabled:opacity-50 disabled:cursor-not-allowed">
               {t('logAnalysis.analyze')}
             </button>
@@ -519,8 +519,6 @@ const LogStreamEnhanced: React.FC<LogStreamEnhancedProps> = ({
           </div>
         )}
       </div>
-      {initPid !== null && <LogAnalysisDialog open={analysisOpen} onClose={() => setAnalysisOpen(false)}
-        processId={initPid} processName={processName} connectionId={isRemoteRoute ? serverId : undefined} />}
     </div>
   );
 };

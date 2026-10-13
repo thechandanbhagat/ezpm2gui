@@ -25,6 +25,8 @@ import WhatsNew from './components/WhatsNew';
 import Help from './components/Help';
 import WhatsNewModal, { shouldShowWhatsNew, markWhatsNewSeen } from './components/WhatsNewModal';
 import StatusBar, { Notification } from './components/StatusBar';
+import { LogAnalysisProvider } from './components/LogAnalysisContext';
+import { LogAnalysisContent } from './components/LogAnalysisSidebar';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import { AUTH_CONFIG_CHANGED_EVENT, AUTH_REQUIRED_EVENT, AUTH_SESSION_CHANGED_EVENT, getToken } from './auth';
 import {
@@ -122,6 +124,7 @@ const App: React.FC = () => {
   const enqueueNotification = useCallback((message: string, type: Notification['type'] = 'error') => {
     const id = `notif-${++notifCounterRef.current}`;
     setNotifications(prev => [...prev, { id, message, type }]);
+    return id;
   }, []);
   const dismissNotification = useCallback((id: string) => {
     setNotifications(prev => prev.filter(n => n.id !== id));
@@ -206,6 +209,9 @@ const App: React.FC = () => {
   const activeServerIdRef = useRef<string>(getStoredActiveServerId());
   const [remoteConnections, setRemoteConnections] = useState<RemoteConnection[]>([]);
   const [remoteConnectionsLoaded, setRemoteConnectionsLoaded] = useState<boolean>(false);
+  const remoteErrorNotificationRef = useRef<{ serverId: string; id: string } | null>(null);
+  const activeRemoteServerAvailable = activeServerId !== LOCAL_SERVER_ID && remoteConnectionsLoaded
+    && isRemoteServerAvailable(activeServerId, remoteConnections);
 
   // @group ServerSwitcher : Persist active server selection consistently
   const persistActiveServerId = useCallback((serverId: string): void => {
@@ -248,7 +254,12 @@ const App: React.FC = () => {
     // Track last data update timestamp to detect if data is actually flowing
     let lastDataUpdate = Date.now();
     let connectionErrorTimeout: ReturnType<typeof setTimeout> | null = null;
+    let connectionLostNotificationId: string | null = null;
     let socketConnected = socket.connected;
+    const notifyConnectionLost = () => {
+      if (connectionLostNotificationId !== null) return;
+      connectionLostNotificationId = enqueueNotification(t('errors.connectionLost'), 'warn');
+    };
 
     // Initial data fetch (local processes and metrics)
     const fetchInitialData = async (): Promise<void> => {
@@ -298,7 +309,7 @@ const App: React.FC = () => {
 
         connectionErrorTimeout = setTimeout(() => {
           if (Date.now() - lastDataUpdate > 5000 && !socketConnected) {
-            enqueueNotification(t('errors.connectionLost'), 'warn');
+            notifyConnectionLost();
           }
         }, 3000);
       }
@@ -310,6 +321,10 @@ const App: React.FC = () => {
       socketConnected = true;
       setSocketConnected(true);
       lastDataUpdate = Date.now();
+      if (connectionLostNotificationId !== null) {
+        dismissNotification(connectionLostNotificationId);
+        connectionLostNotificationId = null;
+      }
 
       if (connectionErrorTimeout) {
         clearTimeout(connectionErrorTimeout);
@@ -330,7 +345,7 @@ const App: React.FC = () => {
 
         connectionErrorTimeout = setTimeout(() => {
           if (!socketConnected && Date.now() - lastDataUpdate > 5000) {
-            enqueueNotification(t('errors.connectionLost'), 'warn');
+            notifyConnectionLost();
           }
         }, 5000);
       }
@@ -343,6 +358,7 @@ const App: React.FC = () => {
       if (connectionErrorTimeout) {
         clearTimeout(connectionErrorTimeout);
       }
+      if (connectionLostNotificationId !== null) dismissNotification(connectionLostNotificationId);
       
       socket.off('processes');
       socket.off('metrics');
@@ -353,7 +369,7 @@ const App: React.FC = () => {
       setSocketConnected(false);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canAccessApi, sessionToken, enqueueNotification, loadLocalProcessesAndMetrics]);
+  }, [canAccessApi, sessionToken, enqueueNotification, dismissNotification, loadLocalProcessesAndMetrics]);
 
   // Filter processes when search, status, or namespace filter changes
   useEffect(() => {
@@ -406,15 +422,30 @@ const App: React.FC = () => {
 
   // @group ServerSwitcher : Poll remote processes when a remote server is active
   useEffect(() => {
-    if (!canAccessApi) return;
-    if (activeServerId === LOCAL_SERVER_ID || !remoteConnectionsLoaded) return;
-    if (!isRemoteServerAvailable(activeServerId, remoteConnections)) return;
+    const previousError = remoteErrorNotificationRef.current;
+    if (previousError && (previousError.serverId !== activeServerId || !canAccessApi || !activeRemoteServerAvailable)) {
+      dismissNotification(previousError.id);
+      remoteErrorNotificationRef.current = null;
+    }
+    if (!canAccessApi || !activeRemoteServerAvailable) return;
+
+    let active = true;
+    let fetching = false;
 
     const fetchRemoteProcesses = async (): Promise<void> => {
+      if (fetching) return;
+      fetching = true;
       try {
         const res = await axios.get<PM2Process[]>(`/api/remote/${activeServerId}/processes`);
+        if (!active) return;
         setProcesses(res.data);
+        const notification = remoteErrorNotificationRef.current;
+        if (notification?.serverId === activeServerId) {
+          dismissNotification(notification.id);
+          remoteErrorNotificationRef.current = null;
+        }
       } catch (err: any) {
+        if (!active) return;
         console.error('Error fetching remote processes:', err);
         const errorMessage = err.response?.data?.error || err.message;
 
@@ -427,21 +458,29 @@ const App: React.FC = () => {
           return;
         }
 
-        enqueueNotification(t('errors.failedFetchRemote', { error: errorMessage }));
+        if (!remoteErrorNotificationRef.current) {
+          const id = enqueueNotification(t('errors.failedFetchRemote', { error: errorMessage }));
+          remoteErrorNotificationRef.current = { serverId: activeServerId, id };
+        }
+      } finally {
+        fetching = false;
       }
     };
 
     fetchRemoteProcesses();
     const interval = setInterval(fetchRemoteProcesses, 3000);
-    return () => clearInterval(interval);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
   }, [
     canAccessApi,
     activeServerId,
+    activeRemoteServerAvailable,
     enqueueNotification,
+    dismissNotification,
     loadLocalProcessesAndMetrics,
     persistActiveServerId,
-    remoteConnections,
-    remoteConnectionsLoaded,
     t,
   ]);
 
@@ -859,6 +898,7 @@ const App: React.FC = () => {
 
   return (
     <ThemeProvider theme={muiTheme}>
+    <LogAnalysisProvider enabled={canAccessApi}>
     <Router>
       <div className="min-h-screen bg-[#0a0a0a]">
         <div className="flex">
@@ -1066,6 +1106,7 @@ const App: React.FC = () => {
           <main className={`flex-1 min-w-0 pt-9 min-h-screen transition-[margin] duration-200 bg-[#0a0a0a] ${
             sidebarCollapsed ? 'sm:ml-[44px]' : 'sm:ml-[200px]'
           }`}>
+            <LogAnalysisContent>
             <div className="px-3 py-3 pb-8">
 
               <Routes>
@@ -1129,6 +1170,7 @@ const App: React.FC = () => {
                 <Route path="/help" element={<Help />} />
               </Routes>
             </div>{/* /px-3 py-3 */}
+            </LogAnalysisContent>
           </main>
         </div>
 
@@ -1205,6 +1247,7 @@ const App: React.FC = () => {
         </Dialog>
       </div>
     </Router>
+    </LogAnalysisProvider>
     </ThemeProvider>
   );
 };

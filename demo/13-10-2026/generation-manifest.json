@@ -1,0 +1,37 @@
+{
+  "createdAt": "2026-10-13",
+  "provider": "ElevenLabs",
+  "voice": {
+    "name": "Jerry B. — Instructional & Tutorial",
+    "id": "tCgAUbeV0tdD1S2yFoCx",
+    "model": "eleven_multilingual_v2"
+  },
+  "music": {
+    "model": "eleven_music_v2",
+    "instrumental": true,
+    "generatedSeparately": true,
+    "durationSeconds": 90
+  },
+  "audioFiles": [
+    "narration-ai.mp3",
+    "narration-tsln.mp3",
+    "background-ai.mp3",
+    "background-tsln.mp3"
+  ],
+  "generations": {
+    "aiNarration": "4hbDChL4y943Fuo58l83",
+    "tslnNarration": "n0TofWuMKFhuNZ9MzGMR",
+    "aiBackground": "NIdbkCagPYNf5Q5Fdqk0",
+    "tslnBackground": "4T2oBJNs4NJCwWXKwNzu"
+  },
+  "captions": "Aligned to narration using ElevenLabs Scribe; display acronyms normalized.",
+  "demoData": "Fictional sample logs and simulated analysis; actual app interface.",
+  "sources": {
+    "documentation": "https://ezpm2gui.chandanbhagat.com.np/",
+    "tslnPaper": "https://doi.org/10.31224/6375",
+    "authors": [
+      "Chandan Bhagat",
+      "Manas Mudbari"
+    ]
+  }
+}

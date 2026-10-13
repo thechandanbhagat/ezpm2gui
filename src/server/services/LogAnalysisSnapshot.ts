@@ -6,6 +6,7 @@ import { AnalysisSnapshot, LogAnalysisError, prepareSnapshot, PreparedSnapshot }
 
 const TAIL_BYTES = 64 * 1024;
 const STREAM_LINES = 200;
+const MAX_CONNECTION_ID_LENGTH = 128;
 
 export interface SnapshotSelection { processId: number; connectionId?: string }
 export interface CollectedSnapshot extends PreparedSnapshot { warnings: string[] }
@@ -16,7 +17,8 @@ export function validateSnapshotSelection(value: unknown): SnapshotSelection {
     throw new LogAnalysisError('Select a valid PM2 process.', 400);
   }
   if (input.connectionId !== undefined && (typeof input.connectionId !== 'string' ||
-      !/^[a-zA-Z0-9_-]{1,128}$/.test(input.connectionId))) {
+      input.connectionId.length === 0 || input.connectionId.length > MAX_CONNECTION_ID_LENGTH ||
+      /[^a-zA-Z0-9_.:-]/.test(input.connectionId))) {
     throw new LogAnalysisError('Select a valid remote connection.', 400);
   }
   return { processId: input.processId!, ...(input.connectionId ? { connectionId: input.connectionId } : {}) };

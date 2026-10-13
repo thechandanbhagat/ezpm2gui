@@ -6,16 +6,17 @@
 
 A modern web-based graphical user interface for the PM2 process manager, built with TypeScript, Tailwind CSS, and React.
 
-## v1.12.0
+## v1.13.0
 
-- Analyze application logs with installed Claude Code, Codex, Cursor, GitHub Copilot, or Ollama CLIs. Reuse existing CLI sign-in, review redacted snapshots, and approve cloud analysis before sending logs.
-- Open **Help** to watch the product walkthrough and AI log analysis demo inside the application.
-- Password and session changes now keep the app state synchronized, with improved contrast and readability across light and dark themes.
+- Investigate logs in a persistent right sidebar with separate Markdown question/response chats, suggested follow-up questions, and SQLite conversation history. Analysis keeps running when you hide the sidebar or reload the page.
+- Choose Ollama local or cloud models and optional model overrides for installed Claude Code, Codex, Cursor, and GitHub Copilot CLIs. Provider discovery is cached by the backend; cloud analysis requires explicit consent.
+- Reduce repeated prompt fields with a reversible TSLN log profile when the complete prompt is smaller than JSON. Read the explanation and original paper from **Help**.
+- Connect disconnected servers directly from the process sidebar and see their processes immediately. Remote analysis IDs, reconnect notifications, and development WebSocket proxy routing are fixed.
 
 Install or upgrade:
 
 ```sh
-npm install -g ezpm2gui@1.12.0
+npm install -g ezpm2gui@1.13.0
 ```
 
 ## Demo Videos and User Guide
@@ -23,9 +24,16 @@ npm install -g ezpm2gui@1.12.0
 Open **Help** in the application sidebar, or visit `/help`, to browse and play the published demo videos.
 
 - [Product walkthrough](https://youtu.be/u1ckawU-sg4) — a 66-second tour of process monitoring, logs, deployment, and settings with narration and soft background music.
-- [AI log analysis](https://youtu.be/EPwORhBHupU) — a 63-second walkthrough of installed CLI agents, the redacted log preview, local Ollama models, cloud consent, and a diagnostic report. The video uses clearly labeled sample logs and a simulated report.
+- [Earlier AI log analysis demo](https://youtu.be/EPwORhBHupU) — the published 63-second walkthrough of installed CLI agents, the redacted log preview, local Ollama models, cloud consent, and a diagnostic report. The video uses clearly labeled sample logs and a simulated report.
 
-Read the [illustrated user guide](ezpm2gui/userguides/user-guide.md) or the [documentation website](https://ezpm2gui.vercel.app/). The local guide has been reviewed against v1.11.4 and includes setup, live and remote historical metrics, logs, deployment, and security settings.
+New v1.13.0 videos are available as repository assets; YouTube links will be added after upload:
+
+- [AI log analysis walkthrough](demo/13-10-2026/videos/ezpm2gui-ai-log-analysis.mp4) — 77 seconds covering sidebar connections, model selection, Markdown chats, follow-ups, and saved history. [Captions](demo/13-10-2026/captions/ai-log-analysis.srt) · [Narration](demo/13-10-2026/audio/narration-ai.mp3) · [Background music](demo/13-10-2026/audio/background-ai.mp3).
+- [How and why TSLN is used](demo/13-10-2026/videos/ezpm2gui-tsln-explained.mp4) — 80 seconds explaining repeat markers, preserved evidence, the byte comparison, and JSON fallback. [Captions](demo/13-10-2026/captions/tsln-explained.srt) · [Narration](demo/13-10-2026/audio/narration-tsln.mp3) · [Background music](demo/13-10-2026/audio/background-tsln.mp3).
+
+Both videos use ElevenLabs narration and separately generated instrumental music. The AI walkthrough uses sample logs and simulated responses. See the [demo asset notes and generation manifest](demo/13-10-2026/README.md) for scripts, provenance, and the TSLN fixture limitations.
+
+Read the [illustrated user guide](ezpm2gui/userguides/user-guide.md) or the [documentation website](https://ezpm2gui.chandanbhagat.com.np/). The local guide has been reviewed against v1.11.4 and includes setup, live and remote historical metrics, logs, deployment, and security settings.
 
 To add a published demo to Help, update the shared [video catalog](src/client/src/utils/demo-videos.ts), its preview image, and the titles and descriptions in the three locale files.
 
@@ -71,7 +79,7 @@ To add a published demo to Help, update the shared [video catalog](src/client/sr
 
 ![Settings](ezpm2gui/screenshots/11-settings.png)
 
-> See the full visual walkthrough in [https://ezpm2gui.vercel.app/](https://ezpm2gui.vercel.app/) — every screen is annotated with a screenshot.
+> See the full visual walkthrough in [https://ezpm2gui.chandanbhagat.com.np/](https://ezpm2gui.chandanbhagat.com.np/) — every screen is annotated with a screenshot.
 
 ## Features
 
@@ -81,8 +89,10 @@ To add a published demo to Help, update the shared [video catalog](src/client/sr
 - **System metrics dashboard** - Monitor CPU, memory usage, and uptime
 - **Metrics page with live sparklines** - Per-process rolling 1-hour CPU and memory micro-graphs updated every 3s; switch to History tab for SQLite-backed long-term charts
 - **Enhanced log streaming** - View and filter logs from multiple processes simultaneously
-- **Optional AI log analysis** *(v1.12.0)* - Analyze raw local or remote PM2 log history using an installed Claude Code, Codex, Cursor Agent, GitHub Copilot CLI, or a downloaded Ollama model
-- **Help and demo videos** *(v1.12.0)* - Open Help from the sidebar to watch the product walkthrough and AI log analysis demo, with links to the user guide and documentation
+- **AI log analysis chats** *(v1.13.0)* - Investigate local or remote logs in a persistent sidebar with safe Markdown responses, suggested follow-up questions, SQLite history, and background analysis jobs
+- **Local and cloud model selection** *(v1.13.0)* - Use Ollama local/cloud models or optional model overrides for installed Claude Code, Codex, Cursor Agent, and GitHub Copilot CLIs; discovery is cached by the backend
+- **TSLN prompt compression** *(v1.13.0)* - Preserve prepared log evidence with a reversible local profile and select it only when the complete prompt is smaller than JSON
+- **Help and demo videos** *(v1.13.0)* - Watch published demos and open the TSLN explanation, research paper, user guide, and documentation website
 - **Log search highlighting** *(v1.9.0)* - Search terms are visually highlighted in the log viewer
 - **Log timestamp range filter** *(v1.9.0)* - Filter log output by start/end timestamp with snapshot mode
 - **Remote log polling** *(v1.9.0)* - Logs from remote servers fetched and displayed in real-time
@@ -96,7 +106,7 @@ To add a published demo to Help, update the shared [video catalog](src/client/sr
 - **Ecosystem configuration** - Create and manage your PM2 ecosystem files
 - **PM2 modules support** - Manage and configure PM2 modules
 - **Cron Jobs** - Schedule and manage automated tasks with visual cron expression builder
-- **Remote Server Management** - Connect and manage PM2 on remote servers via SSH
+- **Remote Server Management** - Connect and manage PM2 on remote servers via SSH, with sidebar Connect buttons and immediate process-list updates
 - **Encrypted SSH credentials** *(v1.9.0)* - Credential submissions encrypted in-browser with RSA-OAEP + AES-256-GCM before the GUI server establishes SSH connections
 - **Advanced Monitoring Dashboard** - Real-time performance charts with health scoring
 - **Multi-language support** *(v1.11.0)* - Full i18n with English, Nepali, and Chinese locales; language switcher in the navbar; community-extensible
@@ -108,7 +118,9 @@ To add a published demo to Help, update the shared [video catalog](src/client/sr
 
 ### AI Log Analysis
 
-Open a process log viewer and choose **Analyze logs**. The dialog detects supported tools on the machine running the `ezpm2gui` Node server, loads recent raw stdout and stderr history (up to 200 lines each), and lets you review the redacted snapshot before running analysis. Viewer search/date filters do not affect this snapshot. Results describe suspected issues, supporting log lines, likely causes, and suggested checks; they do not modify applications or restart processes.
+Open a process log viewer and choose **Analyze logs**. The right sidebar lists supported tools discovered by the `ezpm2gui` Node server, loads recent raw stdout and stderr history (up to 200 lines each), and lets you review the redacted snapshot before running analysis. Viewer search/date filters do not affect this snapshot. Results describe suspected issues, supporting log lines, likely causes, and suggested checks; they do not modify applications or restart processes.
+
+Questions and responses appear as separate chat messages, with Markdown headings, lists, tables, and code blocks rendered safely. Suggested follow-up questions fill the composer for review before sending. Reopen a saved conversation to continue investigating; SQLite stores the redacted snapshot, analysis requests, responses, and job state. Background analysis continues when the sidebar is hidden or the browser reloads. Jobs interrupted by a backend restart are marked interrupted rather than submitted to a provider again.
 
 Install a supported CLI on the machine running `ezpm2gui` and, for cloud providers, sign in once. The package detects the installed executable and invokes it for analysis, reusing the CLI's existing authentication. The npm package does not bundle agents, models, or credentials:
 
@@ -118,13 +130,17 @@ Install a supported CLI on the machine running `ezpm2gui` and, for cloud provide
 | [Codex](https://learn.chatgpt.com/docs/non-interactive-mode) | Install a current `codex` CLI and run `codex login` | Cloud |
 | [Cursor Agent](https://cursor.com/docs/cli/installation) | Install the separate `agent` / `cursor-agent` CLI and run `agent login` / `cursor-agent login` | Cloud |
 | [GitHub Copilot](https://docs.github.com/en/copilot/get-started/cli-quickstart) | Install a current `copilot` CLI and run `copilot login` with an account that has Copilot access | Cloud |
-| [Ollama](https://docs.ollama.com/) | Install the `ollama` CLI, start its daemon on `127.0.0.1:11434`, and download a local model with `ollama pull <model>`; analysis runs through `ollama run` | Local |
+| [Ollama](https://docs.ollama.com/) | Install the `ollama` CLI, start its daemon on `127.0.0.1:11434`, and add a local or cloud model with `ollama pull <model>`; analysis runs through `ollama run` | Local or cloud |
 
-Cloud providers require an explicit checkbox before dispatch and use the user's account, limits, and provider terms. Ollama analysis accepts verified downloaded local models only; its loopback daemon API is used to discover and validate those models, while the CLI runs inference. A tool installed in a browser user's laptop is available only if the GUI server runs there too; Docker deployments need the tool and its authentication inside the container.
+Cloud providers and Ollama cloud models require an explicit checkbox before dispatch and use the user's account, limits, and provider terms. Ollama's loopback daemon API discovers and validates local or cloud models, while the CLI runs inference. Other providers accept an optional model override. A tool installed in a browser user's laptop is available only if the GUI server runs there too; Docker deployments need the tool and its authentication inside the container.
 
-No separate API key or token is required when the CLI is already signed in. Supported credential environment variables remain optional alternatives. Analysis reuses only the credential and identity state needed from the installed CLI while keeping diagnostic configuration isolated from custom hooks and plugins. Credentials stay server-side and are never requested by the browser dialog. Provider detection checks required CLI capabilities and gives an upgrade/setup reason for unsupported installations.
+No separate API key or token is required when the CLI is already signed in. Supported credential environment variables remain optional alternatives. Analysis reuses only the credential and identity state needed from the installed CLI while keeping diagnostic configuration isolated from custom hooks and plugins. Credentials stay server-side and are never requested by the browser sidebar. Provider detection checks required CLI capabilities and gives an upgrade/setup reason for unsupported installations.
 
-Common credential patterns are redacted, but automatic redaction cannot recognize every application-specific secret. Review the preview before submitting. Log snapshots are bounded by lines and bytes; stderr and stdout remain separate, and no event timestamps are invented. Analysis uses a temporary working directory, restricted provider tools, a timeout, and cancellation. The GUI does not save analysis snapshots or results. When no GUI password is configured, AI endpoints are restricted to loopback connections; configure a password before accessing analysis from another machine.
+The backend starts provider discovery once when the server starts and caches the successful catalog for that server run. Opening AI settings, restoring a conversation, or reloading the page reads this catalog without rescanning installed tools. Choose **Refresh providers** after installing a CLI or adding an Ollama model to request a new backend scan. Simultaneous requests share the scan, and closing a browser does not cancel discovery for other clients. Each analysis still validates its selected provider and Ollama model before inference.
+
+Common credential patterns are redacted, but automatic redaction cannot recognize every application-specific secret. Review the preview before submitting. Log snapshots are bounded by lines and bytes; stderr and stdout remain separate, and no event timestamps are invented. Analysis uses a temporary working directory, restricted provider tools, a timeout, and cancellation. Redacted snapshots, questions, and responses are saved in SQLite for conversation history. When no GUI password is configured, AI endpoints are restricted to loopback connections; configure a password before accessing analysis from another machine.
+
+Provider prompts use a reversible local TSLN log profile to reduce repeated fields while preserving numbered diagnostic evidence and exact timestamp strings. After redaction, the server verifies an exact encode/decode round trip and selects TSLN only when the complete prompt, including its instructions, is smaller in UTF-8 bytes than JSON; otherwise it uses JSON. Saved snapshots and capture limits stay unchanged, and byte savings do not guarantee token savings. Read [Why EZ PM2 GUI uses TSLN for AI log analysis](ezpm2gui/userguides/tsln-log-analysis.md) for examples, safeguards, measured byte savings, and limitations, or read the [TSLN paper on engrXiv](https://doi.org/10.31224/6375). The [rendered TSLN guide](https://ezpm2gui.chandanbhagat.com.np/userguides/tsln-log-analysis.html) and paper are also linked from **Help** in the application.
 
 ### Process Monitoring
 Monitor all your PM2 processes in real-time with detailed information on CPU usage, memory consumption, uptime, and status. The intuitive interface makes it easy to identify issues at a glance.
@@ -139,6 +155,7 @@ EZ PM2 GUI ships with full internationalisation (i18n) powered by `i18next` and 
 ### Remote Server Management
 Connect to and manage PM2 processes on remote servers via secure SSH connections:
 - Add multiple remote server connections with SSH credentials
+- Choose **Connect** beside a disconnected server in the process sidebar; its process list updates automatically when the connection is ready
 - View and manage processes on remote servers
 - Stream logs from remote processes in real-time with polling
 - Execute PM2 commands on remote machines
