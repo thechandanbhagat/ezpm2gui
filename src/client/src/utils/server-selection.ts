@@ -5,6 +5,12 @@ export const LOCAL_SERVER_ID = 'local';
 export const ACTIVE_SERVER_STORAGE_KEY = 'ezpm2gui-active-server';
 export const REMOTE_CONNECTIONS_CHANGED_EVENT = 'ezpm2gui-remote-connections-changed';
 
+export interface RemoteConnectionsChangedDetail {
+  deletedConnectionId?: string;
+  connectionId?: string;
+  connected?: boolean;
+}
+
 // @group Utilities : Active server availability helpers
 export function isRemoteServerAvailable(
   serverId: string,

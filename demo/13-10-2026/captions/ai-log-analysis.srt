@@ -1,0 +1,110 @@
+1
+00:00:00,350 --> 00:00:02,788
+A wall of logs can hide useful clues.
+
+2
+00:00:03,392 --> 00:00:07,281
+EZ PM2 GUI turns a snapshot into a focused
+
+3
+00:00:07,316 --> 00:00:08,164
+conversation.
+
+4
+00:00:08,605 --> 00:00:11,983
+This walkthrough uses sample logs and simulated analysis.
+
+5
+00:00:12,494 --> 00:00:14,201
+Connect from the process sidebar.
+
+6
+00:00:14,584 --> 00:00:16,767
+The list updates when the connection is ready.
+
+7
+00:00:17,278 --> 00:00:20,645
+Open the service logs, then select Analyze logs to reveal
+the
+
+8
+00:00:20,691 --> 00:00:22,142
+persistent right sidebar.
+
+9
+00:00:22,746 --> 00:00:26,415
+Expand AI Settings and choose an available provider:
+Ollama
+
+10
+00:00:26,473 --> 00:00:29,538
+local or cloud models, or an installed cloud-connected
+
+11
+00:00:29,596 --> 00:00:30,769
+command-line provider.
+
+12
+00:00:31,373 --> 00:00:34,670
+For cloud analysis, review the sharing notice and
+explicitly
+
+13
+00:00:34,716 --> 00:00:37,143
+allow the snapshot and conversation to be sent.
+
+14
+00:00:37,584 --> 00:00:40,103
+Inspect the redacted snapshot before sending it.
+
+15
+00:00:40,614 --> 00:00:42,936
+The preview shows captured lines and limits.
+
+16
+00:00:43,377 --> 00:00:46,721
+Ask a concrete question: why is this service restarting?
+
+17
+00:00:47,232 --> 00:00:48,544
+Then start the analysis.
+
+18
+00:00:48,985 --> 00:00:51,678
+The Markdown response appears separately from your
+question.
+
+19
+00:00:52,189 --> 00:00:55,742
+Follow cited lines, distinguish observations from
+hypotheses,
+
+20
+00:00:55,916 --> 00:00:57,483
+and review suggested checks.
+
+21
+00:00:57,994 --> 00:01:00,583
+Verify the evidence before changing the application.
+
+22
+00:01:01,094 --> 00:01:04,217
+Choose a suggested follow-up to fill the composer, then
+send it
+
+23
+00:01:04,241 --> 00:01:04,856
+when ready.
+
+24
+00:01:05,460 --> 00:01:07,909
+Requests and responses are saved in SQLite.
+
+25
+00:01:08,513 --> 00:01:11,706
+Reopen your conversation from history and continue with
+the same
+
+26
+00:01:11,752 --> 00:01:12,611
+context.

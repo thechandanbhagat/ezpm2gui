@@ -6,6 +6,29 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.13.0] - 2026-10-13
+
+### Added
+
+- **Persistent AI analysis sidebar** — separate questions and safe Markdown responses, suggested follow-up questions, SQLite snapshots/request-response history, and cancellable background jobs that survive hiding the sidebar or reloading the browser. Backend-interrupted jobs are recorded without automatically resubmitting them.
+- **Cloud model selection** — Ollama local/cloud models and optional model overrides for Claude Code, Codex, Cursor Agent, and GitHub Copilot CLI, with explicit cloud-sharing consent.
+- **Reversible TSLN log profile** — redact first, verify exact evidence round trips, and choose TSLN only when the complete prompt is smaller in UTF-8 bytes than JSON; fall back to JSON otherwise. Stored snapshots and capture limits remain unchanged; token savings are not guaranteed.
+- **Sidebar Connect action** — connect a disconnected remote server directly from the process tree, with progress, retryable errors, and immediate process-list updates.
+- **TSLN documentation and demos** — Markdown and rendered guides, the engrXiv paper in Help, and two captioned 1080p repository videos with separate ElevenLabs narration/music tracks and production metadata.
+
+### Changed
+
+- Provider discovery runs once from the backend at startup and caches successful results. Manual refreshes share a scan; opening AI settings or restoring chats reads the cache.
+- Documentation links use `https://ezpm2gui.chandanbhagat.com.np/`.
+
+### Fixed
+
+- Remote log analysis accepts valid connection IDs containing dots.
+- Disconnect notifications are deduplicated per outage, with stale polling responses guarded.
+- Remote sidebar and server selection refresh after connection changes without reloading the page.
+- Removing password protection resumes the mounted sidebar without a reload; logout and protected sessions still suspend stale requests.
+- The development WebSocket proxy handles only Socket.IO paths, preventing interception of webpack's `/ws` connection and related reset/write-after-end errors.
+
 ## [1.12.0] - 2026-10-12
 
 ### Added

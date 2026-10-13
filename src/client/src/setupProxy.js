@@ -10,6 +10,10 @@ module.exports = function (app) {
   );
   app.use(
     '/socket.io',
-    createProxyMiddleware({ target: apiUrl, changeOrigin: true, ws: true })
+    // Express mount paths do not scope HPM's server-wide upgrade listener.
+    createProxyMiddleware(
+      pathname => pathname === '/socket.io' || pathname.startsWith('/socket.io/'),
+      { target: apiUrl, changeOrigin: true, ws: true }
+    )
   );
 };

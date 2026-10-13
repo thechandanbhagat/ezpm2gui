@@ -96,11 +96,24 @@ const Help: React.FC = () => {
           <div className="mt-7 border-t border-[var(--ez-border)] pt-4">
             <h2 className="text-sm font-semibold">{t('help.moreHelp')}</h2>
             <ul className="mt-3 space-y-3">
-              <li><a href="https://ezpm2gui.vercel.app/userguides/" target="_blank" rel="noopener noreferrer" className={linkClass}>{t('help.userGuide')}<ArrowTopRightOnSquareIcon className="h-3 w-3" aria-hidden="true" /></a></li>
-              <li><a href="https://ezpm2gui.vercel.app/" target="_blank" rel="noopener noreferrer" className={linkClass}>{t('help.documentation')}<ArrowTopRightOnSquareIcon className="h-3 w-3" aria-hidden="true" /></a></li>
+              <li><a href="https://ezpm2gui.chandanbhagat.com.np/userguides/" target="_blank" rel="noopener noreferrer" className={linkClass}>{t('help.userGuide')}<ArrowTopRightOnSquareIcon className="h-3 w-3" aria-hidden="true" /></a></li>
+              <li><a href="https://ezpm2gui.chandanbhagat.com.np/" target="_blank" rel="noopener noreferrer" className={linkClass}>{t('help.documentation')}<ArrowTopRightOnSquareIcon className="h-3 w-3" aria-hidden="true" /></a></li>
               <li><Link to="/whats-new" className={linkClass}>{t('help.whatsNew')}</Link></li>
             </ul>
           </div>
+          <section aria-labelledby="help-tsln-title" className="mt-7 border-t border-[var(--ez-border)] pt-4">
+            <h2 id="help-tsln-title" className="text-sm font-semibold">{t('help.tslnTitle')}</h2>
+            <p className="mt-2 text-xs leading-relaxed text-[var(--ez-text-muted)]">{t('help.tslnDescription')}</p>
+            <ul className="mt-3 space-y-3">
+              <li><a href="https://ezpm2gui.chandanbhagat.com.np/userguides/tsln-log-analysis.html" target="_blank" rel="noopener noreferrer" className={linkClass}>
+                {t('help.tslnGuide')}<ArrowTopRightOnSquareIcon className="h-3 w-3 shrink-0" aria-hidden="true" />
+              </a></li>
+              <li><a href="https://doi.org/10.31224/6375" target="_blank" rel="noopener noreferrer" className={linkClass}>
+                {t('help.tslnPaper')}<ArrowTopRightOnSquareIcon className="h-3 w-3 shrink-0" aria-hidden="true" />
+              </a></li>
+            </ul>
+            <p className="mt-2 text-[11px] leading-relaxed text-[var(--ez-text-subtle)]">{t('help.tslnAuthors')}</p>
+          </section>
         </aside>
       </div>
     </div>
