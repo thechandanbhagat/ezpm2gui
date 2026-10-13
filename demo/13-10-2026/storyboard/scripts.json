@@ -1,0 +1,272 @@
+{
+  "schemaVersion": 1,
+  "language": "en",
+  "pronunciation": {
+    "app": "E Z P M two G U I",
+    "tsln": "T S L N",
+    "sqlite": "sequel light",
+    "utf8": "U T F eight",
+    "engrXiv": "engineering archive",
+    "authorNames": "Use the author's names as written: Chandan Bhagat and Manas Mudbari."
+  },
+  "productionNotes": [
+    "Use actual application screenshots or a captured app walkthrough for interface scenes.",
+    "Keep 'Sample logs · simulated analysis' visible during the AI walkthrough.",
+    "Narration and background audio must be generated as separate tracks before mixing.",
+    "Captions should use display spelling EZ PM2 GUI, TSLN, SQLite, UTF-8 and engrXiv.",
+    "Use a quiet instrumental bed and duck it under narration; no sound masking spoken evidence.",
+    "Do not imply a live AI provider was run when the response comes from the demo fixture.",
+    "Allow the end card and paper DOI to remain legible for at least four seconds."
+  ],
+  "videos": [
+    {
+      "id": "ai-log-analysis",
+      "filename": "ezpm2gui-ai-log-analysis.mp4",
+      "title": "AI log analysis in EZ PM2 GUI",
+      "description": "An English walkthrough of connecting a remote server, reviewing a redacted log snapshot, choosing a provider, investigating cited evidence, and continuing a saved conversation. Sample logs and simulated analysis are clearly labeled.",
+      "targetDurationSeconds": 85,
+      "narration": "A wall of logs can hide useful clues. E Z P M two G U I turns a snapshot into a focused conversation. This walkthrough uses sample logs and simulated analysis. Connect from the process sidebar. The list updates when the connection is ready. Open the service logs, then select Analyze logs to reveal the persistent right sidebar. Expand AI Settings and choose an available provider: Ollama local or cloud models, or an installed cloud-connected command-line provider. For cloud analysis, review the sharing notice and explicitly allow the snapshot and conversation to be sent. Inspect the redacted snapshot before sending it. The preview shows captured lines and limits. Ask a concrete question: why is this service restarting? Then start the analysis. The Markdown response appears separately from your question. Follow cited lines, distinguish observations from hypotheses, and review suggested checks. Verify the evidence before changing the application. Choose a suggested follow-up to fill the composer, then send it when ready. Requests and responses are saved in SQLite. Reopen your conversation from history and continue with the same context.",
+      "wordCount": 178,
+      "scenes": [
+        {
+          "id": "intro",
+          "title": "From noisy logs to a focused investigation",
+          "narration": "A wall of logs can hide useful clues. E Z P M two G U I turns a snapshot into a focused conversation. This walkthrough uses sample logs and simulated analysis.",
+          "onScreenText": [
+            "AI log analysis",
+            "Evidence → investigation → follow-up",
+            "Sample logs · simulated analysis"
+          ],
+          "visual": "Open on a dark cyan title card, then reveal the actual Log Streaming page. Keep a persistent sample-data disclosure during the app walkthrough.",
+          "durationWeight": 1,
+          "role": "hook",
+          "visualKind": "title",
+          "accentText": "Investigate with context"
+        },
+        {
+          "id": "connect",
+          "title": "Connect and open the process logs",
+          "narration": "Connect from the process sidebar. The list updates when the connection is ready. Open the service logs, then select Analyze logs to reveal the persistent right sidebar.",
+          "onScreenText": [
+            "1. Connect the server",
+            "2. Open the service logs",
+            "3. Analyze logs"
+          ],
+          "visual": "Show disconnected office-server and its Connect button, connect it, highlight the updated process list, select booking-manager, and click Analyze logs. Frame the actual UI without browser chrome.",
+          "durationWeight": 1,
+          "role": "workflow",
+          "visualKind": "ui",
+          "screenshotKey": "connect",
+          "accentText": "Connect without reloading"
+        },
+        {
+          "id": "models",
+          "title": "Choose the provider and model",
+          "narration": "Expand AI Settings and choose an available provider: Ollama local or cloud models, or an installed cloud-connected command-line provider. For cloud analysis, review the sharing notice and explicitly allow the snapshot and conversation to be sent.",
+          "onScreenText": [
+            "AI Settings",
+            "Local or cloud model",
+            "Review cloud sharing"
+          ],
+          "visual": "Show actual AI Settings expanded, a local Ollama selection, then a cloud selection and its sharing checkbox. Use short labeled zooms rather than a crowded full-page screenshot.",
+          "durationWeight": 1.2,
+          "role": "workflow",
+          "visualKind": "ui",
+          "screenshotKey": "settings",
+          "accentText": "Choose where analysis runs"
+        },
+        {
+          "id": "question",
+          "title": "Review the snapshot and ask a question",
+          "narration": "Inspect the redacted snapshot before sending it. The preview shows captured lines and limits. Ask a concrete question: why is this service restarting? Then start the analysis.",
+          "onScreenText": [
+            "Review the redacted snapshot",
+            "Why is this service restarting?"
+          ],
+          "visual": "Expand Log snapshot, show numbered stdout/stderr sample lines and redaction metadata. Close it, type the example investigation in the composer, and show analysis progress.",
+          "durationWeight": 1,
+          "role": "workflow",
+          "visualKind": "ui",
+          "screenshotKey": "snapshot",
+          "accentText": "Start with a specific question"
+        },
+        {
+          "id": "response",
+          "title": "Read the evidence and suggested checks",
+          "narration": "The Markdown response appears separately from your question. Follow cited lines, distinguish observations from hypotheses, and review suggested checks. Verify the evidence before changing the application.",
+          "onScreenText": [
+            "Readable Markdown",
+            "Cited evidence",
+            "Observations · hypotheses · checks"
+          ],
+          "visual": "Show the separate question and assistant cards, rendered headings and evidence bullets. Highlight a line citation and the distinction between observed facts and suspected causes.",
+          "durationWeight": 1.1,
+          "role": "workflow",
+          "visualKind": "ui",
+          "screenshotKey": "response",
+          "accentText": "Evidence before action"
+        },
+        {
+          "id": "history",
+          "title": "Continue the investigation later",
+          "narration": "Choose a suggested follow-up to fill the composer, then send it when ready. Requests and responses are saved in SQLite. Reopen your conversation from history and continue with the same context.",
+          "onScreenText": [
+            "Suggested follow-up questions",
+            "Saved requests and responses",
+            "Reopen and continue"
+          ],
+          "visual": "Click a follow-up suggestion and show it filling the composer without automatic submission. Briefly show the next chat turn, close and reopen the analysis sidebar, then select the saved conversation in Conversation history. End on product name and documentation domain.",
+          "durationWeight": 1.1,
+          "role": "close",
+          "visualKind": "ui",
+          "screenshotKey": "history",
+          "accentText": "A conversation you can return to"
+        }
+      ]
+    },
+    {
+      "id": "tsln-explained",
+      "filename": "ezpm2gui-tsln-explained.mp4",
+      "title": "Why EZ PM2 GUI uses TSLN",
+      "description": "An English explanation of the local TSLN log profile: adjacent repeated values, evidence preservation, redaction and round-trip verification, conditional JSON fallback, measured fixture bytes, and unchanged capture limits.",
+      "targetDurationSeconds": 85,
+      "narration": "Logs can repeat timestamps, messages, and JSON field names hundreds of times. E Z P M two G U I uses a local T S L N based profile to reduce that repetition in AI prompts. T S L N means Time Series Lean Notation. Our profile declares the columns once, then writes one row per evidence line. An equals sign repeats the previous value in the same column. Every row, stream, and line number remains. Timestamps stay exact text, and the empty symbol marks an unparsed timestamp. Nothing is sorted, grouped, or dropped by compression, so repeated events remain countable. The backend redacts first. It encodes and decodes the candidate, verifies an exact match, then compares complete prompt representations. Compression is selected only for fewer UTF eight bytes; otherwise, JSON stays. Savings depend on the logs. Fewer bytes do not guarantee equivalent token savings. The captured tail stays bounded. Saved snapshots and the preview keep their original redacted rows. Open Help and demos for the implementation guide and the T S L N paper, published on engrXiv by Chandan Bhagat and Manas Mudbari.",
+      "wordCount": 184,
+      "visualData": {
+        "sourceLogs": [
+          "2026-10-13T12:04:50: No user context in headers",
+          "2026-10-13T12:04:50: No user context in headers",
+          "2026-10-13T12:04:50: Worker ready"
+        ],
+        "profileHeader": "# TSLN-based log profile/1",
+        "schema": "# Schema: d:line s:stream i:timestamp i:separator i:message",
+        "encodedRows": [
+          "1|\"stdout\"|\"2026-10-13T12:04:50\"|\": \"|\"No user context in headers\"",
+          "2|=|=|=|=",
+          "3|=|=|=|\"Worker ready\""
+        ],
+        "untimedExample": "4|=|∅|\"\"|\"    at worker.run (worker.ts:42:7)\"",
+        "repeatMarker": "=",
+        "missingTimestampMarker": "∅",
+        "benchmark": {
+          "label": "Synthetic fixture: 200 identical timestamped stdout messages",
+          "jsonBytes": 24493,
+          "profileBytesWithInstructions": 2955,
+          "reductionPercent": 87.9,
+          "unit": "UTF-8 bytes",
+          "disclaimer": "Fixture measurement; production savings vary. Byte reduction does not establish equivalent token, price, latency, or accuracy improvement."
+        },
+        "captureLimits": {
+          "tailBytesPerStream": 65536,
+          "recentNonblankLinesPerStream": 200,
+          "maxPreparedRows": 400,
+          "serializedSnapshotBytes": 61440,
+          "caption": "Compression does not expand the captured tail."
+        },
+        "links": {
+          "guide": "https://ezpm2gui.chandanbhagat.com.np/userguides/tsln-log-analysis.html",
+          "paper": "https://doi.org/10.31224/6375"
+        },
+        "authors": [
+          "Chandan Bhagat",
+          "Manas Mudbari"
+        ]
+      },
+      "scenes": [
+        {
+          "id": "intro",
+          "title": "Why repetitive logs need a leaner representation",
+          "narration": "Logs can repeat timestamps, messages, and JSON field names hundreds of times. E Z P M two G U I uses a local T S L N based profile to reduce that repetition in AI prompts.",
+          "onScreenText": [
+            "Why TSLN?",
+            "Repeated fields add text",
+            "A local log profile"
+          ],
+          "visual": "Animate three repeated source log lines next to numbered JSON rows. Highlight duplicate stream, timestamp, separator, and message fields. Display the expanded name Time-Series Lean Notation.",
+          "durationWeight": 1,
+          "role": "hook",
+          "visualKind": "title",
+          "accentText": "Keep the evidence. Reduce repetition."
+        },
+        {
+          "id": "schema",
+          "title": "Declare the schema once",
+          "narration": "T S L N means Time Series Lean Notation. Our profile declares the columns once, then writes one row per evidence line. An equals sign repeats the previous value in the same column.",
+          "onScreenText": [
+            "Schema once",
+            "One row per evidence line",
+            "= repeats the previous column value"
+          ],
+          "visual": "Transform the three-line source example into the exact profile schema and encoded example provided in visualData. Animate the second-row equals markers and the third-row changed message; retain line numbers 1, 2, and 3.",
+          "durationWeight": 1.1,
+          "role": "explanation",
+          "visualKind": "tsln",
+          "accentText": "Repeat the value, keep the row"
+        },
+        {
+          "id": "preservation",
+          "title": "Preserve the diagnostic evidence",
+          "narration": "Every row, stream, and line number remains. Timestamps stay exact text, and the empty symbol marks an unparsed timestamp. Nothing is sorted, grouped, or dropped by compression, so repeated events remain countable.",
+          "onScreenText": [
+            "Exact timestamp text",
+            "∅ = no parsed timestamp",
+            "Order and evidence preserved"
+          ],
+          "visual": "Show an exact timestamp close-up and a separate untimed stack-frame row using unquoted ∅. Return to three source rows and three decoded rows with matching line badges. Label separate streams without claiming cross-stream chronology.",
+          "durationWeight": 1,
+          "role": "explanation",
+          "visualKind": "tsln",
+          "accentText": "Compression preserves prepared rows"
+        },
+        {
+          "id": "safeguards",
+          "title": "Verify and compare before sending",
+          "narration": "The backend redacts first. It encodes and decodes the candidate, verifies an exact match, then compares complete prompt representations. Compression is selected only for fewer UTF eight bytes; otherwise, JSON stays.",
+          "onScreenText": [
+            "Redact → encode → decode",
+            "Exact round-trip verification",
+            "Smaller representation, or JSON"
+          ],
+          "visual": "Animate a pipeline from redacted rows to encoder to decoder to an exact-match check, followed by a size gate choosing TSLN or JSON. A mismatch branch stops analysis. Clearly separate this prompt transformation from saved storage.",
+          "durationWeight": 1.2,
+          "role": "explanation",
+          "visualKind": "tsln",
+          "accentText": "Verify before inference"
+        },
+        {
+          "id": "limits",
+          "title": "Understand the savings and limits",
+          "narration": "Savings depend on the logs. Fewer bytes do not guarantee equivalent token savings. The captured tail stays bounded. Saved snapshots and the preview keep their original redacted rows.",
+          "onScreenText": [
+            "Synthetic fixture · 200 repeated messages",
+            "24,493 → 2,955 UTF-8 bytes",
+            "87.9% fixture reduction",
+            "Capture limits stay unchanged"
+          ],
+          "visual": "Animate the documented synthetic fixture byte comparison, explicitly labeled synthetic and not guaranteed. Show a fixed capture-window bracket that never expands, then separate Raw redacted preview and SQLite snapshot cards unchanged by prompt compression.",
+          "durationWeight": 1,
+          "role": "limits",
+          "visualKind": "tsln",
+          "accentText": "Measured bytes, workload-dependent savings"
+        },
+        {
+          "id": "paper",
+          "title": "Read the explanation and paper",
+          "narration": "Open Help and demos for the implementation guide and the T S L N paper, published on engrXiv by Chandan Bhagat and Manas Mudbari.",
+          "onScreenText": [
+            "Help and demos → TSLN",
+            "Implementation guide + paper",
+            "Chandan Bhagat · Manas Mudbari",
+            "doi.org/10.31224/6375"
+          ],
+          "visual": "Show the actual Help and demos TSLN section, highlight the rendered guide and paper links, then end on a clean paper citation card with the documentation domain.",
+          "durationWeight": 0.8,
+          "role": "close",
+          "visualKind": "ui",
+          "screenshotKey": "help",
+          "accentText": "Read the rationale and safeguards"
+        }
+      ]
+    }
+  ]
+}

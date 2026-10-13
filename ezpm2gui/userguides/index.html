@@ -508,6 +508,7 @@
         <a href="#remote">Remote</a>
         <a href="#deploy">Deploy</a>
         <a href="#settings">Settings</a>
+        <a href="tsln-log-analysis.html">TSLN analysis</a>
       </div>
       <div class="nav-actions">
         <button class="theme-btn" id="themeToggle" title="Toggle theme" aria-label="Toggle colour theme">
@@ -673,6 +674,7 @@ pm2 start ecosystem.config.js</code></pre>
 <figure class="shot"><img src="../screenshots/10-log-streaming.png" alt="Live stdout from api-gateway with matching health-check text highlighted." loading="lazy" width="1280" height="720"><figcaption class="shot-caption">Live stdout from api-gateway with matching health-check text highlighted.</figcaption></figure>
 <ol><li>Click a process in the sidebar, or its <strong>Logs</strong> action in the process table.</li><li>Select <strong>Standard out</strong> or <strong>Standard err</strong>. Local logs stream over the socket; remote log views refresh through remote polling.</li><li>Use <strong>Filter logs…</strong> to narrow and highlight matching text. <strong>Stop Stream</strong>, <strong>Auto-scroll</strong>, and <strong>Refresh</strong> control the view.</li><li>Enter a <strong>from</strong> and/or <strong>to</strong> timestamp and click <strong>apply</strong> to view a historical snapshot. Incoming live updates pause while the range filter is active; clear the range to return to live output.</li><li>Use <strong>Download</strong> to save the loaded log text. <strong>Clear</strong> clears the viewer; it does not delete the log file on disk.</li></ol>
 <p>Date filtering needs timestamps that the viewer can parse. Lines without a timestamp inherit the preceding timestamp for multiline entries. If logs are missing, check PM2’s stdout/stderr paths and the GUI server’s file permissions.</p>
+<p>For AI analysis, read <a href="tsln-log-analysis.html">why EZ PM2 GUI uses TSLN for log snapshots</a>, including compression examples, evidence safeguards, and the paper behind the notation.</p>
 </section>
 
 <section id="settings"><h2 class="section-title">Settings and Navigation</h2>

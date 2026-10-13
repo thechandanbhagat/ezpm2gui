@@ -29,6 +29,13 @@ jest.doMock('./components/WhatsNewModal', () => ({
   __esModule: true, default: () => null, shouldShowWhatsNew: () => false, markWhatsNewSeen: () => {},
 }));
 
+jest.doMock('./components/LogAnalysisContext', () => ({
+  LogAnalysisProvider: ({ children }) => children,
+}));
+jest.doMock('./components/LogAnalysisSidebar', () => ({
+  LogAnalysisContent: ({ children }) => children,
+}));
+
 const App = require('./App').default;
 const auth = require('./auth');
 const axios = require('axios');

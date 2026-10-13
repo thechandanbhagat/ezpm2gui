@@ -23,7 +23,7 @@ import {
 import DownloadIcon from '@mui/icons-material/Download';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { LogEntry } from '../types/pm2';
-import LogAnalysisDialog from './LogAnalysisDialog';
+import { useLogAnalysis } from './LogAnalysisContext';
 
 // @group Types
 interface ProcessLogsProps {
@@ -44,7 +44,7 @@ const LINE_OPTIONS = [
 const ProcessLogs: React.FC<ProcessLogsProps> = ({ processId, processName, connectionId }) => {
   const { t } = useTranslation();
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [analysisOpen, setAnalysisOpen] = useState(false);
+  const { openAnalysis } = useLogAnalysis();
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
   const [autoRefresh, setAutoRefresh] = useState<boolean>(true);
@@ -181,7 +181,7 @@ const ProcessLogs: React.FC<ProcessLogsProps> = ({ processId, processName, conne
 
         {/* Auto-scroll + auto-refresh */}
         <Stack direction="row" spacing={0.5} alignItems="center" sx={{ flexWrap: 'wrap', rowGap: 0.5 }}>
-          <Button size="small" variant="outlined" onClick={() => setAnalysisOpen(true)}>{t('logAnalysis.analyze')}</Button>
+          <Button size="small" variant="outlined" onClick={() => openAnalysis({ processId, processName, connectionId })}>{t('logAnalysis.analyze')}</Button>
           <FormControlLabel
             control={<Checkbox checked={autoScroll} onChange={() => setAutoScroll(v => !v)} size="small" />}
             label={<Typography variant="caption">{t('logs.autoScroll')}</Typography>}
@@ -283,8 +283,6 @@ const ProcessLogs: React.FC<ProcessLogsProps> = ({ processId, processName, conne
           {logType !== 'out' && totalLines.err > 0 && logType !== 'err' ? ` · stderr total: ${totalLines.err.toLocaleString()}` : ''}
         </Typography>
       )}
-      <LogAnalysisDialog open={analysisOpen} onClose={() => setAnalysisOpen(false)}
-        processId={processId} processName={processName} connectionId={connectionId} />
     </Box>
   );
 };

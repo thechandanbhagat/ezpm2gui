@@ -6,6 +6,33 @@
 
 一个现代化的 PM2 进程管理器 Web 图形界面，基于 TypeScript、Tailwind CSS 和 React 构建。
 
+## v1.13.0
+
+- 在持久化的右侧栏中分析日志：问题与回复分开展示，正确渲染 Markdown，提供后续问题建议，并将会话历史保存到 SQLite。隐藏侧栏或刷新页面后，后台分析仍可继续。
+- 选择 Ollama 本地或云端模型，并为已安装的 Claude Code、Codex、Cursor 和 GitHub Copilot CLI 指定可选模型。后端缓存工具发现结果，云端分析需要明确授权。
+- 使用可逆的 TSLN 日志格式减少重复字段；仅当完整提示比 JSON 更小时采用。在应用的 **帮助** 页面可打开说明文档和原始论文。
+- 可直接在进程侧栏连接未连接的服务器，进程列表自动更新；修复远程连接 ID 校验、重复断线通知及开发环境 WebSocket 代理路由。
+
+安装或升级：
+
+```sh
+npm install -g ezpm2gui@1.13.0
+```
+
+## 演示视频和用户指南
+
+打开应用侧栏的 **帮助**，或访问 `/help`，可播放已发布的演示视频：
+
+- [产品概览](https://youtu.be/u1ckawU-sg4) — 66 秒介绍进程监控、日志、部署和设置。
+- [早期 AI 日志分析演示](https://youtu.be/EPwORhBHupU) — 已发布的 63 秒演示，使用示例日志和模拟分析报告。
+
+新的 v1.13.0 视频已保存到仓库；上传后再添加 YouTube 链接：
+
+- [AI 日志分析](demo/13-10-2026/videos/ezpm2gui-ai-log-analysis.mp4) — 77 秒展示连接、模型选择、Markdown 对话、后续问题和会话历史。[字幕](demo/13-10-2026/captions/ai-log-analysis.srt) · [旁白](demo/13-10-2026/audio/narration-ai.mp3) · [背景音乐](demo/13-10-2026/audio/background-ai.mp3)。
+- [TSLN 的使用方式与原因](demo/13-10-2026/videos/ezpm2gui-tsln-explained.mp4) — 80 秒介绍重复标记、证据保留、字节比较及 JSON 回退。[字幕](demo/13-10-2026/captions/tsln-explained.srt) · [旁白](demo/13-10-2026/audio/narration-tsln.mp3) · [背景音乐](demo/13-10-2026/audio/background-tsln.mp3)。
+
+两部视频使用 ElevenLabs 旁白及单独生成的纯音乐；AI 演示使用示例日志和模拟回复。详见 [演示素材说明](demo/13-10-2026/README.md)。阅读 [用户指南](ezpm2gui/userguides/user-guide.md)、[TSLN 说明](ezpm2gui/userguides/tsln-log-analysis.md) 或访问 [文档网站](https://ezpm2gui.chandanbhagat.com.np/)。
+
 ## 截图
 
 **进程仪表盘** — 实时系统指标和所有 PM2 进程一览：
@@ -36,7 +63,7 @@
 
 ![设置](ezpm2gui/screenshots/11-settings.png)
 
-> 完整的视觉演示请访问 [https://ezpm2gui.vercel.app/](https://ezpm2gui.vercel.app/) — 每个页面都配有截图说明。
+> 完整的视觉演示请访问 [https://ezpm2gui.chandanbhagat.com.np/](https://ezpm2gui.chandanbhagat.com.np/) — 每个页面都配有截图说明。
 
 ## 功能特性
 
@@ -46,6 +73,10 @@
 - **系统指标仪表盘** - 监控 CPU、内存使用和运行时间
 - **带实时迷你图的指标页面** - 每个进程滚动显示 1 小时 CPU 和内存微型图表，每 3 秒更新；切换到历史标签页查看基于 SQLite 的长期图表
 - **增强的日志流** - 同时查看和筛选多个进程的日志
+- **AI 日志分析对话** *(v1.13.0)* - 右侧栏分别展示问题和 Markdown 回复，提供后续问题建议，并使用 SQLite 保存历史与后台分析任务
+- **本地与云端模型选择** *(v1.13.0)* - 支持 Ollama 本地/云端模型及已安装 CLI 的可选模型，后端缓存工具发现结果
+- **TSLN 提示压缩** *(v1.13.0)* - 使用可逆的本地日志格式保留证据，仅在完整提示的字节数小于 JSON 时使用
+- **帮助与研究文档** *(v1.13.0)* - 播放已发布的演示，并打开 TSLN 说明、论文、用户指南和文档网站
 - **日志搜索高亮** *(v1.9.0)* - 搜索词在日志查看器中可视化高亮显示
 - **日志时间戳范围筛选** *(v1.9.0)* - 按开始/结束时间戳筛选日志输出，支持快照模式
 - **远程日志轮询** *(v1.9.0)* - 实时获取并显示远程服务器的日志
@@ -58,7 +89,7 @@
 - **生态系统配置** - 创建和管理 PM2 生态系统文件
 - **PM2 模块支持** - 管理和配置 PM2 模块
 - **定时任务** - 使用可视化 cron 表达式构建器调度和管理自动化任务
-- **远程服务器管理** - 通过 SSH 连接和管理远程服务器上的 PM2
+- **远程服务器管理** - 通过 SSH 管理远程 PM2，支持侧栏连接按钮和即时更新进程列表
 - **端到端加密凭据** *(v1.9.0)* - 远程服务器密码在浏览器中使用 RSA-OAEP + AES-256-GCM 加密后再传输
 - **高级监控仪表盘** - 带健康评分的实时性能图表
 - **多语言支持** *(v1.10.0)* - 完整的国际化支持，内置英语和尼泊尔语；导航栏提供语言切换器；社区可扩展
@@ -66,6 +97,16 @@
 - **完整的 TypeScript 类型** - 健壮且可维护的代码库
 
 ## 详细功能
+
+### AI 日志分析
+
+打开进程日志并选择 **分析日志**。右侧栏读取原始 stdout 和 stderr 的近期记录（每个流最多 200 行），不受查看器搜索或日期筛选影响。提交前可检查脱敏快照，并选择运行 `ezpm2gui` 后端的机器上已安装的 Claude Code、Codex、Cursor Agent、GitHub Copilot CLI 或 Ollama。云端分析会发送快照、问题及保存的会话，需要明确授权；CLI 复用已有登录状态。
+
+问题与回复分开展示，安全渲染 Markdown。每次完成后提供后续问题建议；点击建议会填写输入框，由您确认发送。脱敏快照、请求、回复及任务状态保存到 SQLite，支持重新打开会话。隐藏侧栏或刷新页面不会取消后台分析；后端重启时中断的任务会被标记，不会自动重新发送。
+
+后端启动时扫描一次工具并缓存成功结果，打开 AI 设置或刷新页面不会重新扫描。安装新工具或添加 Ollama 模型后，使用 **刷新提供者** 手动扫描。每次分析仍会校验选定的工具和 Ollama 模型。
+
+TSLN 本地日志格式在脱敏后进行精确的编码/解码校验，保留行号、流、原始时间戳字符串和消息。仅当包含说明的完整提示在 UTF-8 字节数上小于 JSON 时使用，否则回退到 JSON。保存的快照与采集上限不变，字节节省不代表一定节省模型 token。详见 [TSLN 说明](ezpm2gui/userguides/tsln-log-analysis.md) 和 [engrXiv 论文](https://doi.org/10.31224/6375)；应用 **帮助** 页面也提供链接。
 
 ### 进程监控
 实时监控所有 PM2 进程，提供 CPU 使用率、内存消耗、运行时间和状态等详细信息。直观的界面让您可以一眼识别问题。
@@ -338,7 +379,7 @@ ezpm2gui/
 2. 创建您的功能分支 (`git checkout -b feature/amazing-feature`)
 3. 进行修改
 4. 运行测试确保一切正常
-5. 使用我们的[提交指南](./docs/COMMIT_GUIDE.md)提交更改
+5. 使用清晰的说明提交更改
 6. 推送到分支 (`git push origin feature/amazing-feature`)
 7. 打开 Pull Request
 
