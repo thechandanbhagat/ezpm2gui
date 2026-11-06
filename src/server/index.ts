@@ -1,3 +1,4 @@
+import './utils/install-console-policy';
 import path from 'path';
 // @group Configuration : Load .env.local first (local overrides), then .env (defaults)
 // Must happen before any code reads process.env
@@ -489,7 +490,7 @@ if (require.main === module) {
 
   const server = createServer();
   server.listen(PORT, HOST as string, () => {
-    console.log(`Server running on http://${HOST}:${PORT}`);
+    console.info(`Server running on http://${HOST}:${PORT}`);
     void listProviders().catch(error => {
       console.error('Initial AI provider discovery failed. Use Refresh providers to retry.', error);
     });
@@ -497,7 +498,7 @@ if (require.main === module) {
 
   // Handle shutdown gracefully
   process.on('SIGINT', async () => {
-    console.log('\nGracefully shutting down...');
+    console.info('\nGracefully shutting down...');
     try {
       await logAnalysisRoutes.closeHistory();
       await disconnectFromPM2();
@@ -510,7 +511,7 @@ if (require.main === module) {
   });
 
   process.on('SIGTERM', async () => {
-    console.log('\nGracefully shutting down...');
+    console.info('\nGracefully shutting down...');
     try {
       await logAnalysisRoutes.closeHistory();
       await disconnectFromPM2();

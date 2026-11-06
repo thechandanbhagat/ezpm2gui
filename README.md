@@ -283,6 +283,7 @@ EZ PM2 GUI uses environment variables for configuration:
 - `HOST`: The host to bind to (default: `localhost`)
 - `PM2_HOME`: Use the same PM2 data directory as the processes you intend to manage
 - `EZPM2GUI_SECRET`: Stable encryption secret for saved SSH credentials; preserve it when migrating data. If unset, a built-in legacy key is used.
+- `EZPM2GUI_DEBUG`: Set to `1` to show server `console.log` traces. Otherwise those traces are dropped. Warnings and errors still print. In the browser, run `localStorage.setItem('ezpm2gui-debug', '1')` and reload to show the same traces.
 - `EZPM2GUI_CONFIG_DIR`: Directory for runtime state (`auth.json`, session tokens, remote connections, cron jobs, metrics DB). If unset, files are written inside the npm package (`dist/server/config`) and can be lost on `npm i -g`.
 
 You can set these in a `.env` file at the project root (create it if it doesn't exist):
