@@ -1,6 +1,6 @@
 # EZ PM2 GUI
 
-[![Discord](https://img.shields.io/discord/1234567890?logo=discord&logoColor=white&label=Discord&color=5865F2)](https://discord.gg/ttgc2zqK7b)
+[![Discord](https://img.shields.io/badge/Discord-join-5865F2?logo=discord&logoColor=white)](https://discord.gg/ttgc2zqK7b)
 
 🌐 **支持的语言**: [English](README.md) | [中文](README_zh.md)
 
