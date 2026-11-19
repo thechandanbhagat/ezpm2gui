@@ -748,12 +748,10 @@
     "configureSecurity": "Configure Security",
     "configureSecurityDesc": "Set up PIN and password protection from Settings.",
     "openSettings": "Open Settings",
-    "aiLogTitle": "Saved AI Conversations",
-    "aiLogDesc": "Read Markdown responses, ask follow-up questions, and reopen saved chats with local or cloud models.",
-    "snapshotTitle": "TSLN Log Evidence",
-    "snapshotDesc": "Preserve every prepared evidence row and verify compression before selecting a smaller prompt.",
-    "helpTitle": "Connections and TSLN Help",
-    "helpDesc": "Connect servers from the process sidebar and read the TSLN implementation guide and paper from Help."
+    "metricsActionsTitle": "Metrics process actions",
+    "metricsActionsDesc": "Start, restart, stop, and delete target the selected server. A pending confirmation keeps its original server and process.",
+    "clusterActionsTitle": "Cluster Management",
+    "clusterActionsDesc": "Details, scaling, execution mode, and reload use the selected server, including when local and remote processes share a PM2 ID."
   },
   "scriptEditor": {
     "title": "Inline Script",

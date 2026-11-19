@@ -6,6 +6,13 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.13.1] - 2026-11-19
+
+### Fixed
+
+- Live Metrics sends process actions to the server shown in the process list. A pending confirmation keeps its original server and PM2 process ID when you switch servers.
+- Cluster Management reads details, scales instances, changes execution mode, and reloads the process on the selected server. Switching servers clears the previous selection, including when both hosts have a process with the same PM2 ID.
+
 ## [1.13.0] - 2026-10-13
 
 ### Added
