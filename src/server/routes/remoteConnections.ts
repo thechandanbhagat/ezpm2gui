@@ -1,8 +1,14 @@
 import express, { Router } from 'express';
 import { remoteConnectionManager, RemoteConnectionConfig } from '../utils/remote-connection';
 import { getRSAPublicKey, decryptTransitPayload, EncryptedPayload } from '../utils/encryption';
+import { createClusterRouter, remoteClusterTarget } from './clusterManagement';
 
 const router: Router = express.Router();
+
+router.use('/:connectionId/cluster', createClusterRouter(connectionId => {
+  const connection = remoteConnectionManager.getConnection(connectionId);
+  return connection && remoteClusterTarget(connection);
+}));
 
 // @group Security : Validate remote log file paths before shell interpolation
 const SHELL_UNSAFE_CHARS = /['"`;$|&<>(){}\\\n\r\0]/;
@@ -308,7 +314,10 @@ router.post('/pm2/action/:connectionId/:action', async (req, res) => {
             error: `Unknown action: ${action}`
           });
       }
-      
+
+      if (result.code !== 0) {
+        return res.status(400).json({ success: false, error: `PM2 could not ${action} the process on the selected server` });
+      }
       res.json({
         success: true,
         result
