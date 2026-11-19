@@ -207,6 +207,7 @@ const App: React.FC = () => {
     getStoredActiveServerId
   );
   const activeServerIdRef = useRef<string>(getStoredActiveServerId());
+  const serverSelectionEpochRef = useRef(0);
   const [remoteConnections, setRemoteConnections] = useState<RemoteConnection[]>([]);
   const [remoteConnectionsLoaded, setRemoteConnectionsLoaded] = useState<boolean>(false);
   const remoteErrorNotificationRef = useRef<{ serverId: string; id: string } | null>(null);
@@ -215,6 +216,7 @@ const App: React.FC = () => {
 
   // @group ServerSwitcher : Persist active server selection consistently
   const persistActiveServerId = useCallback((serverId: string): void => {
+    if (activeServerIdRef.current !== serverId) serverSelectionEpochRef.current += 1;
     activeServerIdRef.current = serverId;
     setActiveServerId(serverId);
     localStorage.setItem(ACTIVE_SERVER_STORAGE_KEY, serverId);
@@ -222,12 +224,23 @@ const App: React.FC = () => {
 
   // @group DataFetching : Local server process and metrics loader
   const loadLocalProcessesAndMetrics = useCallback(async (): Promise<void> => {
+    const selectionEpoch = serverSelectionEpochRef.current;
     const [processesRes, metricsRes] = await Promise.all([
       axios.get<PM2Process[]>('/api/processes'),
       axios.get<SystemMetricsData>('/api/metrics'),
     ]);
-    setProcesses(processesRes.data);
-    setMetrics(metricsRes.data);
+    if (activeServerIdRef.current === LOCAL_SERVER_ID && serverSelectionEpochRef.current === selectionEpoch) {
+      setProcesses(processesRes.data);
+      setMetrics(metricsRes.data);
+    }
+  }, []);
+
+  const loadRemoteProcesses = useCallback(async (serverId: string, signal?: AbortSignal): Promise<void> => {
+    const selectionEpoch = serverSelectionEpochRef.current;
+    const response = await axios.get<PM2Process[]>(`/api/remote/${encodeURIComponent(serverId)}/processes`, { signal });
+    if (!signal?.aborted && activeServerIdRef.current === serverId && serverSelectionEpochRef.current === selectionEpoch) {
+      setProcesses(response.data);
+    }
   }, []);
 
   // @group ServerSwitcher : Refresh configured remote server list
@@ -429,23 +442,25 @@ const App: React.FC = () => {
     }
     if (!canAccessApi || !activeRemoteServerAvailable) return;
 
-    let active = true;
+    const controller = new AbortController();
+    const selectionEpoch = serverSelectionEpochRef.current;
+    const isCurrentSelection = () => !controller.signal.aborted && activeServerIdRef.current === activeServerId &&
+      serverSelectionEpochRef.current === selectionEpoch;
     let fetching = false;
 
     const fetchRemoteProcesses = async (): Promise<void> => {
       if (fetching) return;
       fetching = true;
       try {
-        const res = await axios.get<PM2Process[]>(`/api/remote/${activeServerId}/processes`);
-        if (!active) return;
-        setProcesses(res.data);
+        await loadRemoteProcesses(activeServerId, controller.signal);
+        if (!isCurrentSelection()) return;
         const notification = remoteErrorNotificationRef.current;
         if (notification?.serverId === activeServerId) {
           dismissNotification(notification.id);
           remoteErrorNotificationRef.current = null;
         }
       } catch (err: any) {
-        if (!active) return;
+        if (!isCurrentSelection()) return;
         console.error('Error fetching remote processes:', err);
         const errorMessage = err.response?.data?.error || err.message;
 
@@ -470,7 +485,7 @@ const App: React.FC = () => {
     fetchRemoteProcesses();
     const interval = setInterval(fetchRemoteProcesses, 3000);
     return () => {
-      active = false;
+      controller.abort();
       clearInterval(interval);
     };
   }, [
@@ -480,6 +495,7 @@ const App: React.FC = () => {
     enqueueNotification,
     dismissNotification,
     loadLocalProcessesAndMetrics,
+    loadRemoteProcesses,
     persistActiveServerId,
     t,
   ]);
@@ -614,28 +630,33 @@ const App: React.FC = () => {
   }, []);
 
   // Process control functions
-  const handleProcessAction = (id: number, action: string): void => {
+  const handleProcessAction = (id: number, action: string, useProcessId = false): void | Promise<void> => {
     // For destructive actions, show confirmation dialog
     if (['stop', 'delete', 'restart'].includes(action)) {
       const processName = processes.find(p => p.pm_id === id)?.name || `Process ${id}`;
+      const serverId = activeServerId;
+      const serverName = serverId === LOCAL_SERVER_ID
+        ? t('serverSwitcher.local')
+        : remoteConnections.find(connection => connection.id === serverId)?.name || serverId;
+      const targetLabel = `${processName} (#${id} · ${serverName})`;
       let title: string, message: string;
       
       switch (action) {
         case 'stop':
           title = 'Stop Process?';
-          message = `Are you sure you want to stop ${processName}?`;
+          message = `Are you sure you want to stop ${targetLabel}?`;
           break;
         case 'delete':
           title = 'Delete Process?';
-          message = `Are you sure you want to delete ${processName} from PM2?`;
+          message = `Are you sure you want to delete ${targetLabel} from PM2?`;
           break;
         case 'restart':
           title = 'Restart Process?';
-          message = `Are you sure you want to restart ${processName}?`;
+          message = `Are you sure you want to restart ${targetLabel}?`;
           break;
         default:
           title = 'Confirm Action';
-          message = `Are you sure you want to ${action} ${processName}?`;
+          message = `Are you sure you want to ${action} ${targetLabel}?`;
           break;
       }
       
@@ -644,22 +665,32 @@ const App: React.FC = () => {
         title,
         message,
         action,
-        processId: id
+        processId: id,
+        serverId,
+        processName,
+        useProcessId,
       });
     } else {
       // For non-destructive actions, proceed immediately
-      executeAction(id, action);
+      return executeAction(id, action, activeServerId, undefined, useProcessId);
     }
   };
   
   // Execute the actual API call — routes to remote API when a remote server is active
-  const executeAction = async (id: number, action: string): Promise<void> => {
+  const executeAction = async (
+    id: number,
+    action: string,
+    serverId = activeServerIdRef.current,
+    processName = processes.find(process => process.pm_id === id)?.name || String(id),
+    useProcessId = false,
+  ): Promise<void> => {
     try {
-      if (activeServerIdRef.current !== 'local') {
-        // Find process name by id for the remote API
-        const proc = processes.find(p => p.pm_id === id);
-        const processName = proc?.name || String(id);
-        await axios.post(`/api/remote/${activeServerIdRef.current}/processes/${processName}/${action}`);
+      if (serverId !== LOCAL_SERVER_ID) {
+        if (useProcessId) {
+          await axios.post(`/api/remote/pm2/action/${encodeURIComponent(serverId)}/${action}`, { processId: id });
+        } else {
+          await axios.post(`/api/remote/${encodeURIComponent(serverId)}/processes/${encodeURIComponent(processName)}/${action}`);
+        }
       } else {
         await axios.post(`/api/process/${id}/${action}`);
         // The socket will update the process list
@@ -745,7 +776,7 @@ const App: React.FC = () => {
   
   const handleConfirmAction = (): void => {
     if (confirmationDialog.processId !== null) {
-      executeAction(confirmationDialog.processId, confirmationDialog.action);
+      executeAction(confirmationDialog.processId, confirmationDialog.action, confirmationDialog.serverId, confirmationDialog.processName, confirmationDialog.useProcessId);
     }
     setConfirmationDialog(prev => ({ ...prev, isOpen: false }));
   };
@@ -764,6 +795,19 @@ const App: React.FC = () => {
 
   const handleNamespaceFilterChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
     setNamespaceFilter(e.target.value);
+  };
+
+  const refreshClusterProcesses = async (): Promise<void> => {
+    const selectionEpoch = serverSelectionEpochRef.current;
+    try {
+      if (activeServerId === LOCAL_SERVER_ID) await loadLocalProcessesAndMetrics();
+      else await loadRemoteProcesses(activeServerId);
+    } catch (err) {
+      if (activeServerIdRef.current === activeServerId && serverSelectionEpochRef.current === selectionEpoch) {
+        console.error('Error refreshing processes:', err);
+        enqueueNotification(t('errors.failedRefreshProcessData'));
+      }
+    }
   };
 
   if (passwordSet === null || (canAccessApi && loading)) {
@@ -1148,22 +1192,16 @@ const App: React.FC = () => {
                 <Route path="/modules" element={<ModuleManagement onNotify={enqueueNotification} />} />
                 <Route path="/ecosystem" element={<EcosystemGenerator />} />
                 <Route path="/configure/:id" element={<ProcessConfiguration procId={0} />} />
-                <Route path="/cluster" element={<ClusterManagement processes={processes} onRefresh={() => {
-                  const fetchProcesses = async () => {
-                    try {
-                      const response = await axios.get<PM2Process[]>('/api/processes');
-                      setProcesses(response.data);
-                    } catch (err) {
-                      console.error('Error refreshing processes:', err);
-                      enqueueNotification(t('errors.failedRefreshProcessData'));
-                    }
-                  };
-                  fetchProcesses();
-                }} />} />                <Route path="/logs" element={<LogStreamEnhanced />} />
+                <Route path="/cluster" element={
+                  <ClusterManagement key={activeServerId} serverId={activeServerId} processes={processes} onRefresh={refreshClusterProcesses} />
+                } />
+                <Route path="/logs" element={<LogStreamEnhanced />} />
                 <Route path="/logs/remote/:serverId/:processId" element={<LogStreamEnhanced />} />
                 <Route path="/logs/:id" element={<LogStreamEnhanced />} />
                 <Route path="/cron-jobs" element={<CronJobsPage />} />
-                <Route path="/metrics" element={<MetricsPage processes={processes} metrics={metrics} />} />
+                <Route path="/metrics" element={
+                  <MetricsPage serverId={activeServerId} processes={processes} onProcessAction={(id, action) => handleProcessAction(id, action, true)} />
+                } />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/load-balancing-guide" element={<LoadBalancingGuide />} />
                 <Route path="/whats-new" element={<WhatsNew />} />

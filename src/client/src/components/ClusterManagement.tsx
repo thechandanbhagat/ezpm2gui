@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import {
@@ -9,6 +9,7 @@ import {
   BoltIcon,
 } from '@heroicons/react/24/outline';
 import { PM2Process } from '../types/pm2';
+import { LOCAL_SERVER_ID } from '../utils/server-selection';
 
 // @group Types : Cluster management types
 interface ClusterProcess {
@@ -20,12 +21,13 @@ interface ClusterProcess {
 }
 
 interface ClusterManagementProps {
+  serverId: string;
   processes: PM2Process[];
   onRefresh: () => void;
 }
 
 // @group ClusterManagement : Process cluster scaling and exec-mode management
-const ClusterManagement: React.FC<ClusterManagementProps> = ({ processes, onRefresh }) => {
+const ClusterManagement: React.FC<ClusterManagementProps> = ({ serverId, processes, onRefresh }) => {
   const { t } = useTranslation();
   const [selectedProcess, setSelectedProcess] = useState<string>('');
   const [clusterProcesses, setClusterProcesses] = useState<ClusterProcess[]>([]);
@@ -33,62 +35,76 @@ const ClusterManagement: React.FC<ClusterManagementProps> = ({ processes, onRefr
   const [loading, setLoading] = useState<boolean>(false);
   const [success, setSuccess] = useState<string>('');
   const [error, setError] = useState<string>('');
+  const selectionRequest = useRef<AbortController | null>(null);
+  const clusterBase = serverId === LOCAL_SERVER_ID ? '/api/cluster' : `/api/remote/${encodeURIComponent(serverId)}/cluster`;
+  const processUrl = processes.some(p => String(p.pm_id) === selectedProcess) ? `${clusterBase}/${selectedProcess}` : '';
 
-  useEffect(() => {
-    if (selectedProcess) fetchClusterInfo(selectedProcess);
-  }, [selectedProcess]);
-
-  // @group DataFetching : Fetch cluster info for selected process
-  const fetchClusterInfo = async (processId: string) => {
+  const fetchClusterInfo = useCallback(async (url: string, signal: AbortSignal) => {
     try {
-      setLoading(true);
-      const response = await axios.get(`/api/cluster/${processId}`);
+      const response = await axios.get<ClusterProcess>(url, { signal });
+      if (signal.aborted) return;
       setClusterProcesses([response.data]);
       setInstancesInput(response.data.instances || 1);
     } catch {
+      if (signal.aborted) return;
+      setClusterProcesses([]);
       setError('Failed to fetch cluster information');
+    }
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    selectionRequest.current = controller;
+    setClusterProcesses([]);
+    setSuccess('');
+    setError('');
+    setLoading(Boolean(processUrl));
+    if (processUrl) {
+      fetchClusterInfo(processUrl, controller.signal).finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    } else {
+      setSelectedProcess('');
+    }
+    return () => controller.abort();
+  }, [processUrl, fetchClusterInfo]);
+
+  const runAction = async (
+    action: 'scale' | 'exec-mode' | 'reload',
+    data: { instances: number } | { mode: 'fork' | 'cluster' } | undefined,
+    successMessage: string,
+    failureMessage: string,
+  ) => {
+    const signal = selectionRequest.current?.signal;
+    if (!processUrl || !signal || signal.aborted) return;
+    setLoading(true);
+    setError('');
+    setSuccess('');
+    try {
+      await axios.post(`${processUrl}/${action}`, data);
+      if (signal.aborted) return;
+      if (action !== 'reload') await fetchClusterInfo(processUrl, signal);
+      if (signal.aborted) return;
+      setSuccess(successMessage);
+      onRefresh();
+    } catch (err) {
+      const detail = axios.isAxiosError(err) ? err.response?.data?.error : undefined;
+      if (!signal.aborted) setError(typeof detail === 'string' ? detail : failureMessage);
     } finally {
-      setLoading(false);
+      if (!signal.aborted) setLoading(false);
     }
   };
 
-  // @group Handlers : Cluster action handlers
-  const handleScaleProcess = async () => {
-    if (!selectedProcess || instancesInput < 0) return;
-    try {
-      setLoading(true);
-      await axios.post(`/api/cluster/${selectedProcess}/scale`, { instances: instancesInput });
-      await fetchClusterInfo(selectedProcess);
-      setSuccess(`Scaled to ${instancesInput} instances`);
-      onRefresh();
-    } catch { setError('Failed to scale process'); }
-    finally { setLoading(false); }
+  const handleScaleProcess = () => {
+    if (instancesInput < 0) return;
+    return runAction('scale', { instances: instancesInput }, `Scaled to ${instancesInput} instances`, 'Failed to scale process');
   };
+  const handleChangeExecMode = (mode: 'fork' | 'cluster') =>
+    runAction('exec-mode', { mode }, `Execution mode changed to ${mode}`, 'Failed to change execution mode');
+  const handleReloadProcess = () =>
+    runAction('reload', undefined, 'Process reloaded with zero downtime', 'Failed to reload process');
 
-  const handleChangeExecMode = async (mode: 'fork' | 'cluster') => {
-    if (!selectedProcess) return;
-    try {
-      setLoading(true);
-      await axios.post(`/api/cluster/${selectedProcess}/exec-mode`, { mode });
-      await fetchClusterInfo(selectedProcess);
-      setSuccess(`Execution mode changed to ${mode}`);
-      onRefresh();
-    } catch { setError('Failed to change execution mode'); }
-    finally { setLoading(false); }
-  };
-
-  const handleReloadProcess = async () => {
-    if (!selectedProcess) return;
-    try {
-      setLoading(true);
-      await axios.post(`/api/cluster/${selectedProcess}/reload`);
-      setSuccess('Process reloaded with zero downtime');
-      onRefresh();
-    } catch { setError('Failed to reload process'); }
-    finally { setLoading(false); }
-  };
-
-  const proc = clusterProcesses[0];
+  const proc = processUrl && clusterProcesses.find(p => String(p.pm_id) === selectedProcess);
 
   // @group Render : CLI-styled cluster management layout
   return (
@@ -137,7 +153,7 @@ const ClusterManagement: React.FC<ClusterManagementProps> = ({ processes, onRefr
         <div className="flex justify-center py-10">
           <ArrowPathIcon className="h-4 w-4 animate-spin text-[#555]" />
         </div>
-      ) : !selectedProcess ? (
+      ) : !processUrl ? (
         <div className="bg-[#111] border border-[#1e1e1e] rounded-sm p-8 text-center">
           <ServerStackIcon className="mx-auto h-7 w-7 text-[#333] mb-2" />
           <p className="text-[10px] font-mono text-[#555]">{t('cluster.selectHint')}</p>

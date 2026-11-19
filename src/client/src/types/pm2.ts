@@ -62,4 +62,8 @@ export interface ConfirmationDialogData {
   message: string;
   action: string;
   processId: number | null;
+  /** Capture the selected target so switching servers cannot redirect a pending action. */
+  serverId?: string;
+  processName?: string;
+  useProcessId?: boolean;
 }

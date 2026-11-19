@@ -730,12 +730,10 @@
     "configureSecurity": "配置安全",
     "configureSecurityDesc": "从设置中配置 PIN 和密码保护。",
     "openSettings": "打开设置",
-    "aiLogTitle": "已保存的 AI 对话",
-    "aiLogDesc": "阅读 Markdown 回复，提出后续问题，并重新打开使用本地或云端模型的已保存对话。",
-    "snapshotTitle": "TSLN 日志证据",
-    "snapshotDesc": "保留每条已准备的证据记录，验证压缩还原结果后再选择更小的提示表示。",
-    "helpTitle": "连接与 TSLN 帮助",
-    "helpDesc": "从进程侧边栏连接服务器，并在帮助页面阅读 TSLN 实现指南和论文。"
+    "metricsActionsTitle": "指标页面的进程操作",
+    "metricsActionsDesc": "启动、重启、停止和删除操作均针对所选服务器。切换服务器后，待确认的操作仍针对原来的服务器和进程。",
+    "clusterActionsTitle": "集群管理",
+    "clusterActionsDesc": "查看详情、调整实例数、切换执行模式和重载均在所选服务器上进行，即使本地和远程进程的 PM2 ID 相同。"
   },
   "scriptEditor": {
     "title": "内联脚本",

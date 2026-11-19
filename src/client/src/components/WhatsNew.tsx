@@ -36,6 +36,27 @@ const RELEASES: Release[] = [
   {
     version: APP_RELEASE_VERSION,
     date: APP_RELEASE_DATE,
+    headline: 'Server selection for process controls',
+    changes: [
+      {
+        title: 'Metrics process actions',
+        description: 'Start, restart, stop, and delete target the selected server. A pending confirmation keeps its original server and process.',
+        icon: ChartBarIcon,
+        color: 'text-[#22d3ee]',
+        tag: 'Fix',
+      },
+      {
+        title: 'Cluster Management',
+        description: 'Details, scaling, execution mode, and reload use the selected server, including when local and remote processes share a PM2 ID.',
+        icon: CpuChipIcon,
+        color: 'text-[#22c55e]',
+        tag: 'Fix',
+      },
+    ],
+  },
+  {
+    version: '1.13.0',
+    date: 'October 2026',
     headline: 'Saved AI Conversations & TSLN',
     changes: [
       {

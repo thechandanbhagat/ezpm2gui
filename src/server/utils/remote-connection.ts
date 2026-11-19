@@ -32,6 +32,11 @@ export interface RemoteCommandOptions {
   logCommand?: boolean;
 }
 
+// Quote one POSIX shell argument, including when an invocation runs inside bash -c.
+const shellArgument = (value: string): string => "'" + value.replace(/'/g, "'\\''") + "'";
+
+type PM2Invocation = (command: (binary: string) => string) => string;
+
 /**
  * Class to manage SSH connections to remote servers
  */
@@ -508,20 +513,16 @@ export class RemoteConnection extends EventEmitter {
    * The index of the first successful builder is cached so that subsequent
    * calls (including streaming commands) reuse the same invocation.
    */
-  private static readonly PM2_BUILDERS: Array<(args: string) => string> = [
-    args => `pm2 ${args}`,
-    args => `bash -l -c "pm2 ${args}"`,
-    args => `bash -i -c "pm2 ${args}"`,
-    args => `bash -li -c "pm2 ${args}"`,
-    args => `/usr/local/bin/pm2 ${args}`,
-    args => `/usr/bin/pm2 ${args}`,
-    args => `~/.npm-global/bin/pm2 ${args}`,
-    args => `~/.npm/bin/pm2 ${args}`,
-    args => `~/node_modules/.bin/pm2 ${args}`,
-    args => `. ~/.nvm/nvm.sh && pm2 ${args}`,
-    args => `. ~/.nvm/nvm.sh && nvm use --lts && pm2 ${args}`,
-    args => `. /usr/share/nvm/init-nvm.sh && pm2 ${args}`,
-    args => `npx pm2 ${args}`,
+  private static readonly PM2_BUILDERS: PM2Invocation[] = [
+    command => command('pm2'),
+    ...['-l', '-i', '-li'].map(flags => (command: (binary: string) => string) =>
+      `bash ${flags} -c ${shellArgument(command('pm2'))}`),
+    ...['/usr/local/bin/pm2', '/usr/bin/pm2', '~/.npm-global/bin/pm2', '~/.npm/bin/pm2', '~/node_modules/.bin/pm2']
+      .map(binary => (command: (binary: string) => string) => command(binary)),
+    command => `. ~/.nvm/nvm.sh && ${command('pm2')}`,
+    command => `. ~/.nvm/nvm.sh && nvm use --lts && ${command('pm2')}`,
+    command => `. /usr/share/nvm/init-nvm.sh && ${command('pm2')}`,
+    command => `npx -p pm2 -c ${shellArgument(command('pm2'))}`,
   ];
 
   /** Index into PM2_BUILDERS of the invocation that actually works on this host. -1 = not yet resolved. */
@@ -533,14 +534,15 @@ export class RemoteConnection extends EventEmitter {
    * commands) reuse the same shell/binary path without re-probing.
    */
   async executePM2Command(pm2Args: string, options?: RemoteCommandOptions): Promise<CommandResult> {
+    const invoke = (binary: string) => `${binary} ${pm2Args}`;
     // Fast path: reuse the builder we already know works on this host
     if (this.resolvedBuilderIndex >= 0) {
-      return this.executeCommand(RemoteConnection.PM2_BUILDERS[this.resolvedBuilderIndex](pm2Args), undefined, options);
+      return this.executeCommand(RemoteConnection.PM2_BUILDERS[this.resolvedBuilderIndex](invoke), undefined, options);
     }
 
     let lastError: any = null;
     for (let i = 0; i < RemoteConnection.PM2_BUILDERS.length; i++) {
-      const command = RemoteConnection.PM2_BUILDERS[i](pm2Args);
+      const command = RemoteConnection.PM2_BUILDERS[i](invoke);
       try {
         const result = await this.executeCommand(command, undefined, options);
         if (result.code === 0) {
@@ -564,11 +566,50 @@ export class RemoteConnection extends EventEmitter {
    * Use this when you need the raw command string for a streaming shell exec.
    */
   buildPM2StreamCommand(pm2Args: string): string {
-    if (this.resolvedBuilderIndex >= 0) {
-      return RemoteConnection.PM2_BUILDERS[this.resolvedBuilderIndex](pm2Args);
-    }
     // Default: login+interactive shell covers .profile AND .bashrc (catches nvm)
-    return `bash -li -c "pm2 ${pm2Args}"`;
+    const index = this.resolvedBuilderIndex >= 0 ? this.resolvedBuilderIndex : 3;
+    return RemoteConnection.PM2_BUILDERS[index](binary => `${binary} ${pm2Args}`);
+  }
+
+  /** Resolve PM2 before mutating so a failed action is never retried by another builder. */
+  private async executeClusterInvocation(invoke: (binary: string) => string): Promise<CommandResult> {
+    if (this.resolvedBuilderIndex < 0) await this.executePM2Command('--version');
+    const build = RemoteConnection.PM2_BUILDERS[this.resolvedBuilderIndex];
+    // Run path resolution and the action as the same SSH/sudo user.
+    const result = await this.executeCommand(`sh -c ${shellArgument(build(invoke))}`, undefined, { logCommand: false });
+    if (result.code !== 0) throw new Error('Remote PM2 cluster command failed');
+    return result;
+  }
+
+  async runClusterCommand(args: string[]): Promise<void> {
+    await this.executeClusterInvocation(binary => `${binary} ${args.map(shellArgument).join(' ')}`);
+  }
+
+  async clusterWorkingDirectory(): Promise<string> {
+    const result = await this.executeClusterInvocation(() => 'pwd -P');
+    // Interactive shell builders can print a banner before the command output.
+    const directory = result.stdout.trimEnd().split('\n').pop();
+    if (!directory?.startsWith('/')) throw new Error('Remote PM2 working directory is unavailable');
+    return directory;
+  }
+
+  /** PM2's CLI strips exec_mode on restart. Update just this worker through its daemon API. */
+  async changeClusterMode(id: number, mode: 'fork' | 'cluster'): Promise<void> {
+    const script = `
+      const [binary, id, mode] = process.argv.slice(1);
+      const path = require('path');
+      const binaryDir = path.dirname(require('fs').realpathSync(binary));
+      const pm2 = require(require.resolve('pm2', { paths: [binaryDir] }));
+      const finish = err => { pm2.disconnect(); process.exitCode = err ? 1 : 0; };
+      pm2.connect(err => {
+        if (err) return finish(err);
+        pm2.Client.executeRemote('restartProcessId', {
+          id: Number(id), env: { current_conf: { exec_mode: mode + '_mode' } }
+        }, finish);
+      });
+    `;
+    await this.executeClusterInvocation(binary =>
+      `node -e ${shellArgument(script)} "$(command -v ${binary})" ${shellArgument(String(id))} ${shellArgument(mode)}`);
   }
 
   /**

@@ -23,7 +23,7 @@ import {
   TrashIcon,
 } from '@heroicons/react/24/outline';
 import PageHeader from './PageHeader';
-import { PM2Process, SystemMetricsData } from '../types/pm2';
+import { PM2Process } from '../types/pm2';
 
 // @group ChartJS : Register required chart.js components
 ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend, Filler);
@@ -42,6 +42,11 @@ interface HistMetricPoint {
   memory_mb: number;
 }
 interface LivePoint { ts: number; cpu: number; memMb: number; }
+type ProcessAction = 'start' | 'stop' | 'restart' | 'delete';
+
+function liveProcessKey(serverId: string, processId: number): string {
+  return `${serverId}:${processId}`;
+}
 
 // @group Constants
 const MAX_LIVE_POINTS = 1200; // 1 hour at 3s
@@ -147,12 +152,13 @@ function fmtMem(bytes: number): string {
 
 // @group MetricsPage : Props
 interface MetricsPageProps {
+  serverId: string;
   processes: PM2Process[];
-  metrics: SystemMetricsData;
+  onProcessAction: (id: number, action: ProcessAction) => void | Promise<void>;
 }
 
 // @group MetricsPage : Main component
-const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
+const MetricsPage: React.FC<MetricsPageProps> = ({ serverId, processes, onProcessAction }) => {
   const theme = useTheme();
   const { t } = useTranslation();
   const [tab, setTab] = useState<'live' | 'history'>('live');
@@ -161,21 +167,24 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
   const [selectedLiveProc, setSelectedLiveProc] = useState<string>('');
   const liveBufferRef = useRef<Map<string, LivePoint[]>>(new Map());
   const [, setLiveRender] = useState(0); // bump to force re-render on buffer update
-  const [actionLoading, setActionLoading] = useState<{ [pmId: number]: boolean }>({});
+  const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
 
-  const handleProcessAction = useCallback(async (
-    e: React.MouseEvent, proc: PM2Process, action: 'start' | 'stop' | 'restart' | 'delete'
+  const handleProcessAction = async (
+    e: React.MouseEvent, proc: PM2Process, action: ProcessAction
   ) => {
     e.stopPropagation();
-    setActionLoading(prev => ({ ...prev, [proc.pm_id]: true }));
+    const key = liveProcessKey(serverId, proc.pm_id);
+    setActionLoading(prev => ({ ...prev, [key]: true }));
     try {
-      await axios.post(`/api/process/${proc.pm_id}/${action}`);
-    } catch (err) {
-      console.error(`Failed to ${action} process:`, err);
+      await onProcessAction(proc.pm_id, action);
     } finally {
-      setActionLoading(prev => ({ ...prev, [proc.pm_id]: false }));
+      setActionLoading(prev => {
+        const remaining = { ...prev };
+        delete remaining[key];
+        return remaining;
+      });
     }
-  }, []);
+  };
 
   // @group HistoryState
   const [connections,       setConnections]       = useState<ConnectionInfo[]>([]);
@@ -192,9 +201,11 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
   useEffect(() => {
     const now = Date.now();
     const map = liveBufferRef.current;
+    const currentKeys = new Set<string>();
 
     for (const proc of processes) {
-      const key = proc.name;
+      const key = liveProcessKey(serverId, proc.pm_id);
+      currentKeys.add(key);
       const existing = map.get(key) ?? [];
       existing.push({
         ts:    now,
@@ -207,18 +218,18 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
 
     // Remove processes no longer in the list
     for (const key of map.keys()) {
-      if (!processes.find(p => p.name === key)) map.delete(key);
+      if (!currentKeys.has(key)) map.delete(key);
     }
 
     setLiveRender(n => n + 1);
-  }, [processes]);
+  }, [serverId, processes]);
 
-  // Auto-select first live process when list loads
+  const currentProc = processes.find(p => liveProcessKey(serverId, p.pm_id) === selectedLiveProc);
   useEffect(() => {
-    if (!selectedLiveProc && processes.length > 0) {
-      setSelectedLiveProc(processes[0].name);
+    if (!currentProc && processes.length > 0) {
+      setSelectedLiveProc(liveProcessKey(serverId, processes[0].pm_id));
     }
-  }, [processes, selectedLiveProc]);
+  }, [serverId, processes, currentProc]);
 
   // @group HistoryData : Load connections that have data
   const loadConnections = useCallback(async () => {
@@ -310,7 +321,7 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
   });
 
   // @group LiveChartData : Build chart data from rolling buffer
-  const livePoints  = liveBufferRef.current.get(selectedLiveProc) ?? [];
+  const livePoints  = currentProc ? liveBufferRef.current.get(selectedLiveProc) ?? [] : [];
   const liveLabels  = livePoints.map(p =>
     new Date(p.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
   );
@@ -410,9 +421,6 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
     bg-[#111] text-[#e8e8e8]
     focus:outline-none focus:ring-1 focus:ring-[#22c55e] disabled:opacity-40`;
 
-  // @group LiveCurrentProcess : current live process being viewed
-  const currentProc = processes.find(p => p.name === selectedLiveProc);
-
   // @group SplitPane : Draggable divider state for live tab (left % of total width, default 3:2 = 60%)
   const [splitPct, setSplitPct] = useState(60);
   const splitContainerRef = useRef<HTMLDivElement>(null);
@@ -488,12 +496,13 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
               </div>
               <div className="overflow-y-auto flex-1">
                 {processes.map(proc => {
-                  const procBuf = liveBufferRef.current.get(proc.name) ?? [];
-                  const isSelected = proc.name === selectedLiveProc;
+                  const key = liveProcessKey(serverId, proc.pm_id);
+                  const procBuf = liveBufferRef.current.get(key) ?? [];
+                  const isSelected = key === selectedLiveProc;
                   return (
                     <div
-                      key={proc.pm_id}
-                      onClick={() => setSelectedLiveProc(proc.name)}
+                      key={key}
+                      onClick={() => setSelectedLiveProc(key)}
                       className={`cursor-pointer px-3 py-2 flex flex-col gap-1.5 border-b border-[#1e1e1e] transition-colors ${
                         isSelected
                           ? 'bg-[#111] border-l-2 border-l-[#22c55e]'
@@ -512,7 +521,7 @@ const MetricsPage: React.FC<MetricsPageProps> = ({ processes }) => {
 
                         {/* Action buttons — icon-only, no bg */}
                         <div className="shrink-0 flex items-center gap-0.5">
-                          {actionLoading[proc.pm_id] ? (
+                          {actionLoading[key] ? (
                             <ArrowPathIcon className="h-3 w-3 animate-spin text-[#555]" />
                           ) : proc.pm2_env.status === 'online' ? (
                             <>

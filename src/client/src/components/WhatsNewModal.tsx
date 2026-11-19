@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next';
 import {
   XMarkIcon,
   SparklesIcon,
-  ShieldCheckIcon,
-  PlayCircleIcon,
+  ChartBarIcon,
+  CpuChipIcon,
   ArrowRightIcon,
 } from '@heroicons/react/24/outline';
 import { APP_RELEASE_SUBTITLE, APP_RELEASE_VERSION } from '../utils/release-info';
@@ -30,22 +30,16 @@ interface WhatsNewModalProps {
 // @group Constants : Feature highlights for the popup
 const HIGHLIGHTS: HighlightItem[] = [
   {
-    icon: SparklesIcon,
-    iconColor: 'text-[#a78bfa]',
-    titleKey: 'whatsNew.aiLogTitle',
-    descKey: 'whatsNew.aiLogDesc',
-  },
-  {
-    icon: ShieldCheckIcon,
+    icon: ChartBarIcon,
     iconColor: 'text-[#22d3ee]',
-    titleKey: 'whatsNew.snapshotTitle',
-    descKey: 'whatsNew.snapshotDesc',
+    titleKey: 'whatsNew.metricsActionsTitle',
+    descKey: 'whatsNew.metricsActionsDesc',
   },
   {
-    icon: PlayCircleIcon,
+    icon: CpuChipIcon,
     iconColor: 'text-[#22c55e]',
-    titleKey: 'whatsNew.helpTitle',
-    descKey: 'whatsNew.helpDesc',
+    titleKey: 'whatsNew.clusterActionsTitle',
+    descKey: 'whatsNew.clusterActionsDesc',
   },
 ];
 

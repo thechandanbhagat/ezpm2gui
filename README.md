@@ -6,18 +6,22 @@
 
 A modern web-based graphical user interface for the PM2 process manager, built with TypeScript, Tailwind CSS, and React.
 
+## v1.13.1
+
+Metrics and Cluster Management now send process actions to the selected server, including when the local and remote hosts use the same PM2 process ID.
+
+Install or upgrade:
+
+```sh
+npm install -g ezpm2gui@1.13.1
+```
+
 ## v1.13.0
 
 - Investigate logs in a persistent right sidebar with separate Markdown question/response chats, suggested follow-up questions, and SQLite conversation history. Analysis keeps running when you hide the sidebar or reload the page.
 - Choose Ollama local or cloud models and optional model overrides for installed Claude Code, Codex, Cursor, and GitHub Copilot CLIs. Provider discovery is cached by the backend; cloud analysis requires explicit consent.
 - Reduce repeated prompt fields with a reversible TSLN log profile when the complete prompt is smaller than JSON. Read the explanation and original paper from **Help**.
 - Connect disconnected servers directly from the process sidebar and see their processes immediately. Remote analysis IDs, reconnect notifications, and development WebSocket proxy routing are fixed.
-
-Install or upgrade:
-
-```sh
-npm install -g ezpm2gui@1.13.0
-```
 
 ## Demo Videos and User Guide
 
