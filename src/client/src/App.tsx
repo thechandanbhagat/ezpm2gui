@@ -19,6 +19,7 @@ import LoadBalancingGuide from './components/LoadBalancingGuide';
 import RemoteConnections from './components/RemoteConnections';
 import CronJobsPage from './components/CronJobsPage';
 import MetricsPage from './components/MetricsPage';
+import MonitoringPage from './components/MonitoringPage';
 import ServerSwitcher from './components/ServerSwitcher';
 import PasswordGate from './components/PasswordGate';
 import WhatsNew from './components/WhatsNew';
@@ -1202,6 +1203,7 @@ const App: React.FC = () => {
                 <Route path="/metrics" element={
                   <MetricsPage serverId={activeServerId} processes={processes} onProcessAction={(id, action) => handleProcessAction(id, action, true)} />
                 } />
+                <Route path="/monitoring" element={<MonitoringPage />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/load-balancing-guide" element={<LoadBalancingGuide />} />
                 <Route path="/whats-new" element={<WhatsNew />} />

@@ -120,6 +120,21 @@ To add a published demo to Help, update the shared [video catalog](src/client/sr
 
 ## Detailed Features
 
+### Health checks and alert rules
+
+Open **Health & alerts** in the sidebar (`/monitoring`) to configure background monitoring. Checks continue while the GUI server runs, even with every browser closed.
+
+- **HTTP and TCP checks** — probe an HTTP(S) URL for an expected status code or connect to a TCP host and port. Configure the interval, timeout, and number of consecutive failures before a check is unhealthy. HTTP checks use GET, do not follow redirects, and do not store response bodies.
+- **Alert rules** — alert on unhealthy checks, sustained CPU or memory usage, offline processes, or restart counts within a sliding time window. Process rules can use the local PM2 instance or an already-connected SSH server. Same-name cluster instances are grouped; CPU and memory thresholds use the highest instance reading.
+- **Notifications** — an optional webhook receives a JSON event when a rule fires or recovers. Cooldowns limit repeat firing notifications, and a one-hour maintenance control pauses notifications while monitoring and event recording continue. Delivery results appear alongside events; failed deliveries are not retried automatically.
+- **Recent events** — firing and recovery transitions are saved locally, with the latest 1,000 retained. Configuration and event history live in `monitoring.json` in the configured runtime directory (`EZPM2GUI_CONFIG_DIR`, when set). This is the foundation for a future incident timeline.
+
+Checks run **from the machine hosting EZ PM2 GUI**, including URLs for remote applications. They are not executed through SSH: `localhost` always refers to the GUI server. TCP success means a connection was accepted; an HTTP status check does not prove all application dependencies are healthy. Use a dedicated application health endpoint for deeper checks.
+
+A disconnected server or unavailable metrics produces an **unknown** state rather than a recovery. Restart rules establish a baseline on startup; checks and duration windows must collect fresh evidence after the GUI server restarts. Disabled checks do not produce health alerts. Monitoring reports problems and never restarts applications automatically.
+
+Set a GUI password to manage monitoring from another machine. Without a password, monitoring endpoints are restricted to loopback access. Private and loopback probe destinations are supported for internal services; metadata/link-local and multicast destinations are blocked. URLs cannot contain embedded usernames or passwords. Webhook URLs are stored in the local configuration file, so use a dedicated webhook credential and protect or exclude that file from shared backups. Webhooks use a generic event payload, not Slack or Telegram's provider-specific payload format.
+
 ### AI Log Analysis
 
 Open a process log viewer and choose **Analyze logs**. The right sidebar lists supported tools discovered by the `ezpm2gui` Node server, loads recent raw stdout and stderr history (up to 200 lines each), and lets you review the redacted snapshot before running analysis. Viewer search/date filters do not affect this snapshot. Results describe suspected issues, supporting log lines, likely causes, and suggested checks; they do not modify applications or restart processes.
