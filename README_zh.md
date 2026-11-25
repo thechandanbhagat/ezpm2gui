@@ -6,15 +6,19 @@
 
 一个现代化的 PM2 进程管理器 Web 图形界面，基于 TypeScript、Tailwind CSS 和 React 构建。
 
-## v1.15.0
+## v1.16.0
 
-使用 Cmd+K 或 Ctrl+K 查找页面和所选服务器上的进程。可以打开日志，或确认重启、停止指定的 PM2 实例。
+安装或配置精选的 pm2-notifier 模块，打开设置指南，并管理带作用域的模块包。
 
 安装或升级：
 
 ```sh
-npm install -g ezpm2gui@1.15.0
+npm install -g ezpm2gui@1.16.0
 ```
+
+## v1.15.0
+
+使用 Cmd+K 或 Ctrl+K 查找页面和所选服务器上的进程。可以打开日志，或确认重启、停止指定的 PM2 实例。
 
 ## v1.14.0
 

@@ -6,15 +6,19 @@
 
 A modern web-based graphical user interface for the PM2 process manager, built with TypeScript, Tailwind CSS, and React.
 
-## v1.15.0
+## v1.16.0
 
-Use Cmd+K or Ctrl+K to find pages and processes on the selected server. Open logs or confirm a restart or stop for a specific PM2 instance.
+Install or configure the featured pm2-notifier module, open its setup guide, and manage modules with scoped package names.
 
 Install or upgrade:
 
 ```sh
-npm install -g ezpm2gui@1.15.0
+npm install -g ezpm2gui@1.16.0
 ```
+
+## v1.15.0
+
+Use Cmd+K or Ctrl+K to find pages and processes on the selected server. Open logs or confirm a restart or stop for a specific PM2 instance.
 
 ## v1.14.0
 

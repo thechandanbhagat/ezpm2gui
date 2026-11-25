@@ -6,6 +6,12 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.16.0] - 2026-11-25
+
+### Added
+
+- Install or configure the featured pm2-notifier module, open its setup guide, and manage modules with scoped package names.
+
 ## [1.15.0] - 2026-11-25
 
 ### Added

@@ -36,6 +36,20 @@ const RELEASES: Release[] = [
   {
     version: APP_RELEASE_VERSION,
     date: APP_RELEASE_DATE,
+    headline: "Featured PM2 modules",
+    changes: [
+      {
+        title: "Featured PM2 modules",
+        description: "Install or configure the featured pm2-notifier module, open its setup guide, and manage modules with scoped package names.",
+        icon: CpuChipIcon,
+        color: 'text-[#22d3ee]',
+        tag: 'New',
+      },
+    ],
+  },
+  {
+    version: '1.15.0',
+    date: 'November 2026',
     headline: "Command palette",
     changes: [
       {
