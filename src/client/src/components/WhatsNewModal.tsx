@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import {
   XMarkIcon,
   SparklesIcon,
-  SignalIcon,
+  DocumentMagnifyingGlassIcon,
   ArrowRightIcon,
 } from '@heroicons/react/24/outline';
 import { APP_RELEASE_SUBTITLE, APP_RELEASE_VERSION } from '../utils/release-info';
@@ -29,10 +29,10 @@ interface WhatsNewModalProps {
 // @group Constants : Feature highlights for the popup
 const HIGHLIGHTS: HighlightItem[] = [
   {
-    icon: SignalIcon,
+    icon: DocumentMagnifyingGlassIcon,
     iconColor: 'text-[#22d3ee]',
-    titleKey: 'monitoring.title',
-    descKey: 'monitoring.subtitle',
+    titleKey: 'commandPalette.title',
+    descKey: 'commandPalette.keyboardHint',
   },
 ];
 

@@ -6,15 +6,19 @@
 
 一个现代化的 PM2 进程管理器 Web 图形界面，基于 TypeScript、Tailwind CSS 和 React 构建。
 
-## v1.14.0
+## v1.15.0
 
-在后台运行 HTTP 和 TCP 健康检查，为本地或已连接的远程进程设置告警规则，并查看历史记录或发送 Webhook 通知。
+使用 Cmd+K 或 Ctrl+K 查找页面和所选服务器上的进程。可以打开日志，或确认重启、停止指定的 PM2 实例。
 
 安装或升级：
 
 ```sh
-npm install -g ezpm2gui@1.14.0
+npm install -g ezpm2gui@1.15.0
 ```
+
+## v1.14.0
+
+在后台运行 HTTP 和 TCP 健康检查，为本地或已连接的远程进程设置告警规则，并查看历史记录或发送 Webhook 通知。
 
 ## v1.13.1
 
