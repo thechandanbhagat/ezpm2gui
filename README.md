@@ -6,15 +6,19 @@
 
 A modern web-based graphical user interface for the PM2 process manager, built with TypeScript, Tailwind CSS, and React.
 
-## v1.13.1
+## v1.14.0
 
-Metrics and Cluster Management now send process actions to the selected server, including when the local and remote hosts use the same PM2 process ID.
+Run HTTP and TCP checks in the background, set alert rules for local or connected remote processes, and review alert history or send webhook notifications.
 
 Install or upgrade:
 
 ```sh
-npm install -g ezpm2gui@1.13.1
+npm install -g ezpm2gui@1.14.0
 ```
+
+## v1.13.1
+
+Metrics and Cluster Management now send process actions to the selected server, including when the local and remote hosts use the same PM2 process ID.
 
 ## v1.13.0
 
