@@ -1,0 +1,15 @@
+{
+  "title": "Command palette",
+  "open": "Open command palette",
+  "search": "Search pages or processes…",
+  "searchActions": "Search actions…",
+  "scope": "Processes on {{server}}",
+  "back": "Back to search",
+  "results": "Search results",
+  "pages": "Pages",
+  "noResults": "No matching pages or processes. Try a name, PM2 ID, or namespace.",
+  "noActions": "No matching actions. Try another search.",
+  "processUnavailable": "This process is no longer available. Search for another process.",
+  "actionHint": "Enter to select · Esc to go back. Restart and stop ask for confirmation.",
+  "keyboardHint": "↑ ↓ to navigate · Enter to open · Esc to close"
+}

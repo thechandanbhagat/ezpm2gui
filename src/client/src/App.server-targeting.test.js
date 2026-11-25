@@ -140,3 +140,31 @@ test('Cluster Management refreshes the server whose process 0 was reloaded', asy
     if (name === remoteWorker.name) await click(button('header.switchToLocal'));
   }
 });
+
+test.each(['restart', 'stop'])('command palette keeps %s on the selected remote worker after switching hosts', async action => {
+  const read = axios.get.getMockImplementation();
+  remoteWorker.name = 'queue';
+  axios.get.mockImplementation(async (url, config) => url === `${remotePath}/processes`
+    ? { data: [remoteWorker, { ...remoteWorker, pm_id: 1 }] }
+    : read(url, config));
+  await openPage('/processes');
+  await click(container.querySelector('button[aria-label="commandPalette.open"]'));
+  const options = () => [...document.querySelectorAll('[role="option"]')];
+  await click(options().find(element => element.textContent.includes('queue#1')));
+  await click(options().find(element => element.textContent === `actions.${action}`));
+  expect(axios.post).not.toHaveBeenCalled();
+  expect(container.textContent).toContain('queue (#1 · Production EU)');
+  await click(button('header.switchToLocal'));
+  await click(button('Confirm'));
+  expect(axios.post.mock.calls).toEqual([[`${remoteActions}/${action}`, { processId: 1 }]]);
+});
+
+test('canceling a command palette action leaves the process alone', async () => {
+  await openPage('/processes');
+  await click(container.querySelector('button[aria-label="commandPalette.open"]'));
+  const options = () => [...document.querySelectorAll('[role="option"]')];
+  await click(options().find(element => element.textContent.includes('remote-worker#0')));
+  await click(options().find(element => element.textContent === 'actions.stop'));
+  await click(button('Cancel'));
+  expect(axios.post).not.toHaveBeenCalled();
+});

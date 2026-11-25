@@ -1,0 +1,15 @@
+{
+  "title": "命令面板",
+  "open": "打开命令面板",
+  "search": "搜索页面或进程…",
+  "searchActions": "搜索操作…",
+  "scope": "{{server}} 上的进程",
+  "back": "返回搜索",
+  "results": "搜索结果",
+  "pages": "页面",
+  "noResults": "没有匹配的页面或进程。请尝试名称、PM2 ID 或命名空间。",
+  "noActions": "没有匹配的操作，请尝试其他搜索词。",
+  "processUnavailable": "此进程已不可用，请搜索其他进程。",
+  "actionHint": "Enter 选择 · Esc 返回。重启和停止操作需要确认。",
+  "keyboardHint": "↑ ↓ 选择 · Enter 打开 · Esc 关闭"
+}
