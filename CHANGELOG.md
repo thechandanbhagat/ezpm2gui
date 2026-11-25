@@ -6,6 +6,12 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.14.0] - 2026-11-25
+
+### Added
+
+- Run HTTP and TCP checks in the background, set alert rules for local or connected remote processes, and review alert history or send webhook notifications.
+
 ## [1.13.1] - 2026-11-19
 
 ### Fixed

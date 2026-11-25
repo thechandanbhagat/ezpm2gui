@@ -28,6 +28,7 @@ try {
   fs.writeFileSync(path.join(source, 'auth-tokens.json'), '[]');
   fs.writeFileSync(path.join(source, 'remote-connections.json'), '[{"id":"test-remote"}]');
   fs.writeFileSync(path.join(source, 'cron-jobs.json'), '[{"id":"test-job"}]');
+  fs.writeFileSync(path.join(source, 'monitoring.json'), '{"config":{"revision":3},"events":[]}');
   fs.mkdirSync(path.join(source, 'cron-scripts', 'nested'), { recursive: true });
   fs.writeFileSync(path.join(source, 'cron-scripts', 'nested', 'job.sh'), 'echo test');
   fs.writeFileSync(path.join(destination, 'ezpm2gui.env'), 'PORT=3101');
@@ -37,6 +38,7 @@ try {
 
   migrateConfigDirectory(source, destination);
   assert.equal(fs.readFileSync(path.join(destination, 'auth.json'), 'utf8'), '{"hash":"test-password"}');
+  assert.equal(fs.readFileSync(path.join(destination, 'monitoring.json'), 'utf8'), '{"config":{"revision":3},"events":[]}');
   assert.equal(fs.readFileSync(path.join(destination, 'cron-scripts', 'nested', 'job.sh'), 'utf8'), 'echo test');
   assert.equal(fs.readFileSync(path.join(destination, 'ezpm2gui.env'), 'utf8'), 'PORT=3101');
   assert.ok(!fs.existsSync(path.join(destination, 'remote-metrics.db-wal')));
@@ -62,6 +64,13 @@ try {
   assert.equal(fs.readFileSync(path.join(existing, 'remote-metrics.db'), 'utf8'), 'existing database');
   assert.ok(!fs.existsSync(path.join(existing, 'auth.json')));
   assert.ok(!fs.existsSync(path.join(existing, 'remote-metrics.db-wal')));
+
+  const monitoringOnly = path.join(root, 'monitoring-only');
+  fs.mkdirSync(monitoringOnly);
+  fs.writeFileSync(path.join(monitoringOnly, 'monitoring.json'), '{"config":{"revision":9},"events":[]}');
+  migrateConfigDirectory(source, monitoringOnly);
+  assert.ok(!fs.existsSync(path.join(monitoringOnly, 'auth.json')), 'existing monitoring state must not import old credentials');
+  assert.equal(JSON.parse(fs.readFileSync(path.join(monitoringOnly, 'monitoring.json'), 'utf8')).config.revision, 9);
 
   // A copy failure must stop startup, including on the next attempt.
   const incomplete = path.join(root, 'incomplete');

@@ -25,6 +25,7 @@ const MIGRATE_FILES = [
   'auth-tokens.json',
   'remote-connections.json',
   'cron-jobs.json',
+  'monitoring.json',
 ];
 const MIGRATION_COMPLETE = '.ezpm2gui-migration-complete';
 const MIGRATION_PENDING = '.ezpm2gui-migration-in-progress';

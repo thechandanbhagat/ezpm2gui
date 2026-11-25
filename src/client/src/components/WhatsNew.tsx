@@ -36,6 +36,20 @@ const RELEASES: Release[] = [
   {
     version: APP_RELEASE_VERSION,
     date: APP_RELEASE_DATE,
+    headline: "Health & alerts",
+    changes: [
+      {
+        title: "Health & alerts",
+        description: "Run HTTP and TCP checks in the background, set alert rules for local or connected remote processes, and review alert history or send webhook notifications.",
+        icon: SignalIcon,
+        color: 'text-[#22d3ee]',
+        tag: 'New',
+      },
+    ],
+  },
+  {
+    version: '1.13.1',
+    date: 'November 2026',
     headline: 'Server selection for process controls',
     changes: [
       {

@@ -33,6 +33,9 @@ import { requireAuth, authorizeSocket } from './middleware/requireAuth';
 import { setRevokeListener } from './utils/auth-tokens';
 import { getConfigDir } from './utils/config-dir';
 import logAnalysisRoutes from './routes/logAnalysis';
+import { createMonitoringRouter, monitoringBodyError } from './routes/monitoring';
+import { MonitoringService } from './services/MonitoringService';
+import { createMonitoringTargetCollector, readMonitoringRemoteProcesses } from './services/MonitoringTargets';
 import { listProviders } from './services/LogAnalysisService';
 
 /**
@@ -98,6 +101,22 @@ export function createServer() {
   app.use('/api/auth', pageAuthRoutes);
   app.use('/api/remote-metrics', remoteMetricsRoutes);
   app.use('/api/log-analysis', logAnalysisRoutes);
+
+  const collectMonitoringTargets = createMonitoringTargetCollector({
+    sources: () => [
+      { connectionId: 'local', name: 'Local server', connected: true,
+        list: () => executePM2Command<any[]>(callback => pm2.list(callback)) },
+      ...Array.from(remoteConnectionManager.getAllConnections().entries()).map(([id, connection]) => ({
+        connectionId: id, name: connection.name || connection.host, connected: connection.isConnected(),
+        list: () => readMonitoringRemoteProcesses(connection),
+      })),
+    ],
+  });
+  const monitoring = new MonitoringService({ collectTargets: collectMonitoringTargets });
+  app.use('/api/monitoring', createMonitoringRouter(monitoring));
+  app.use('/api/monitoring', monitoringBodyError);
+  server.on('listening', () => monitoring.start());
+  server.on('close', () => monitoring.stop());
 
   // Start remote metrics poller (30-second interval, polls all connected servers)
   remoteMetricsPoller.start();
