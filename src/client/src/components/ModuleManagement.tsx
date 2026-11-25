@@ -31,6 +31,20 @@ interface ConfigField {
   default: string;
 }
 
+// @group Constants : Published PM2 modules by the EZ PM2 GUI author, shown first
+// Package and PM2 process names are both scoped; keep the full name for API actions.
+const FEATURED_MODULES = [
+  {
+    name: '@thechandanbhagat/pm2-notifier',
+    displayName: 'pm2-notifier',
+    descriptionKey: 'modules.notifierDescription',
+    nodeVersion: 22,
+    repositoryUrl: 'https://github.com/thechandanbhagat/pm2-notifier',
+    npmUrl: 'https://www.npmjs.com/package/@thechandanbhagat/pm2-notifier',
+    setupUrl: 'https://github.com/thechandanbhagat/pm2-notifier#quick-start',
+  },
+];
+
 // @group Constants : Curated list of well-known PM2 modules
 const KNOWN_MODULES: { name: string; description: string; category: string }[] = [
   { name: 'pm2-logrotate',        description: 'Automatically rotate PM2 log files to prevent unbounded disk growth.',       category: 'Logging'       },
@@ -327,6 +341,7 @@ const ModuleManagement: React.FC<{ onNotify: NotifyFn }> = ({ onNotify }) => {
   const [dialogOpen,      setDialogOpen]      = useState(false);
   const [newModuleName,   setNewModuleName]   = useState('');
   const [installing,      setInstalling]      = useState(false);
+  const [installingModule, setInstallingModule] = useState<string | null>(null);
   const [configModule,    setConfigModule]    = useState<string | null>(null);
 
   const fetchModules = useCallback(async () => {
@@ -363,19 +378,23 @@ const ModuleManagement: React.FC<{ onNotify: NotifyFn }> = ({ onNotify }) => {
 
   // @group Handlers : One-click install from catalog
   const handleQuickInstall = async (name: string) => {
+    if (installingModule || installing) return;
     try {
+      setInstallingModule(name);
       await axios.post('/api/modules/install', { moduleName: name });
       onNotify(`Installed: ${name}`, 'success');
-      fetchModules();
+      await fetchModules();
     } catch (err: any) {
       onNotify(err.response?.data?.error || `Failed to install ${name}`, 'error');
+    } finally {
+      setInstallingModule(null);
     }
   };
 
   // @group Handlers : Uninstall a module
   const handleUninstall = async (name: string) => {
     try {
-      await axios.delete(`/api/modules/${name}`);
+      await axios.delete(`/api/modules/${encodeURIComponent(name)}`);
       onNotify(`Uninstalled: ${name}`, 'success');
       fetchModules();
     } catch (err: any) {
@@ -405,8 +424,9 @@ const ModuleManagement: React.FC<{ onNotify: NotifyFn }> = ({ onNotify }) => {
             </button>
             <button
               onClick={() => setDialogOpen(true)}
+              disabled={installingModule !== null}
               className="h-7 px-3 bg-[#e8e8e8] text-[#0a0a0a] text-xs font-mono font-semibold rounded-sm
-                         hover:bg-[#ccc] transition-colors flex items-center gap-1.5"
+                         hover:bg-[#ccc] disabled:opacity-40 transition-colors flex items-center gap-1.5"
             >
               <PlusIcon className="h-3.5 w-3.5" />
               install module
@@ -414,6 +434,71 @@ const ModuleManagement: React.FC<{ onNotify: NotifyFn }> = ({ onNotify }) => {
           </div>
         }
       />
+
+      {/* ── Author Modules ── */}
+      <section aria-labelledby="featured-modules-title" className="mb-6">
+        <h2 id="featured-modules-title" className="text-sm font-semibold text-[var(--ez-text)]">
+          {t('modules.featuredTitle')}
+        </h2>
+        <p className="mt-1 mb-3 text-xs text-[var(--ez-text-muted)]">
+          {t('modules.featuredSubtitle')}{' '}
+          <a href="https://github.com/thechandanbhagat" target="_blank" rel="noopener noreferrer"
+             className="underline underline-offset-4 hover:text-[var(--ez-text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ez-accent)]">
+            Chandan Bhagat
+          </a>
+        </p>
+        <div className="border border-[var(--ez-border)] rounded-sm bg-[var(--ez-bg-surface)] divide-y divide-[var(--ez-border)]">
+          {FEATURED_MODULES.map(mod => {
+            const isInstalled = installedNames.has(mod.name);
+            const isInstalling = installingModule === mod.name;
+            return (
+              <article key={mod.name} className="p-4 flex flex-col sm:flex-row sm:items-start gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-mono text-sm font-semibold text-[var(--ez-text)]">{mod.displayName}</h3>
+                    {isInstalled && (
+                      <span className="text-xs text-[var(--ez-success-text)]">{t('modules.installed')}</span>
+                    )}
+                  </div>
+                  <p className="mt-1 text-xs leading-relaxed text-[var(--ez-text-muted)]">{t(mod.descriptionKey)}</p>
+                  <code className="block mt-3 text-xs text-[var(--ez-text)] break-words">pm2 install {mod.name}</code>
+                  <p className="mt-2 text-xs leading-relaxed text-[var(--ez-text-subtle)]">
+                    {t('modules.requiresNode', { version: mod.nodeVersion })}{' '}{t('modules.notifierSetupHint')}
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-[var(--ez-text-muted)]">
+                    <a href={mod.setupUrl} target="_blank" rel="noopener noreferrer"
+                       className="underline underline-offset-4 hover:text-[var(--ez-text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ez-accent)]">
+                      {t('modules.setupGuide')}
+                    </a>
+                    <a href={mod.repositoryUrl} target="_blank" rel="noopener noreferrer"
+                       className="underline underline-offset-4 hover:text-[var(--ez-text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ez-accent)]">
+                      GitHub
+                    </a>
+                    <a href={mod.npmUrl} target="_blank" rel="noopener noreferrer"
+                       className="underline underline-offset-4 hover:text-[var(--ez-text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ez-accent)]">
+                      npm
+                    </a>
+                  </div>
+                </div>
+                <button
+                  onClick={() => isInstalled ? setConfigModule(mod.name) : handleQuickInstall(mod.name)}
+                  disabled={!isInstalled && (loading || installingModule !== null || installing)}
+                  aria-label={t(isInstalled ? 'modules.configureNamed' : 'modules.installNamed', { name: mod.displayName })}
+                  aria-busy={isInstalling}
+                  className="shrink-0 self-start inline-flex items-center justify-center gap-2 min-h-9 px-3 rounded-sm text-xs font-semibold
+                             bg-[var(--ez-primary-action)] text-[var(--ez-primary-action-text)] hover:bg-[var(--ez-primary-action-hover)]
+                             disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ez-accent)]"
+                >
+                  {isInstalling ? <ArrowPathIcon className="h-4 w-4 animate-spin" aria-hidden="true" />
+                    : isInstalled ? <Cog6ToothIcon className="h-4 w-4" aria-hidden="true" />
+                    : <ArrowDownTrayIcon className="h-4 w-4" aria-hidden="true" />}
+                  {t(isInstalling ? 'modules.installing' : isInstalled ? 'modules.configure' : 'modules.install')}
+                </button>
+              </article>
+            );
+          })}
+        </div>
+      </section>
 
       {/* ── Installed Modules ── */}
       <section className="mb-6">
@@ -530,12 +615,17 @@ const ModuleManagement: React.FC<{ onNotify: NotifyFn }> = ({ onNotify }) => {
                   ) : (
                     <button
                       onClick={() => handleQuickInstall(mod.name)}
-                      title="Install"
+                      disabled={loading || installingModule !== null || installing}
+                      title={installingModule === mod.name ? t('modules.installing') : t('modules.install')}
+                      aria-label={t('modules.installNamed', { name: mod.name })}
+                      aria-busy={installingModule === mod.name}
                       className="h-7 w-7 flex items-center justify-center rounded-sm
                                  border border-[#1e1e1e] text-[#555]
-                                 hover:text-[#888] hover:border-[#333] transition-colors"
+                                 hover:text-[#888] hover:border-[#333] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     >
-                      <ArrowDownTrayIcon className="h-3.5 w-3.5" />
+                      {installingModule === mod.name
+                        ? <ArrowPathIcon className="h-3.5 w-3.5 animate-spin" />
+                        : <ArrowDownTrayIcon className="h-3.5 w-3.5" />}
                     </button>
                   )}
                 </div>

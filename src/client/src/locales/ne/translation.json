@@ -519,7 +519,19 @@
     "subtitle": "PM2 प्लगइन मोड्युलहरू स्थापना, कन्फिगर र व्यवस्थापन गर्नुहोस्",
     "noModules": "कुनै मोड्युल स्थापना छैन।",
     "installModule": "मोड्युल स्थापना",
-    "moduleName": "मोड्युल नाम"
+    "moduleName": "मोड्युल नाम",
+    "featuredTitle": "EZ PM2 GUI का निर्माताबाट",
+    "featuredSubtitle": "यी PM2 मोड्युलका निर्माता र मर्मतकर्ता:",
+    "notifierDescription": "लगातार उच्च CPU प्रयोग र प्रक्रियाका अवस्था परिवर्तनका सूचना Microsoft Teams, Slack, Discord र अनुकूलित JSON वेबहुकमा पठाउनुहोस्।",
+    "requiresNode": "PM2 चल्ने सर्भरमा Node.js {{version}} वा नयाँ संस्करण चाहिन्छ।",
+    "notifierSetupHint": "सूचनाहरू सक्षम गर्न configPath सेट गर्नुहोस्। envFile प्रयोग गर्ने भए पहिले त्यसलाई सेट गर्नुहोस्।",
+    "setupGuide": "सेटअप निर्देशिका",
+    "install": "स्थापना गर्नुहोस्",
+    "installing": "स्थापना हुँदैछ…",
+    "installed": "स्थापित",
+    "configure": "कन्फिगर गर्नुहोस्",
+    "installNamed": "{{name}} स्थापना गर्नुहोस्",
+    "configureNamed": "{{name}} कन्फिगर गर्नुहोस्"
   },
   "ecosystem": {
     "title": "इकोसिस्टम जेनेरेटर",

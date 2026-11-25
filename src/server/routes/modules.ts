@@ -1,30 +1,18 @@
 import { Router } from 'express';
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import fs from 'fs';
-import path from 'path';
-import os from 'os';
 import pm2 from 'pm2';
 import { executePM2Command } from '../utils/pm2-connection';
 
 const router: Router = Router();
 
-// @group Utilities : Resolve pm2 binary path via shell
-const runPM2CLI = (args: string): Promise<{ stdout: string; stderr: string }> =>
+// Run the distributed PM2 CLI with this Node runtime, including on Windows.
+const runPM2CLI = (args: string[]): Promise<{ stdout: string; stderr: string }> =>
   new Promise((resolve, reject) => {
-    // Use shell so the OS resolves the global pm2 binary from PATH
-    const child = exec(`pm2 ${args}`);
-    let out = '';
-    let err = '';
-    child.stdout?.on('data', (d: Buffer) => { out += d.toString(); });
-    child.stderr?.on('data', (d: Buffer) => { err += d.toString(); });
-    child.on('close', (code) => {
-      if (code !== 0) {
-        reject(new Error(err || `pm2 exited with code ${code}`));
-      } else {
-        resolve({ stdout: out, stderr: err });
-      }
+    execFile(process.execPath, [require.resolve('pm2/bin/pm2'), ...args], { encoding: 'utf8' }, (error, stdout, stderr) => {
+      if (error) reject(new Error(stderr.trim() || `PM2 command failed (${error.code})`));
+      else resolve({ stdout, stderr });
     });
-    child.on('error', (e) => reject(e));
   });
 
 // @group APIEndpoints : List installed PM2 modules
@@ -48,7 +36,7 @@ router.get('/', async (_req, res) => {
   } catch (error: any) {
     // Fallback: parse pm2 module:list CLI output
     try {
-      const { stdout } = await runPM2CLI('module:list');
+      const { stdout } = await runPM2CLI(['module:list']);
 
       const moduleLines = stdout
         .split('\n')
@@ -88,7 +76,7 @@ router.post('/install', async (req, res) => {
   }
 
   try {
-    const { stdout } = await runPM2CLI(`install ${moduleName}`);
+    const { stdout } = await runPM2CLI(['install', moduleName]);
     res.json({
       success: true,
       message: `Successfully installed module: ${moduleName}`,
@@ -116,7 +104,7 @@ router.delete('/:moduleName', async (req, res) => {
   }
 
   try {
-    const { stdout } = await runPM2CLI(`uninstall ${moduleName}`);
+    const { stdout } = await runPM2CLI(['uninstall', moduleName]);
     res.json({
       success: true,
       message: `Successfully uninstalled module: ${moduleName}`,
@@ -130,8 +118,8 @@ router.delete('/:moduleName', async (req, res) => {
   }
 });
 
-// @group Utilities : Resolve ~/.pm2/module_conf.json path
-const moduleConfPath = () => path.join(os.homedir(), '.pm2', 'module_conf.json');
+// PM2 resolves PM2_HOME, platform defaults and the optional module config override.
+const moduleConfPath = (): string => require('pm2/paths')().PM2_MODULE_CONF_FILE;
 
 // @group APIEndpoints : Get config for a specific installed module
 router.get('/:moduleName/config', (req, res) => {
@@ -177,9 +165,7 @@ router.put('/:moduleName/config', async (req, res) => {
   try {
     // Run pm2 set for each key sequentially
     for (const [key, value] of Object.entries(config)) {
-      // Wrap value in quotes to handle spaces; strip any embedded quotes first
-      const safeValue = String(value).replace(/"/g, '');
-      await runPM2CLI(`set ${moduleName}:${key} "${safeValue}"`);
+      await runPM2CLI(['set', `${moduleName}:${key}`, String(value)]);
     }
     res.json({ success: true, message: `Configuration updated for ${moduleName}` });
   } catch (error: any) {

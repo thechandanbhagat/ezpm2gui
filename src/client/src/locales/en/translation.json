@@ -519,7 +519,19 @@
     "subtitle": "Install, configure, and manage PM2 modules",
     "noModules": "No modules installed.",
     "installModule": "Install Module",
-    "moduleName": "Module Name"
+    "moduleName": "Module Name",
+    "featuredTitle": "From the creator of EZ PM2 GUI",
+    "featuredSubtitle": "PM2 modules built and maintained by",
+    "notifierDescription": "Sustained CPU and process lifecycle alerts for Microsoft Teams, Slack, Discord, and custom JSON webhooks.",
+    "requiresNode": "Requires Node.js {{version}}+ on the PM2 host.",
+    "notifierSetupHint": "Set configPath to enable notifications. If using envFile, set it first.",
+    "setupGuide": "Setup guide",
+    "install": "Install",
+    "installing": "Installing…",
+    "installed": "Installed",
+    "configure": "Configure",
+    "installNamed": "Install {{name}}",
+    "configureNamed": "Configure {{name}}"
   },
   "ecosystem": {
     "title": "Ecosystem Generator",

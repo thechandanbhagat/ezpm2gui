@@ -6,15 +6,19 @@
 
 A modern web-based graphical user interface for the PM2 process manager, built with TypeScript, Tailwind CSS, and React.
 
-## v1.15.0
+## v1.16.0
 
-Use Cmd+K or Ctrl+K to find pages and processes on the selected server. Open logs or confirm a restart or stop for a specific PM2 instance.
+Install or configure the featured pm2-notifier module, open its setup guide, and manage modules with scoped package names.
 
 Install or upgrade:
 
 ```sh
-npm install -g ezpm2gui@1.15.0
+npm install -g ezpm2gui@1.16.0
 ```
+
+## v1.15.0
+
+Use Cmd+K or Ctrl+K to find pages and processes on the selected server. Open logs or confirm a restart or stop for a specific PM2 instance.
 
 ## v1.14.0
 
@@ -233,6 +237,10 @@ Generate and manage PM2 ecosystem configuration files directly from the UI. This
 
 ### PM2 Modules
 Manage and configure PM2 modules to extend the functionality of your PM2 installation. Install, update, and remove modules with a few clicks.
+
+Modules by the creator of EZ PM2 GUI appear first in the **PM2 Modules** page, with install actions and links to npm, GitHub, and setup instructions:
+
+- **[@thechandanbhagat/pm2-notifier](https://www.npmjs.com/package/@thechandanbhagat/pm2-notifier)** — sustained CPU and process lifecycle alerts for Microsoft Teams, Slack, Discord, and custom JSON webhooks. Requires Node.js 22+ on the PM2 host. Install from the GUI or run `pm2 install @thechandanbhagat/pm2-notifier`, then follow the [setup guide](https://github.com/thechandanbhagat/pm2-notifier#quick-start). Notifications remain idle until `configPath` is set; if using `envFile`, set it first.
 
 ### System Metrics
 Monitor key system metrics including:
