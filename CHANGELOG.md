@@ -6,6 +6,12 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.15.0] - 2026-11-25
+
+### Added
+
+- Use Cmd+K or Ctrl+K to find pages and processes on the selected server. Open logs or confirm a restart or stop for a specific PM2 instance.
+
 ## [1.14.0] - 2026-11-25
 
 ### Added

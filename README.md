@@ -6,15 +6,19 @@
 
 A modern web-based graphical user interface for the PM2 process manager, built with TypeScript, Tailwind CSS, and React.
 
-## v1.14.0
+## v1.15.0
 
-Run HTTP and TCP checks in the background, set alert rules for local or connected remote processes, and review alert history or send webhook notifications.
+Use Cmd+K or Ctrl+K to find pages and processes on the selected server. Open logs or confirm a restart or stop for a specific PM2 instance.
 
 Install or upgrade:
 
 ```sh
-npm install -g ezpm2gui@1.14.0
+npm install -g ezpm2gui@1.15.0
 ```
+
+## v1.14.0
+
+Run HTTP and TCP checks in the background, set alert rules for local or connected remote processes, and review alert history or send webhook notifications.
 
 ## v1.13.1
 

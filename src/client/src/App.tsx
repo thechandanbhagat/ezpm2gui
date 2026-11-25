@@ -21,6 +21,7 @@ import CronJobsPage from './components/CronJobsPage';
 import MetricsPage from './components/MetricsPage';
 import MonitoringPage from './components/MonitoringPage';
 import ServerSwitcher from './components/ServerSwitcher';
+import CommandPalette from './components/CommandPalette';
 import PasswordGate from './components/PasswordGate';
 import WhatsNew from './components/WhatsNew';
 import Help from './components/Help';
@@ -158,6 +159,11 @@ const App: React.FC = () => {
 
   // @group WhatsNew : Show popup once per session
   const [showWhatsNew, setShowWhatsNew] = useState<boolean>(false);
+  const handleOpenCommandPalette = useCallback(() => {
+    setShowWhatsNew(false);
+    setShowAbout(false);
+    setMenuOpen(false);
+  }, []);
   
   // @group Theme : Persisted dark/light mode state
   const [darkMode, setDarkMode] = useState<boolean>(getStoredDarkMode);
@@ -1016,6 +1022,16 @@ const App: React.FC = () => {
 
               {/* Right side */}
               <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
+
+                <CommandPalette
+                  onOpen={handleOpenCommandPalette}
+                  processes={processes}
+                  serverId={activeServerId}
+                  serverName={activeServerId === LOCAL_SERVER_ID
+                    ? t('serverSwitcher.local')
+                    : remoteConnections.find(connection => connection.id === activeServerId)?.name || activeServerId}
+                  onProcessAction={(id, action) => handleProcessAction(id, action, true)}
+                />
 
                 {/* @group Updates : Pulse badge — visible when a newer npm version exists */}
                 {updateAvailable && (

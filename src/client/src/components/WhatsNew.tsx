@@ -36,6 +36,20 @@ const RELEASES: Release[] = [
   {
     version: APP_RELEASE_VERSION,
     date: APP_RELEASE_DATE,
+    headline: "Command palette",
+    changes: [
+      {
+        title: "Command palette",
+        description: "Use Cmd+K or Ctrl+K to find pages and processes on the selected server. Open logs or confirm a restart or stop for a specific PM2 instance.",
+        icon: DocumentMagnifyingGlassIcon,
+        color: 'text-[#22d3ee]',
+        tag: 'New',
+      },
+    ],
+  },
+  {
+    version: '1.14.0',
+    date: 'November 2026',
     headline: "Health & alerts",
     changes: [
       {

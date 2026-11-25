@@ -104,10 +104,16 @@ test('first password stays signed in; locked and expired sessions stop polling w
     expect(container.querySelector('input[placeholder="passwordGate.passwordPlaceholder"]')).toBeNull();
     expect(auth.getToken()).toBe('first-session');
     expect(socket.connect).toHaveBeenCalledTimes(1);
+    expect(container.querySelector('button[aria-label="commandPalette.open"]')).not.toBeNull();
 
     // Locking must unmount Settings and stop protected timers.
     await act(async () => { container.querySelector('button[title="header.lockApp"]').click(); await flush(); });
     expect(container.querySelector('input[placeholder="passwordGate.passwordPlaceholder"]')).not.toBeNull();
+    expect(container.querySelector('button[aria-label="commandPalette.open"]')).toBeNull();
+    const lockedShortcut = new KeyboardEvent('keydown', { key: 'k', code: 'KeyK', metaKey: true, bubbles: true, cancelable: true });
+    await act(async () => { document.body.dispatchEvent(lockedShortcut); await flush(); });
+    expect(lockedShortcut.defaultPrevented).toBe(false);
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
     const count = requests.length;
     await act(async () => { jest.advanceTimersByTime(15000); await flush(); });
     expect(requests).toHaveLength(count);
@@ -137,6 +143,11 @@ test('first password stays signed in; locked and expired sessions stop polling w
     expect(requests).toEqual(['/api/auth/status']);
     expect(socket.connect).not.toHaveBeenCalled();
     expect(container.querySelector('input[placeholder="passwordGate.passwordPlaceholder"]')).not.toBeNull();
+    expect(container.querySelector('button[aria-label="commandPalette.open"]')).toBeNull();
+    const initialShortcut = new KeyboardEvent('keydown', { key: 'k', code: 'KeyK', metaKey: true, bubbles: true, cancelable: true });
+    await act(async () => { document.body.dispatchEvent(initialShortcut); await flush(); });
+    expect(initialShortcut.defaultPrevented).toBe(false);
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
   } finally {
     await act(async () => { root.unmount(); });
     container.remove();
