@@ -501,7 +501,19 @@
     "title": "PM2模块",
     "noModules": "未安装任何模块。",
     "installModule": "安装模块",
-    "moduleName": "模块名称"
+    "moduleName": "模块名称",
+    "featuredTitle": "来自 EZ PM2 GUI 的作者",
+    "featuredSubtitle": "这些 PM2 模块的开发和维护者：",
+    "notifierDescription": "将持续高 CPU 使用率和进程生命周期警报发送到 Microsoft Teams、Slack、Discord 和自定义 JSON Webhook。",
+    "requiresNode": "运行 PM2 的主机需要 Node.js {{version}} 或更高版本。",
+    "notifierSetupHint": "设置 configPath 以启用通知。如果使用 envFile，请先设置它。",
+    "setupGuide": "配置指南",
+    "install": "安装",
+    "installing": "正在安装…",
+    "installed": "已安装",
+    "configure": "配置",
+    "installNamed": "安装 {{name}}",
+    "configureNamed": "配置 {{name}}"
   },
   "ecosystem": {
     "title": "生态系统生成器",

@@ -234,6 +234,10 @@ Generate and manage PM2 ecosystem configuration files directly from the UI. This
 ### PM2 Modules
 Manage and configure PM2 modules to extend the functionality of your PM2 installation. Install, update, and remove modules with a few clicks.
 
+Modules by the creator of EZ PM2 GUI appear first in the **PM2 Modules** page, with install actions and links to npm, GitHub, and setup instructions:
+
+- **[@thechandanbhagat/pm2-notifier](https://www.npmjs.com/package/@thechandanbhagat/pm2-notifier)** — sustained CPU and process lifecycle alerts for Microsoft Teams, Slack, Discord, and custom JSON webhooks. Requires Node.js 22+ on the PM2 host. Install from the GUI or run `pm2 install @thechandanbhagat/pm2-notifier`, then follow the [setup guide](https://github.com/thechandanbhagat/pm2-notifier#quick-start). Notifications remain idle until `configPath` is set; if using `envFile`, set it first.
+
 ### System Metrics
 Monitor key system metrics including:
 - CPU usage and number of cores
